@@ -7,7 +7,8 @@
         "Card.Application",
         "Card.Infrastructure",
         "Card.Presentation",
-        "Card.Bootstrap"
+        "Card.Bootstrap",
+        "UnityEditor.TestRunner"
     ],
     "includePlatforms": [
         "Editor"
