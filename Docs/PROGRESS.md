@@ -8,7 +8,7 @@
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
-| M1 核心基础层（Core） | 🟡 进行中 | 1/9 | — | M1-T1（Result/Guard）完成：新增 60 用例全过；M1-R1（启用 Nullable）待评估 |
+| M1 核心基础层（Core） | 🟡 进行中 | 2/9 | — | M1-T1（Result/Guard）、M1-T2（EventBus）完成，新增 82 用例全过；M1-R1（Nullable）、M1-R2（覆盖率）按约定在 M1 收尾统一处理 |
 | M2 配置与数据管线 | ⬜ 未开始 | 0/7 | — | — |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
@@ -68,7 +68,7 @@
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M1-T1 `Result` / `Guard` | ✅ | 任务卡 [tasks/M1-T1-Result-Guard.md](./tasks/M1-T1-Result-Guard.md)（含 AC 对齐、铁律扫描、边界推演、反向审查）；代码 `Assets/_Project/0_Core/{Result,Guard}.cs`；EditMode 61 passed / 0 failed（新增 60 例，含 28 Guard + 16 `Result` + 16 `Result<T>`），`warning CS` 0 处；血状态为 `CS0246`（先测后写）；`check.ps1` PASS；内核独立扫描 Unity 依赖 0 命中 |
-| M1-T2 `EventBus` | ⬜ | — |
+| M1-T2 `EventBus` | ✅ | 任务卡 [tasks/M1-T2-EventBus.md](./tasks/M1-T2-EventBus.md)；代码 `Assets/_Project/0_Core/{EventBus,EventDispatchFailure,IEventDispatchFailureSink,PublishReport}.cs`；EditMode 83 passed / 0 failed（新增 22 例），`warning CS` 0 处；红状态为 `CS0246`；`check.ps1` PASS；内核扫描 0 命中。语义已锁：类型安全、订阅顺序、Dispose 幂等、派发中增删订阅、重入发布、异常隔离（含 `IEventDispatchFailureSink` 接缝供 M1-T5 接入） |
 | M1-T3 `StateMachine<TState>` | ⬜ | — |
 | M1-T4 `IRandomProvider` ★ | ⬜ | — |
 | M1-T5 `GameLog` ★ | ⬜ | — |
@@ -107,3 +107,4 @@
 | 2026-10-03 | 修复 + 工具 | 修复 PlayMode 冒烟测试 `CS0103`（漏 `using UnityEngine`）；新增 Editor 侧 AI 协同桥接（`AgentConsoleBridge` 输出 `Logs/agent-status.json`，`AgentTestBridge` 输出 `Logs/agent-tests.json`，零第三方依赖），使 AI 可自行验证"编译是否通过、测试是否全绿"；`Card.Editor` 增加 `UnityEditor.TestRunner` 引用；文档 06 增加第 7 节（含 Unity MCP 升级路径与风险说明） | 06 / PROGRESS / Assets |
 | 2026-10-03 | M0 完成 | M0 八项任务全部关闭（8/8）：Unity 侧实跑验证通过——编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（`StandaloneWindows64`，76.5 MB / 0 error）、`check.ps1` PASS、运行时程序集零 `using UnityEditor`、零旧类型；导入 TMP Essential Resources（`Assets/TextMesh Pro/`，72 文件，M5 前置）；补齐 Editor 桥接 `.meta` 与 `ProjectSettings/SceneTemplateSettings.json`；新增 [M0 评审与复盘](./reviews/M0-工程基建-评审与复盘.md)，登记改进项 M0-R2（桥接层补文件触发） | PROGRESS / reviews(新增) / Assets/TextMesh Pro(新增) / Assets/_Project/6_Editor / ProjectSettings |
 | 2026-10-03 | M1-T1 完成 | `Card.Core` 新增 `Result` / `Result<T>` / `Guard`（纯 BCL，无 Unity 依赖）；新增 60 个 EditMode 用例（先红后绿）；新增任务卡 [tasks/M1-T1-Result-Guard.md](./tasks/M1-T1-Result-Guard.md)；登记 M1-R1（启用 `<Nullable>`，P2）与 M1-R2（接入覆盖率统计）；验证方式改为**工程副本 + Unity 批处理模式**（不占用用户编辑器会话，避免 M0-R2 的"必须人工点菜单"瓶颈） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
+| 2026-10-03 | M1-T2 完成 | `Card.Core` 新增 `EventBus` + `EventDispatchFailure` + `IEventDispatchFailureSink` + `PublishReport`（纯 BCL）；锁定派发语义（类型安全、订阅顺序、Dispose 幂等、派发中增删订阅、重入发布、异常隔离不等于解绑）；新增 22 个 EditMode 用例（先红后绿，累计 83 passed / 0 failed）；任务卡 [tasks/M1-T2-EventBus.md](./tasks/M1-T2-EventBus.md) 明确记录"`IEventBus`/`GameEvent` 属 Domain，留待 M3/M4"；用户决策：M1-R1（Nullable）与 M1-R2（覆盖率）推迟到 M1 收尾统一处理 | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
