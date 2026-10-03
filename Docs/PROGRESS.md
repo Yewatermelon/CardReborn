@@ -3,11 +3,11 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M0（工程基建与规范落地）**
+**当前阶段：M1（核心基础层 Core）｜M0 已于 2026-10-03 完成**
 
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
-| M0 工程基建与规范落地 | 🟡 进行中 | 6/8 | — | 待 Unity 打开验证编译/测试 |
+| M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ⬜ 未开始 | 0/9 | — | — |
 | M2 配置与数据管线 | ⬜ 未开始 | 0/7 | — | — |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
@@ -40,17 +40,19 @@
 | M0-T2 拷入文档与 AGENTS.md | ✅ | `Docs/`（含 00–06、模板、PROGRESS）与根 `AGENTS.md` 已入库 |
 | M0-T3 建立目录骨架 | ✅ | `Assets/_Project/{0_Core…7_Tests, Art, Audio, Prefabs, Scenes, Config}`、`Config/Excel/`、`Tools/`、`Assets/ThirdParty/`、`Docs/reference/` |
 | M0-T4 创建 8 个 asmdef | ✅ | 8 个运行时 asmdef；`0_Core/1_Domain/2_Application/2_Network` 均设 `noEngineReferences: true`（编译期禁止引用 UnityEngine）；Unity 已编译出 `Card.Core/Domain/Application/Network/Infrastructure/Presentation/Bootstrap/Editor.dll` |
-| M0-T5 建立测试工程 | 🟡 待验证 | 测试程序集已建；PlayMode 冒烟测试曾因漏 `using UnityEngine` 报 `CS0103`，已修复，待 Unity 重新编译并跑测试确认 |
+| M0-T5 建立测试工程 | ✅ | 2026-10-03 于 Unity 2022.3.54f1c1 实跑：`TestRunner_IsWired_Up` 1 passed/0 failed（`Logs/agent-tests-editmode.json`，09:10:37Z）、`PlayModeRunner_IsWired_Up` 1 passed/0 failed（`Logs/agent-tests.json`，09:10:53Z）；早期 `CS0103` 已修复（`325df66`） |
 | M0-T6 初始化 Git 仓库与 .gitignore | ✅ | 首次提交 `cc56f56`（64 文件）；已推送 `origin/main`；Git LFS 已启用（.gitattributes） |
 | M0-T7 本地校验脚本 | ✅ | `Tools/check.ps1` 跑通（PASS）；用故意违规探针验证可正确报出 R1/R4 并以退出码 1 失败 |
-| M0-T8 开工自检 | 🟡 待完成 | 需在 Unity 中打开一次：生成 `.meta`、确认编译无错误、Test Runner 两个冒烟测试通过 |
+| M0-T8 开工自检 | ✅ | [06 第 5.5 节](./06-新项目搭建与仓库初始化清单.md)五项全过：① 编译 0 error/0 warning，空场景出包成功（76.5 MB / 0 error，`Logs/agent-build.txt`）② `check.ps1` PASS ③ 运行时程序集 `using UnityEditor` 0 处 ④ 旧类型（`BattleManager`/`CardStore`/`MonoSingleton`）0 处 ⑤ `Docs` + `AGENTS.md` + `PROGRESS.md` 就位；`.meta` 已由 Unity 生成，TMP Essentials 已导入（72 文件） |
 
-### M0 待办（需要在 Unity 编辑器里执行）
+### M0 收尾记录（2026-10-03 完成）
 
-1. 切到 Unity 窗口让它刷新（或按 `Ctrl+R`），等待编译完成。
-2. `Window > TextMeshPro > Import TMP Essential Resources`（M5 之前必须完成）。
-3. `Tools > Card > Agent > Run EditMode Tests` / `Run PlayMode Tests`（或直接用 Test Runner）。
-4. AI 读取 `Logs/agent-status.json`（应为 0 编译错误）与 `Logs/agent-tests.json`（应为 0 失败），提交剩余 `.meta`，M0 勾选完成。
+1. ✅ Unity 已打开并刷新编译，`.meta` 全部生成，编译 0 error / 0 warning。
+2. ✅ `TMP Essential Resources` 已导入（`Assets/TextMesh Pro/`，72 文件）——M5 前置项提前关闭。
+3. ✅ `Tools > Card > Agent > Run EditMode Tests` / `Run PlayMode Tests` 均已跑通，各 1 passed / 0 failed。
+4. ✅ 已读 `Logs/agent-status.json`（0 编译错误、0 警告）与 `Logs/agent-tests.json`（0 失败），剩余 `.meta` 已提交。
+
+> 备注：Unity 在窗口非前台时不会可靠地重新导入脚本，本轮验证由**临时**的 Editor-only 触发脚本（读 `Logs/agent-run-tests.flag`）驱动，验证后已删除；`Tools > Card > Agent` 菜单入口保持不变。改进项登记为 M0-R2。
 
 ### AI 协同开发（Agent Bridge，已内置）
 
@@ -71,7 +73,7 @@
 
 | 里程碑 | 复盘日期 | 记录位置 | 主要改进项 |
 | --- | --- | --- | --- |
-| — | — | — | — |
+| M0 工程基建与规范落地 | 2026-10-03 | [reviews/M0-工程基建-评审与复盘.md](./reviews/M0-工程基建-评审与复盘.md) | 桥接层补"文件触发"入口（M0-R2）；M1 起接入覆盖率与复杂度统计；提交前例行 `git diff ProjectSettings/` |
 
 ## 变更日志（文档/架构）
 
@@ -85,3 +87,4 @@
 | 2026-10-03 | 落地准备 | 明确"新建独立 Unity 工程 + 拷文档"的开工路径：新增 06（新项目搭建与仓库初始化清单，含该拷/不该拷清单、工程基线、目录骨架、Git/GitHub 流程与仓库地址该写在哪）；M0 由 7 项调整为 8 项并改为在新工程中执行；取消 `Assets/_Legacy/` 方案，改为旧工程独立保留；Excel 源表移到 `Assets/` 之外的 `Config/Excel/` | 00 / 02 / 03 / 06(新增) / AGENTS / README / PROGRESS |
 | 2026-10-03 | 工程落地 | 新工程 `E:\Unity\Project\CardReborn` 建立并完成 M0 主体：目录骨架 + 8 个运行时 asmdef（其中 4 个设 `noEngineReferences: true`）+ 2 个测试程序集与冒烟测试 + `Tools/check.ps1`（已用违规探针验证有效）+ Git 初始化/LFS/首次提交 `cc56f56` 并推送 `origin/main`；旧工程 Docs 副本冻结，**此后以本仓库 `Docs/` 为唯一权威** | 全部（本仓库内） |
 | 2026-10-03 | 修复 + 工具 | 修复 PlayMode 冒烟测试 `CS0103`（漏 `using UnityEngine`）；新增 Editor 侧 AI 协同桥接（`AgentConsoleBridge` 输出 `Logs/agent-status.json`，`AgentTestBridge` 输出 `Logs/agent-tests.json`，零第三方依赖），使 AI 可自行验证"编译是否通过、测试是否全绿"；`Card.Editor` 增加 `UnityEditor.TestRunner` 引用；文档 06 增加第 7 节（含 Unity MCP 升级路径与风险说明） | 06 / PROGRESS / Assets |
+| 2026-10-03 | M0 完成 | M0 八项任务全部关闭（8/8）：Unity 侧实跑验证通过——编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（`StandaloneWindows64`，76.5 MB / 0 error）、`check.ps1` PASS、运行时程序集零 `using UnityEditor`、零旧类型；导入 TMP Essential Resources（`Assets/TextMesh Pro/`，72 文件，M5 前置）；补齐 Editor 桥接 `.meta` 与 `ProjectSettings/SceneTemplateSettings.json`；新增 [M0 评审与复盘](./reviews/M0-工程基建-评审与复盘.md)，登记改进项 M0-R2（桥接层补文件触发） | PROGRESS / reviews(新增) / Assets/TextMesh Pro(新增) / Assets/_Project/6_Editor / ProjectSettings |
