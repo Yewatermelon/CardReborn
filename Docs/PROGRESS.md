@@ -7,12 +7,12 @@
 
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
-| M0 工程基建与规范落地 | ⬜ 未开始 | 0/7 | — | 文档集已就绪，可开工 |
-| M1 核心基础层（Core） | ⬜ 未开始 | 0/7 | — | — |
+| M0 工程基建与规范落地 | 🟡 进行中 | 6/8 | — | 待 Unity 打开验证编译/测试 |
+| M1 核心基础层（Core） | ⬜ 未开始 | 0/9 | — | — |
 | M2 配置与数据管线 | ⬜ 未开始 | 0/7 | — | — |
-| M3 领域模型与规则内核 | ⬜ 未开始 | 0/8 | — | 质量门禁最严 |
-| M4 回合状态机与效果系统 | ⬜ 未开始 | 0/8 | — | 质量门禁最严 |
-| M5 表现层与交互 | ⬜ 未开始 | 0/7 | — | — |
+| M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
+| M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
+| M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
@@ -29,6 +29,28 @@
 | M14 双人验证与体验打磨 | ⬜ 未开始 | 0/7 | — | — |
 
 > **阶段三（未来，暂不做）**：专用服务器、公网对战、匹配服务、NAT 穿透与中继、反作弊加固、客户端预测与和解、主机迁移。
+
+---
+
+## M0 任务级状态（进行中）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M0-T1 新建工程并校准基线 | ✅ | `ProjectSettings/ProjectVersion.txt` = `2022.3.54f1c1`；`Packages/manifest.json` 无 URP/HDRP，含 feature.2d / textmeshpro / test-framework |
+| M0-T2 拷入文档与 AGENTS.md | ✅ | `Docs/`（含 00–06、模板、PROGRESS）与根 `AGENTS.md` 已入库 |
+| M0-T3 建立目录骨架 | ✅ | `Assets/_Project/{0_Core…7_Tests, Art, Audio, Prefabs, Scenes, Config}`、`Config/Excel/`、`Tools/`、`Assets/ThirdParty/`、`Docs/reference/` |
+| M0-T4 创建 8 个 asmdef | 🟡 已建，待编译验证 | 8 个运行时 asmdef；`0_Core/1_Domain/2_Application/2_Network` 均设 `noEngineReferences: true`（编译期禁止引用 UnityEngine） |
+| M0-T5 建立测试工程 | 🟡 已建，待 Test Runner 验证 | `Card.Tests.EditMode` / `Card.Tests.PlayMode` 各含 1 个冒烟测试 |
+| M0-T6 初始化 Git 仓库与 .gitignore | ✅ | 首次提交 `cc56f56`（64 文件）；已推送 `origin/main`；Git LFS 已启用（.gitattributes） |
+| M0-T7 本地校验脚本 | ✅ | `Tools/check.ps1` 跑通（PASS）；用故意违规探针验证可正确报出 R1/R4 并以退出码 1 失败 |
+| M0-T8 开工自检 | 🟡 待完成 | 需在 Unity 中打开一次：生成 `.meta`、确认编译无错误、Test Runner 两个冒烟测试通过 |
+
+### M0 待办（需要在 Unity 编辑器里执行）
+
+1. 打开工程 `E:\Unity\Project\CardReborn`，等待导入完成，确认 Console 无编译错误。
+2. `Window > TextMeshPro > Import TMP Essential Resources`（M5 之前必须完成）。
+3. `Window > General > Test Runner`：EditMode 与 PlayMode 各跑一次冒烟测试。
+4. 确认后由 AI 提交 Unity 生成的 `.meta` 文件（第二次提交），M0 方可勾选完成。
 
 ---
 
@@ -54,3 +76,4 @@
 | 2026-10-03 | 架构澄清 | 修正"帧同步不需要服务器"的不准确表述（帧同步省的是权威逻辑服务器，信令/中继/房间仍需要）；明确状态同步**可用房主模式**（一个客户端充当权威宿主），并新增部署拓扑章节与 ADR-15/16（`MatchHost` 为共享库，三种宿主共用），新增 FR-14.11～13、N-15/N-16、M12-T9/T10 | 00 / 01 / 02 / 03 / 05 / PROGRESS |
 | 2026-10-03 | 范围收敛 | 阶段二收敛为**单台 PC 上以监听服务器（房主模式）验证双人联网**：只做 `LocalHost` + `PeerHost`；传输改用 BCL `System.Net.Sockets`（零新增依赖）；移除匹配/房间服务、账号、NAT 穿透、中继、反作弊、客户端预测（列入阶段三）；专用服务器仅保留接口。新增 ADR-17、铁律 13、FR-14.12～14、N-17/N-18，重写 05 文档为 3.0 版（新增第 15 节：范围收敛与本机双进程验证方法） | 00 / 01 / 02 / 03 / 04 / 05 / AGENTS / README / PROGRESS |
 | 2026-10-03 | 落地准备 | 明确"新建独立 Unity 工程 + 拷文档"的开工路径：新增 06（新项目搭建与仓库初始化清单，含该拷/不该拷清单、工程基线、目录骨架、Git/GitHub 流程与仓库地址该写在哪）；M0 由 7 项调整为 8 项并改为在新工程中执行；取消 `Assets/_Legacy/` 方案，改为旧工程独立保留；Excel 源表移到 `Assets/` 之外的 `Config/Excel/` | 00 / 02 / 03 / 06(新增) / AGENTS / README / PROGRESS |
+| 2026-10-03 | 工程落地 | 新工程 `E:\Unity\Project\CardReborn` 建立并完成 M0 主体：目录骨架 + 8 个运行时 asmdef（其中 4 个设 `noEngineReferences: true`）+ 2 个测试程序集与冒烟测试 + `Tools/check.ps1`（已用违规探针验证有效）+ Git 初始化/LFS/首次提交 `cc56f56` 并推送 `origin/main`；旧工程 Docs 副本冻结，**此后以本仓库 `Docs/` 为唯一权威** | 全部（本仓库内） |
