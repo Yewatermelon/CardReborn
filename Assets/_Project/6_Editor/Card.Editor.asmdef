@@ -1,0 +1,23 @@
+{
+    "name": "Card.Editor",
+    "rootNamespace": "Card.Editor",
+    "references": [
+        "Card.Core",
+        "Card.Domain",
+        "Card.Application",
+        "Card.Infrastructure",
+        "Card.Presentation",
+        "Card.Bootstrap"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

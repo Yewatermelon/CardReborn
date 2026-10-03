@@ -1,0 +1,21 @@
+{
+    "name": "Card.Presentation",
+    "rootNamespace": "Card.Presentation",
+    "references": [
+        "Card.Core",
+        "Card.Domain",
+        "Card.Application",
+        "Card.Infrastructure",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,21 @@
+{
+    "name": "Card.Bootstrap",
+    "rootNamespace": "Card.Bootstrap",
+    "references": [
+        "Card.Core",
+        "Card.Domain",
+        "Card.Application",
+        "Card.Network",
+        "Card.Infrastructure",
+        "Card.Presentation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

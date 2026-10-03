@@ -1,0 +1,28 @@
+{
+    "name": "Card.Tests.PlayMode",
+    "rootNamespace": "Card.Tests.PlayMode",
+    "references": [
+        "Card.Core",
+        "Card.Domain",
+        "Card.Application",
+        "Card.Network",
+        "Card.Infrastructure",
+        "Card.Presentation",
+        "Card.Bootstrap",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

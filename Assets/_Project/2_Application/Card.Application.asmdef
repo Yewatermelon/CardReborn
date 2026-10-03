@@ -1,0 +1,17 @@
+{
+    "name": "Card.Application",
+    "rootNamespace": "Card.Application",
+    "references": [
+        "Card.Core",
+        "Card.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
