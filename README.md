@@ -17,6 +17,8 @@
 2. 首次打开后执行一次 **Window → TextMeshPro → Import TMP Essential Resources**（必须，否则 TMP 文本不显示）。
 3. 运行本地门禁：`powershell -ExecutionPolicy Bypass -File Tools/check.ps1`
 4. 测试：`Window → General → Test Runner`，运行 EditMode / PlayMode。
+5. 无 Unity 环境下跑内核测试与覆盖率：`powershell -ExecutionPolicy Bypass -File Tools/coverage.ps1`（首次需联网还原 NuGet 包）。
+6. 导入 / 重载配置：菜单 `Tools > Card > 导入配置` / `Tools > Card > 重载配置`（无界面入口见 [Docs/HANDOFF.md](Docs/HANDOFF.md) 第 4 节）。
 
 ## 文档（唯一权威依据）
 
@@ -32,6 +34,8 @@
 | [Docs/05 联网对战设计文档](Docs/05-联网对战_状态同步_设计文档.md) | 权威状态同步（当前阶段：本机房主模式验证） |
 | [Docs/06 新项目搭建清单](Docs/06-新项目搭建与仓库初始化清单.md) | 环境搭建、Git 初始化 |
 | [Docs/PROGRESS.md](Docs/PROGRESS.md) | 进度看板 |
+| [Docs/HANDOFF.md](Docs/HANDOFF.md) | **换人 / AI 交接说明**（现状快照、验证命令、已知坑、待办） |
+| [Docs/tasks/](Docs/tasks/) ・ [Docs/reviews/](Docs/reviews/) | 任务卡 ・ 里程碑复盘 |
 
 ## 目录结构
 
@@ -44,12 +48,12 @@ Assets/_Project/
 ├─ 3_Infrastructure/ Card.Infrastructure  配置、存档、Unity 适配
 ├─ 4_Presentation/   Card.Presentation    表现层（只读订阅）
 ├─ 5_Bootstrap/      Card.Bootstrap       组装与启动
-├─ 6_Editor/         Card.Editor          仅编辑器工具（Excel 导入、校验）
+├─ 6_Editor/         Card.Editor          仅编辑器工具（配置导入/重载、校验）
 ├─ 7_Tests/          Card.Tests.*         EditMode / PlayMode 测试
 └─ Art/ Audio/ Config/ Prefabs/ Scenes/
 
-Config/Excel/        Excel 配置源表（Assets 之外，Unity 不导入）
-Tools/               check.ps1 等本地脚本
+Config/Excel/        CSV 配置源表（Assets 之外，Unity 不导入；Excel 可直接另存）
+Tools/               check.ps1、coverage.ps1 与无 Unity 覆盖率工具链
 Docs/                开发文档
 ```
 
@@ -64,4 +68,6 @@ Core ← Domain ← Application ← { Network, Infrastructure } ← Presentation
 
 ## 当前状态
 
-见 [Docs/PROGRESS.md](Docs/PROGRESS.md)。当前阶段：**M0 工程基建与规范落地**。
+见 [Docs/PROGRESS.md](Docs/PROGRESS.md)（每个任务的证据）与 [Docs/HANDOFF.md](Docs/HANDOFF.md)（交接快照）。
+
+**当前阶段：M3 领域模型与规则内核**；已完成 M0（工程基建）、M1（Core 基础层）、M2（配置与数据管线）。
