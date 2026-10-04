@@ -17,6 +17,7 @@ namespace Card.Core
     {
         private readonly List<string> _header = new List<string>();
         private readonly List<string[]> _rows = new List<string[]>();
+        private readonly List<int> _rowLineNumbers = new List<int>();
 
         private CsvTable()
         {
@@ -106,6 +107,7 @@ namespace Card.Core
             }
 
             _rows.Add(row);
+            _rowLineNumbers.Add(lineNumber);
         }
 
         /// <summary>按行号取整行（只读视图）。</summary>
@@ -120,6 +122,20 @@ namespace Card.Core
             }
 
             return _rows[rowIndex];
+        }
+
+        /// <summary>该数据行在源文件里的行号（1 起；用于错误定位）。</summary>
+        public int GetSourceLineNumber(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= _rowLineNumbers.Count)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(rowIndex),
+                    rowIndex,
+                    "行号越界：共 " + _rowLineNumbers.Count + " 行。");
+            }
+
+            return _rowLineNumbers[rowIndex];
         }
 
         /// <summary>列名是否存在（大小写敏感）。</summary>
