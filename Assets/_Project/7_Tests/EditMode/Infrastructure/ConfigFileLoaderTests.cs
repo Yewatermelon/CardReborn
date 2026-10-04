@@ -54,7 +54,7 @@ namespace Card.Tests.EditMode.Infrastructure
             ConfigLoadResult result = ConfigFileLoader.Load(_outputDirectory);
 
             Assert.That(result.Succeeded, Is.True, result.ToText());
-            Assert.That(result.Bundle!.Cards.Count, Is.EqualTo(6));
+            Assert.That(result.Bundle!.Cards.Count, Is.GreaterThanOrEqualTo(30), "首版内容目标见 ConfigContentTests");
             Assert.That(result.Bundle.Heroes.Count, Is.EqualTo(2));
             Assert.That(result.Bundle.HeroPowers.Count, Is.EqualTo(2));
             Assert.That(result.Bundle.RarityWeights.Count, Is.EqualTo(4));
@@ -68,7 +68,7 @@ namespace Card.Tests.EditMode.Infrastructure
 
             CardDefinition treant = FindCard(result.Bundle, "NEUTRAL_TREANT");
             Assert.That(treant.Keywords, Is.EqualTo(Keyword.Deathrattle));
-            Assert.That(treant.Rarity, Is.EqualTo(CardRarity.Legendary));
+            Assert.That(treant.Rarity, Is.EqualTo(CardRarity.Epic));
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace Card.Tests.EditMode.Infrastructure
 
             Assert.That(database.RequireCard("MAGE_BLOCK").Cost, Is.EqualTo(3));
             Assert.That(database.RequireCard(1).Key, Is.EqualTo("NEUTRAL_PANGO"));
-            Assert.That(database.FilterCards(cardClass: CardClass.Mage).Count, Is.EqualTo(2));
+            Assert.That(database.FilterCards(cardClass: CardClass.Mage).Count, Is.GreaterThanOrEqualTo(2));
             Assert.That(database.RequireHero("HERO_MAGE").Class, Is.EqualTo(CardClass.Mage));
             Assert.That(database.Gacha.PackSize, Is.EqualTo(5));
             Assert.That(database.Rules.ManaLimit, Is.EqualTo(10));
