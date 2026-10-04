@@ -1,0 +1,7 @@
+Id,Key,NameKey,DescKey,Cost,Type,Rarity,Class,Attack,Health,Keywords,TargetRule,Effects,SetKey,ArtKey,AudioKey,Enabled
+1,NEUTRAL_PANGO,CARD_001_NAME,CARD_001_DESC,2,Minion,Common,Neutral,2,3,,None,,Core,art_card_001,sfx_play_001,TRUE
+2,NEUTRAL_HARMONICA,CARD_002_NAME,CARD_002_DESC,4,Minion,Rare,Neutral,3,5,Taunt,None,,Core,art_card_002,sfx_play_002,TRUE
+3,MAGE_FIREBALL,CARD_005_NAME,CARD_005_DESC,4,Spell,Common,Mage,0,0,,EnemyMinion,DamageEffect:6,Core,art_spell_001,sfx_cast_001,TRUE
+4,MAGE_BLOCK,CARD_006_NAME,CARD_006_DESC,3,Spell,Rare,Mage,0,0,,None,GainArmorEffect:8,Core,art_spell_002,sfx_cast_002,TRUE
+5,NEUTRAL_GIANT,CARD_004_NAME,CARD_004_DESC,6,Minion,Epic,Neutral,5,9,Taunt,None,,Core,art_card_004,sfx_play_004,TRUE
+6,NEUTRAL_TREANT,CARD_008_NAME,CARD_008_DESC,8,Minion,Legendary,Neutral,8,8,Deathrattle,None,SummonEffect:NEUTRAL_PANGO|2,Core,art_card_008,sfx_play_008,TRUE
