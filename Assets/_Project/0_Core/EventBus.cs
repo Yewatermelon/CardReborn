@@ -48,7 +48,7 @@ namespace Card.Core
         {
             ThrowIfReferenceTypeEventIsNull(evt);
 
-            if (!_channels.TryGetValue(typeof(TEvent), out object channelObject))
+            if (!_channels.TryGetValue(typeof(TEvent), out object? channelObject))
             {
                 return default;
             }
@@ -96,7 +96,7 @@ namespace Card.Core
         /// <summary>当前活跃订阅者数量（诊断与测试用）。</summary>
         public int SubscriberCount<TEvent>()
         {
-            if (!_channels.TryGetValue(typeof(TEvent), out object channelObject))
+            if (!_channels.TryGetValue(typeof(TEvent), out object? channelObject))
             {
                 return 0;
             }
@@ -116,7 +116,7 @@ namespace Card.Core
 
         private List<Subscription<TEvent>> GetOrCreateChannel<TEvent>()
         {
-            if (_channels.TryGetValue(typeof(TEvent), out object existing))
+            if (_channels.TryGetValue(typeof(TEvent), out object? existing))
             {
                 return (List<Subscription<TEvent>>)existing;
             }

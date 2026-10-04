@@ -27,7 +27,7 @@ namespace Card.Core
     /// 5. 回调抛异常会向上传播（不吞异常、不回滚），此时 <see cref="Current"/> 已是目标状态；
     /// 6. <b>非线程安全</b>：单线程使用（服务器 tick / 主线程）。
     /// </summary>
-    public sealed class StateMachine<TState>
+    public sealed class StateMachine<TState> where TState : notnull
     {
         /// <summary>目标状态未注册时的错误码。</summary>
         public const string ErrorUnknownState = "ERROR_STATE_UNKNOWN";
@@ -168,7 +168,7 @@ namespace Card.Core
                     && EqualityComparer<TState>.Default.Equals(_to, other._to);
             }
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is Transition other && Equals(other);
             }

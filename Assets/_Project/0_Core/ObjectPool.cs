@@ -193,7 +193,7 @@ namespace Card.Core
         {
             public static readonly ReferenceComparer Instance = new ReferenceComparer();
 
-            public bool Equals(T left, T right)
+            public bool Equals(T? left, T? right)
             {
                 return ReferenceEquals(left, right);
             }

@@ -63,7 +63,7 @@ namespace Card.Core
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Result other && Equals(other);
         }
@@ -189,7 +189,7 @@ namespace Card.Core
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Result<T> other && Equals(other);
         }

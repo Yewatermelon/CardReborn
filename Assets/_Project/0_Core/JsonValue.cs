@@ -20,8 +20,6 @@ namespace Card.Core
     /// </summary>
     public sealed class JsonValue
     {
-        private const string Indent = "  ";
-
         private static readonly List<JsonValue> NoItems = new List<JsonValue>();
         private static readonly List<KeyValuePair<string, JsonValue>> NoMembers =
             new List<KeyValuePair<string, JsonValue>>();
@@ -195,7 +193,7 @@ namespace Card.Core
                     builder.Append(_intValue.ToString(CultureInfo.InvariantCulture));
                     return;
                 case JsonKind.String:
-                    WriteString(builder, _stringValue);
+                    JsonText.AppendString(builder, _stringValue);
                     return;
                 case JsonKind.Array:
                     WriteArray(builder, depth);
@@ -218,7 +216,7 @@ namespace Card.Core
             for (int i = 0; i < _items.Count; i++)
             {
                 builder.Append('\n');
-                AppendIndent(builder, depth + 1);
+                JsonText.AppendIndent(builder, depth + 1);
                 _items[i].Write(builder, depth + 1);
                 if (i < _items.Count - 1)
                 {
@@ -227,7 +225,7 @@ namespace Card.Core
             }
 
             builder.Append('\n');
-            AppendIndent(builder, depth);
+            JsonText.AppendIndent(builder, depth);
             builder.Append(']');
         }
 
@@ -243,8 +241,8 @@ namespace Card.Core
             for (int i = 0; i < _members.Count; i++)
             {
                 builder.Append('\n');
-                AppendIndent(builder, depth + 1);
-                WriteString(builder, _members[i].Key);
+                JsonText.AppendIndent(builder, depth + 1);
+                JsonText.AppendString(builder, _members[i].Key);
                 builder.Append(": ");
                 _members[i].Value.Write(builder, depth + 1);
                 if (i < _members.Count - 1)
@@ -254,57 +252,9 @@ namespace Card.Core
             }
 
             builder.Append('\n');
-            AppendIndent(builder, depth);
+            JsonText.AppendIndent(builder, depth);
             builder.Append('}');
         }
 
-        private static void AppendIndent(StringBuilder builder, int depth)
-        {
-            for (int i = 0; i < depth; i++)
-            {
-                builder.Append(Indent);
-            }
-        }
-
-        private static void WriteString(StringBuilder builder, string value)
-        {
-            builder.Append('"');
-            for (int i = 0; i < value.Length; i++)
-            {
-                char c = value[i];
-                switch (c)
-                {
-                    case '"':
-                        builder.Append("\\\"");
-                        break;
-                    case '\\':
-                        builder.Append("\\\\");
-                        break;
-                    case '\n':
-                        builder.Append("\\n");
-                        break;
-                    case '\r':
-                        builder.Append("\\r");
-                        break;
-                    case '\t':
-                        builder.Append("\\t");
-                        break;
-                    default:
-                        if (c < ' ')
-                        {
-                            builder.Append("\\u");
-                            builder.Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                        }
-                        else
-                        {
-                            builder.Append(c);
-                        }
-
-                        break;
-                }
-            }
-
-            builder.Append('"');
-        }
     }
 }

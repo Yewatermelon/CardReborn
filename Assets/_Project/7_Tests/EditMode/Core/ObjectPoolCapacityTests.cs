@@ -185,8 +185,8 @@ namespace Card.Tests.EditMode.Core
             ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => new PooledItem(), maxCapacity: 1);
             pool.Rent();
 
-            pool.TryRent(out PooledItem _);
-            pool.TryRent(out PooledItem _);
+            pool.TryRent(out PooledItem? _);
+            pool.TryRent(out PooledItem? _);
 
             Assert.That(pool.RejectedCount, Is.EqualTo(2));
             Assert.That(sink.Entries.Count, Is.EqualTo(1));

@@ -59,7 +59,7 @@ namespace Card.Tests.EditMode.Core
         public void Parse_WhenTextIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => CsvTable.Parse(null!));
+                Assert.Throws<ArgumentNullException>(() => CsvTable.Parse(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("text"));
         }
