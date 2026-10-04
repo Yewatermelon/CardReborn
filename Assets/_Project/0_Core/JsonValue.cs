@@ -174,6 +174,12 @@ namespace Card.Core
             return builder.ToString();
         }
 
+        /// <summary>解析 JSON 文本（极简子集：对象/数组/字符串/整数/布尔/null）。</summary>
+        public static JsonValue Parse(string text)
+        {
+            return JsonParser.Parse(text);
+        }
+
         public override string ToString()
         {
             return ToJson();
