@@ -4,6 +4,29 @@
 > 目标：不依赖任何聊天记录，也能在 30 分钟内搞清楚"项目是什么、现在到哪、下一步做什么、怎么验证、哪里容易踩坑"。
 > 维护约定：每次里程碑结束或交接时更新本文件；正文以仓库内文档与代码为准，冲突时以 `Docs/00`–`Docs/06` + `AGENTS.md` 为准。
 
+## 0. 交接操作清单（项目所有者照这个顺序做）
+
+> 细节都在本文后续章节；这一节只给"按顺序做什么"。带 ✅ 的是**已经完成**的。
+
+- [x] **1. 冻结当前状态**：确认工作区干净、`main` 与远端一致、门禁与测试全绿。命令：`git status -sb`、`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
+- [x] **2. 打检查点标签**：`checkpoint/m2-complete`（已推送远端，指向 `9eb3c13`，见第 10 节）。
+- [x] **3. 生成离线备份**：`E:\Unity\Project\CardReborn-backups\CardReborn-2026-10-04-m2-complete.bundle`（3.04 MB，SHA256 见第 10 节）。
+- [ ] **4. 把备份复制到异地**（**唯一还没做的关键一步**）：把整个工程目录（**含 `.git`**）和 bundle 一起复制到移动硬盘 / 网盘 / 另一台机器。现在两份备份都在同一块硬盘上，防不了硬件故障。
+- [ ] **5. 确认环境三件套**（第 10.6 节）：Unity `2022.3.54f1c1`（许可证已激活）、.NET SDK 9.x、Git + Git LFS（`git lfs install` 至少执行过一次）。
+- [ ] **6. 确认新 AI 的访问与授权**（第 8 节）：仓库访问权限（私有仓库需给凭据）；是否允许联网（首次 `dotnet restore`、`git push`、`git lfs fetch`）；是否允许必要时聚焦 Unity 窗口（多数验证已做成无界面方式）。
+- [ ] **7. 把"开场指令"粘给新 AI**（可直接复制下面这段）：
+
+  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M2，下一步是 M3。
+  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M3 任务表。
+  > 然后跑三条命令确认环境：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
+  > 期望结果：静态门禁 PASS、自检 PASS、443 用例全过、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`。
+  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M3-T1**，按仓库既有流程：先写任务卡、先写测试再实现。
+  > 约束：不要移动或删除 `checkpoint/*` 标签；每个任务结束更新 `Docs/PROGRESS.md` 并在任务卡里写结论；里程碑结束写 `Docs/reviews/` 复盘。
+
+- [ ] **8. 让新 AI 做一次"交接验收"**：跑第 7 步的三条命令并把**实际输出**贴回来；数字对得上才算交接成功（对不上先查环境，不要急着改代码）。
+- [ ] **9. 把边界说清楚**（第 8 节第二段）：是否沿用现有流程约定（任务卡 / 先测试 / 复盘）；是否允许修改 `Docs/00`–`Docs/06` 的规范；哪些操作必须先问你（联网、聚焦 GUI、删除、改远端）。
+- [ ] **10. 收尾**：让新 AI 更新本文第 3 节快照（一开工数字就会变），并在下一个里程碑结束时用同样方式打新标签。
+
 ## 1. 一分钟概览
 
 | 项 | 内容 |
@@ -186,6 +209,16 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | ③ 离线 bundle（本文件提交时已重新生成） | 全部历史 + 标签，**不含 LFS 对象** | 3.04 MB（SHA256 `46DF7DFFF017A577A2A127AE3DA5ACC998FFA63A19E88EB87720EC15EBF2C417`） | 恢复时需另取 LFS 对象 | ⚠️ 实测：直接 `git clone <bundle>` 会在 LFS smudge 处中断，**索引为空**、工作区不干净；必须先联网 `git lfs fetch --all`（或 `GIT_LFS_SKIP_SMUDGE=1` 先出指针再补） |
 
 离线 bundle 位置：`E:\Unity\Project\CardReborn-backups\CardReborn-2026-10-04-m2-complete.bundle`
+
+**一键完成第 2、3 步**（打标签 + 推标签 + 生成并校验 bundle）；
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Tools/checkpoint.ps1 -Name checkpoint/m3-complete `
+  -Note "M3 完成：<填当时的编译/测试/覆盖率结论>"
+# 先看计划不落盘：加 -DryRun
+```
+
+脚本的几条自我保护：工作区有未提交改动或 `HEAD != origin/<branch>` 只**警告**；标签已存在直接失败（检查点本应不可变）；不会删除、不会强推、不会移动已有标签。
 
 > **重要**：②和③目前都在**同一块硬盘**上。真要防硬件故障，请把它们复制到别处（移动硬盘 / 网盘 / 另一台机器）。
 
