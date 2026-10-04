@@ -3,7 +3,10 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M2（配置与数据管线）｜M0、M1 已完成（2026-10-03 / 2026-10-04）**
+**当前阶段：M3（领域模型与规则内核）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
+
+> **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
+> 本文件的状态与证据在每次交接前需重新跑验证并更新。
 
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
@@ -151,3 +154,4 @@
 | 2026-10-04 | M2-T6 完成 | 热加载：`Domain/Config/ConfigService`（构造即持有配置、`Current` 永不为 null；`TryReload()` 成功才换库并 `Version++`，失败保留旧库、记录 `LastReload`，绝不因坏配置清空卡池；加载委托由外部注入）；`ConfigLoadResult` 移入 Domain；`Card.Editor` 菜单 `Tools > Card > 重载配置`（+ `ReloadForAutomation` 无界面入口，成功摘要为"卡牌 N（启用 M）/英雄 H/每包 P"，失败弹窗列全部问题）；新增 8 例（累计 435 passed / 0 failed）；`Config/README.md` 补"导入 / 重载"两步说明 | PROGRESS / Config/README / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/3_Infrastructure / Assets/_Project/6_Editor / Assets/_Project/7_Tests |
 | 2026-10-04 | M2-T7 完成 | 首版内容入库：`Cards.csv` 37 行（35 启用 = 随从 23 + 法术 12；稀有度四档；5 必备关键词；8 种效果组件；2 张废弃卡），`Config/README.md` 补效果串约定；新增 `ConfigContentTests`（8 例）把内容目标变成自动化门禁；重新导入生成物（`cards.json` 17.4 KB）；两条绑定旧条数的加载测试改为"≥ 内容目标"式断言，内容规模统一由 `ConfigContentTests` 把关；累计 443 passed / 0 failed，清缓存 0 error/0 warning | PROGRESS / Config/Excel/Cards.csv / Config/README / Assets/_Project/Config(生成物) / Assets/_Project/7_Tests / tasks(新增) |
 | 2026-10-04 | M2 完成 | M2 七项任务全部关闭并通过门禁：`改 CSV → 导入（含校验）→ 生成物 → 加载 → 卡池查询` 全链路打通，热加载支持"成功才换库、失败保旧"，内容目标由测试锁定；累计 443 用例（M1 228 → M2 +215）；覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；新增 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) | PROGRESS / reviews(新增) |
+| 2026-10-04 | 交接准备 | 新增 [Docs/HANDOFF.md](./HANDOFF.md)（面向接手 AI 的交接说明：现状快照、两种验证跑法与命令、开发流程约定、10 条已知坑、M3 与 P3 待办、接手准备与需用户确认的三件事、快速文件地图）；入口接入 `AGENTS.md` 必读顺序与 `Docs/README.md` 索引；`Docs/02` M2 段加"实施说明"批注（CSV/JSON 取代 xlsx/SO，以 ADR-19/20 为准）；`PROGRESS` 顶部加交接指引并把当前阶段切到 M3；交接前重跑验证：Unity 清缓存 0 error/0 warning + 443 passed、工具链 `0_Core 96.51%` / `Domain + App 92.36%`、`check.ps1` 与 `-SelfTest` PASS、工作区干净且与 `origin/main` 一致 | AGENTS / Docs/README / Docs/02 / Docs/HANDOFF(新增) / PROGRESS |
