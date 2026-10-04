@@ -9,7 +9,7 @@
 | --- | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
-| M2 配置与数据管线 | 🟡 进行中 | 1/7 | — | M2-T1（配置 Schema）完成：14 个 Domain 契约 + 严格解析原语；覆盖率门禁扩展为 Core ≥ 90% + Domain/App ≥ 80% |
+| M2 配置与数据管线 | 🟡 进行中 | 2/7 | — | M2-T1（配置 Schema）、M2-T2（CSV 源表模板 + `CsvTable`）完成；累计 287 用例全过 |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
@@ -90,7 +90,7 @@
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M2-T1 定义配置 Schema | ✅ | 任务卡 [tasks/M2-T1-ConfigSchema.md](./tasks/M2-T1-ConfigSchema.md)；代码 `Assets/_Project/1_Domain/Config/*.cs`（5 枚举 + `ConfigTokens` / `KeywordTokens` + 6 个 Definition + `ConfigDocument<T>` / `ConfigSchema`，共 14 文件）；EditMode 262 passed / 0 failed（新增 34 例：`KeywordTokensTests` 15 + `ConfigContractTests` 19），清缓存干净重编译 0 error/0 warning；`check.ps1` PASS；无 Unity 工具链 262/262 通过（`0_Core 97.71%`、`Domain + App 93.94%`） |
-| M2-T2 编写 Excel 模板 | ⬜ | — |
+| M2-T2 编写配置源表模板（CSV） | ✅ | 任务卡 [tasks/M2-T2-TableTemplates.md](./tasks/M2-T2-TableTemplates.md)；新增 [00 ADR-19](./00-现状解构与架构再设计.md)（源表用 CSV，导入器零新依赖）；`Config/Excel/{Cards,Heroes,HeroPowers,RarityWeights,GachaConfig,Rules}.csv` + `Config/README.md`（填写说明与常见错误）；`Core/CsvTable.cs`（纯 BCL 极简 CSV：BOM/CRLF/空行/行列不齐/列名严格匹配）；EditMode 287 passed / 0 failed（新增 25 例：`CsvTableTests` 14 + `ConfigTemplateTests` 11），0 error/0 warning；无 Unity 工具链 287/287 通过（`0_Core 97.69%`、`Domain + App 93.94%`）；`check.ps1` PASS。模板校验覆盖表头一致性、枚举/关键词/整数/布尔、外键与唯一性 |
 | M2-T3 实现导入器（Editor） | ⬜ | — |
 | M2-T4 实现校验器 | ⬜ | — |
 | M2-T5 `CardDatabase` | ⬜ | — |
@@ -140,3 +140,4 @@
 | 2026-10-04 | M1 收尾（R1/R2） | **M1-R1**：`Assets/csc.rsp` 开启 `-nullable:enable`，修复 64 条 CS86xx（Core 的可空字段/参数、编辑器桥 DTO、测试中"故意传 null"改用 `null!`），仍保持 0 warning；记录 Unity `csc.rsp` **不支持 `#` 注释**的限制（曾导致 200+ 编译错误）。**M1-R2**：新增 `Tools/Coverage`（内核库 + 测试工程，链接同一份源码）+ `Tools/coverage.ps1`，在 Unity 工程外用 .NET 9 + NUnit + coverlet 跑通 228 个测试并测出 `Card.Core` 行覆盖率 **97.71%**（分支 88.13%），顺带得到 FR-13.2/13.3 的直接证据；新增 [00 ADR-18](./00-现状解构与架构再设计.md)。**M1-R3 关闭**。新增 **M1-R4（P3）** | PROGRESS / 00(ADR-18) / 03(§4/§10/§5.9.5) / Tools / Assets/csc.rsp / Assets/_Project |
 | 2026-10-04 | M1 完成 | M1 九项任务全部关闭并通过门禁：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 97.71%（门禁 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 进程编译并跑通测试；新增 [M1 评审与复盘](./reviews/M1-核心基础层-评审与复盘.md)（含 3 个工具侧问题的 5 Why 与改进项） | PROGRESS / reviews(新增) |
 | 2026-10-04 | M2-T1 完成 | `Card.Domain.Config` 新增配置契约（14 文件）：`CardType/CardRarity/CardClass/TargetRule/Keyword`（12 关键词 flags）、`ConfigTokens`（严格枚举解析：拒数字/拒未定义/大小写不敏感）、`KeywordTokens`（`Taunt\|Charge` ⇄ flags，含稳定格式化与失败 token 上报）、`CardDefinition/HeroDefinition/HeroPowerDefinition/GachaConfig/RarityWeight/RulesConfig`、`ConfigDocument<T>` + `ConfigSchema`（`schemaVersion` 与文件名常量）；新增 34 个 EditMode 用例（累计 262 passed / 0 failed）；`Tools/Coverage` 内核库纳入 `1_Domain`，覆盖率门禁扩展为 **Core ≥ 90% + Domain/App ≥ 80%（NFR-4）**，当前 `0_Core 97.71%` / `Domain + App 93.94%`。记录两个坑：Unity 缺 `IsExternalInit`（用条件编译 shim 解决）、Unity 自带旧 NUnit 对数组不支持 `Has.Count` | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/0_Core / Assets/_Project/7_Tests / Tools |
+| 2026-10-04 | M2-T2 完成 | 配置源表改为一等公民的 **CSV**（[ADR-19](./00-现状解构与架构再设计.md)，用户选定方案 A：导入器零新依赖）：`Config/Excel/` 下 6 张表（Cards / Heroes / HeroPowers / RarityWeights / GachaConfig / Rules）+ `Config/README.md`（列说明、枚举取值、铁律、常见错误示例）；`Card.Core` 新增 `CsvTable`（BOM/CRLF/空行/行列不齐/列名大小写严格匹配，错误带行号）；新增 25 个 EditMode 用例（累计 287 passed / 0 failed），模板校验覆盖表头一致性、枚举与关键词解析、整数/布尔、外键（HeroPowerKey）与 Id/Key 唯一性；测试定位仓库根目录不使用 `Application.dataPath`，因此无 Unity 工具链同样 287/287 通过 | PROGRESS / 00(ADR-19) / Config(新增 CSV+README) / Assets/_Project/0_Core / Assets/_Project/7_Tests / tasks(新增) |
