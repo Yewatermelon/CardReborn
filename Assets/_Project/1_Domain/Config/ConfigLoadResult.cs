@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Card.Core;
-using Card.Domain.Config;
 
-namespace Card.Infrastructure.Config
+namespace Card.Domain.Config
 {
-    /// <summary>加载生成物的结果：成功时给出配置集合，失败时给出全部错误（文件名 + 原因）。</summary>
+    /// <summary>
+    /// 加载生成物的结果：成功时给出配置集合，失败时给出全部错误（文件名 + 原因）。
+    /// 放在 Domain：它是纯数据结果（无 I/O、无 Unity），读盘实现由 Infrastructure 提供。
+    /// </summary>
     public sealed class ConfigLoadResult
     {
         private readonly List<string> _errors;

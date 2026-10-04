@@ -112,3 +112,13 @@ Unity.exe -batchmode -quit -projectPath <工程根目录> `
 
 生成物落在 `Assets/_Project/Config/`：`cards.json`、`heroes.json`、`hero_powers.json`、`rarity_weights.json`、`gacha.json`、`rules.json`。
 每个文件首行是 `"_generated": "由 Tools/Card/导入配置 生成，请勿手改"`——**要改数据请改本目录的 CSV，然后重新导入**。
+
+## 7. 改完数据后怎么让运行时用上
+
+两步（菜单都在 `Tools > Card` 下）：
+
+1. **导入配置**：CSV → JSON 生成物（校验不过就不写文件）；
+2. **重载配置**：重新加载生成物并重建卡池，**无需重启**。
+
+运行时侧由 `Card.Domain.Config.ConfigService` 承担：重载成功才换新卡池（新卡立刻可查，`Version` +1），
+失败则保留旧卡池并报出全部问题——不会因为一次坏配置把卡池清空。

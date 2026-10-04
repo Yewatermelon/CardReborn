@@ -1,5 +1,6 @@
 using System.IO;
 using Card.Core;
+using Card.Domain.Config;
 using Card.Infrastructure.Config;
 using UnityEditor;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace Card.Editor.ConfigPipeline
     internal static class ConfigImportMenu
     {
         private const string MenuPath = "Tools/Card/导入配置";
+        private const string ReloadMenuPath = "Tools/Card/重载配置";
         private const string SourceRelativePath = "Config/Excel";
         private const string OutputRelativePath = "Assets/_Project/Config";
 
@@ -58,6 +60,54 @@ namespace Card.Editor.ConfigPipeline
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 重载运行时配置（M2-T6）：读 Assets/_Project/Config 的生成物并重建卡池。
+        /// 说明：编辑器里目前没有常驻的游戏实例（MonoBehaviour 从 M5 才有），所以这里做的是
+        /// "重新加载 + 冒烟自检"；真正的热替换语义在 Card.Domain.Config.ConfigService，
+        /// 运行时通过注入持有同一个服务实例，重载成功后 Current 立即换新。
+        /// </summary>
+        [MenuItem(ReloadMenuPath)]
+        private static void ReloadConfigFromMenu()
+        {
+            ReloadConfig(showDialog: true);
+        }
+
+        /// <summary>无界面入口（-executeMethod）：重载并返回是否成功。</summary>
+        public static bool ReloadForAutomation()
+        {
+            return ReloadConfig(showDialog: false);
+        }
+
+        private static bool ReloadConfig(bool showDialog)
+        {
+            string projectRoot = Directory.GetParent(Application.dataPath)!.FullName;
+            string outputDirectory = Path.Combine(projectRoot, OutputRelativePath.Replace('/', Path.DirectorySeparatorChar));
+
+            ConfigLoadResult result = ConfigFileLoader.Load(outputDirectory);
+            if (!result.Succeeded)
+            {
+                GameLog.Error(LogChannel.Config, "配置重载失败：\n" + result.ToText());
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog("重载配置失败", result.ToText(), "好");
+                }
+
+                return false;
+            }
+
+            CardDatabase database = new CardDatabase(result.Bundle!);
+            string summary = "配置重载成功：卡牌 " + database.CardCount + " 张（启用 " + database.EnabledCardCount
+                + "）、英雄 " + database.HeroCount + " 个、每包 " + database.Gacha.PackSize + " 张";
+
+            GameLog.Info(LogChannel.Config, summary);
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog("重载配置", summary, "好");
+            }
+
+            return true;
         }
     }
 }
