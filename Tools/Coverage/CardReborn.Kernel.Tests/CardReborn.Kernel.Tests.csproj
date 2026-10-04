@@ -17,7 +17,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\Assets\_Project\7_Tests\EditMode\**\*.cs" />
+    <!--
+      The harness covers the Unity-free kernel only (Core / Domain / Application and their tests).
+      Infrastructure tests are excluded on purpose: Card.Infrastructure may use Unity in the future,
+      so it is not part of the "must compile without Unity" set.
+    -->
+    <Compile Include="..\..\..\Assets\_Project\7_Tests\EditMode\**\*.cs"
+             Exclude="..\..\..\Assets\_Project\7_Tests\EditMode\Infrastructure\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -36,6 +36,7 @@ namespace Card.Tests.EditMode.Config
             string expected = string.Join("\n", new[]
             {
                 "{",
+                "  \"_generated\": \"由 Tools/Card/导入配置 生成，请勿手改\",",
                 "  \"schemaVersion\": 1,",
                 "  \"cards\": [",
                 "    {",
@@ -71,7 +72,11 @@ namespace Card.Tests.EditMode.Config
         {
             string json = ConfigJsonWriter.WriteCards(Array.Empty<CardDefinition>()).ToJson();
 
-            Assert.That(json, Is.EqualTo("{\n  \"schemaVersion\": 1,\n  \"cards\": []\n}"));
+            Assert.That(
+                json,
+                Is.EqualTo(
+                    "{\n  \"_generated\": \"由 Tools/Card/导入配置 生成，请勿手改\"," +
+                    "\n  \"schemaVersion\": 1,\n  \"cards\": []\n}"));
         }
 
         [Test]
@@ -99,7 +104,8 @@ namespace Card.Tests.EditMode.Config
 
             string json = ConfigJsonWriter.WriteHeroes(heroes).ToJson();
 
-            Assert.That(json, Does.StartWith("{\n  \"schemaVersion\": 1,\n  \"heroes\": ["));
+            Assert.That(json, Does.Contain("\n  \"schemaVersion\": 1,\n  \"heroes\": ["));
+            Assert.That(json, Does.StartWith("{\n  \"_generated\": "));
             Assert.That(json, Does.Contain("\"heroPowerKey\": \"HERO_POWER_FIREBALL\""));
             Assert.That(json, Does.Contain("\"class\": \"Mage\""));
         }
@@ -171,7 +177,8 @@ namespace Card.Tests.EditMode.Config
 
             string json = ConfigJsonWriter.WriteCards(cards).ToJson();
 
-            Assert.That(json, Does.StartWith("{\n  \"schemaVersion\": 1,\n  \"cards\": ["));
+            Assert.That(json, Does.Contain("\n  \"schemaVersion\": 1,\n  \"cards\": ["));
+            Assert.That(json, Does.StartWith("{\n  \"_generated\": "));
             Assert.That(cards.Count, Is.EqualTo(table.RowCount));
             for (int i = 0; i < cards.Count; i++)
             {
@@ -190,10 +197,10 @@ namespace Card.Tests.EditMode.Config
 
             Assert.That(
                 ConfigJsonWriter.WriteGacha(gacha).ToJson(),
-                Does.StartWith("{\n  \"schemaVersion\": " + ConfigSchema.CurrentVersion + ","));
+                Does.Contain("\n  \"schemaVersion\": " + ConfigSchema.CurrentVersion + ","));
             Assert.That(
                 ConfigJsonWriter.WriteRules(rules).ToJson(),
-                Does.StartWith("{\n  \"schemaVersion\": " + ConfigSchema.CurrentVersion + ","));
+                Does.Contain("\n  \"schemaVersion\": " + ConfigSchema.CurrentVersion + ","));
         }
 
         [Test]

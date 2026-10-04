@@ -1,0 +1,24 @@
+{
+  "_generated": "由 Tools/Card/导入配置 生成，请勿手改",
+  "schemaVersion": 1,
+  "heroPowers": [
+    {
+      "id": 1,
+      "key": "HERO_POWER_FIREBALL",
+      "cost": 2,
+      "targetRule": "Any",
+      "effects": [
+        "DamageEffect:1"
+      ]
+    },
+    {
+      "id": 2,
+      "key": "HERO_POWER_ARMOR",
+      "cost": 2,
+      "targetRule": "None",
+      "effects": [
+        "GainArmorEffect:2"
+      ]
+    }
+  ]
+}

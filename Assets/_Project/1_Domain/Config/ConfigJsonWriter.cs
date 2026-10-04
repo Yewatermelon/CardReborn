@@ -128,6 +128,7 @@ namespace Card.Domain.Config
         private static JsonValue Envelope(string entriesName, JsonValue entries)
         {
             return JsonValue.Object()
+                .Add("_generated", JsonValue.From("由 Tools/Card/导入配置 生成，请勿手改"))
                 .Add(ConfigSchema.VersionProperty, JsonValue.From(ConfigSchema.CurrentVersion))
                 .Add(entriesName, entries);
         }

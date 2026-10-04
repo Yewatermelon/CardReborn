@@ -18,5 +18,6 @@ namespace Card.Domain.Config
         public const string HeroPowersFileName = "hero_powers.json";
         public const string GachaFileName = "gacha.json";
         public const string RulesFileName = "rules.json";
+        public const string RarityWeightsFileName = "rarity_weights.json";
     }
 }

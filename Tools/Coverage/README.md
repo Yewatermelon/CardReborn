@@ -21,5 +21,8 @@ Notes:
   `CardReborn.Kernel.Tests` (links `Assets/_Project/7_Tests/EditMode`). The split matters:
   coverlet does not instrument the test assembly itself, so the kernel must be its own library
   for the report to contain anything.
+- `7_Tests/EditMode/Infrastructure/**` is excluded: this harness only proves the **Unity-free
+  kernel** (Core / Domain / Application) builds and passes, and `Card.Infrastructure` is allowed
+  to use Unity. Those tests run in the Unity Test Runner instead.
 - `LangVersion` is pinned to 9.0 to match Unity 2022.3, so a green run here also means the
   kernel compiles under the editor's language version.

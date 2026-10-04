@@ -1,4 +1,5 @@
 using Card.Core;
+using System.Collections.Generic;
 
 namespace Card.Domain.Config
 {
@@ -11,7 +12,8 @@ namespace Card.Domain.Config
             CsvTable? heroPowers,
             CsvTable? rarityWeights,
             CsvTable? gachaConfig,
-            CsvTable? rules)
+            CsvTable? rules,
+            IReadOnlyList<ConfigValidationIssue>? loadingIssues = null)
         {
             Cards = cards;
             Heroes = heroes;
@@ -19,6 +21,7 @@ namespace Card.Domain.Config
             RarityWeights = rarityWeights;
             GachaConfig = gachaConfig;
             Rules = rules;
+            LoadingIssues = loadingIssues ?? System.Array.Empty<ConfigValidationIssue>();
         }
 
         public CsvTable? Cards { get; }
@@ -32,5 +35,8 @@ namespace Card.Domain.Config
         public CsvTable? GachaConfig { get; }
 
         public CsvTable? Rules { get; }
+
+        /// <summary>读取阶段的既有问题（如 CSV 结构错误）；校验器会一并报出。</summary>
+        public IReadOnlyList<ConfigValidationIssue> LoadingIssues { get; }
     }
 }

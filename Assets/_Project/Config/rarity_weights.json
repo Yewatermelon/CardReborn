@@ -1,0 +1,26 @@
+{
+  "_generated": "由 Tools/Card/导入配置 生成，请勿手改",
+  "schemaVersion": 1,
+  "rarityWeights": [
+    {
+      "rarity": "Common",
+      "weight": 70,
+      "minPerPack": 0
+    },
+    {
+      "rarity": "Rare",
+      "weight": 22,
+      "minPerPack": 1
+    },
+    {
+      "rarity": "Epic",
+      "weight": 6,
+      "minPerPack": 0
+    },
+    {
+      "rarity": "Legendary",
+      "weight": 2,
+      "minPerPack": 0
+    }
+  ]
+}

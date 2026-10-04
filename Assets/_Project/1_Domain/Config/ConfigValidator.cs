@@ -25,6 +25,9 @@ namespace Card.Domain.Config
 
             List<ConfigValidationIssue> issues = new List<ConfigValidationIssue>();
 
+            // 读取阶段的问题（CSV 结构错误等）先入列，保证"一次列全部问题"。
+            issues.AddRange(sources.LoadingIssues);
+
             // 顺序：规则表先（卡片费用上界要用 ManaLimit）；技能表先于英雄表（英雄外键指向技能）。
             RulesConfig? rules = RuleConfigValidator.ValidateRules(sources.Rules, issues);
             List<HeroPowerDefinition> powers = HeroConfigValidator.ValidateHeroPowers(sources.HeroPowers, issues);

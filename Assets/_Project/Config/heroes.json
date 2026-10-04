@@ -1,0 +1,22 @@
+{
+  "_generated": "由 Tools/Card/导入配置 生成，请勿手改",
+  "schemaVersion": 1,
+  "heroes": [
+    {
+      "id": 1,
+      "key": "HERO_MAGE",
+      "nameKey": "HERO_001_NAME",
+      "health": 30,
+      "heroPowerKey": "HERO_POWER_FIREBALL",
+      "class": "Mage"
+    },
+    {
+      "id": 2,
+      "key": "HERO_WARRIOR",
+      "nameKey": "HERO_002_NAME",
+      "health": 30,
+      "heroPowerKey": "HERO_POWER_ARMOR",
+      "class": "Warrior"
+    }
+  ]
+}
