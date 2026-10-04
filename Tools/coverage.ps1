@@ -17,6 +17,7 @@
 [CmdletBinding()]
 param(
     [double]$MinimumLineRate = 0.90,
+    [double]$MinimumRuleLayerRate = 0.80,
     [switch]$NoRestore
 )
 
@@ -24,6 +25,7 @@ $ErrorActionPreference = 'Stop'
 
 $project = Join-Path $PSScriptRoot 'Coverage/CardReborn.Kernel.Tests/CardReborn.Kernel.Tests.csproj'
 $results = Join-Path $PSScriptRoot 'Coverage/results'
+$repoRoot = Split-Path $PSScriptRoot -Parent
 
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:DOTNET_NOLOGO = '1'
@@ -57,22 +59,36 @@ if (-not $cobertura) {
 
 [xml]$report = Get-Content -LiteralPath $cobertura.FullName -Raw
 
-# coverlet writes per-file names relative to <sources>; the kernel library links 0_Core.
-$sourceRoots = @($report.coverage.sources.source) -join ';'
-$coversKernel = $sourceRoots -match '0_Core'
-
-if (-not $coversKernel) {
-    Write-Host ("WARN - coverage sources do not point at 0_Core: {0}" -f $sourceRoots) -ForegroundColor Yellow
+# coverlet writes per-file names relative to <sources>; map them back onto the layer folders.
+$layerMap = @{}
+foreach ($layer in @('0_Core', '1_Domain', '2_Application')) {
+    $dir = Join-Path $repoRoot ("Assets/_Project/{0}" -f $layer)
+    if (-not (Test-Path $dir)) { continue }
+    foreach ($file in Get-ChildItem -Path $dir -Recurse -File -Filter '*.cs') {
+        $layerMap[$file.Name] = $layer
+    }
 }
 
-$totalLines = 0
-$coveredLines = 0
+function Get-LayerOfFile {
+    param([string]$FileName)
+
+    foreach ($layer in @('0_Core', '1_Domain', '2_Application')) {
+        if ($FileName -match $layer) { return $layer }
+    }
+
+    $leaf = Split-Path $FileName -Leaf
+    if ($layerMap.ContainsKey($leaf)) { return $layerMap[$leaf] }
+    return ''
+}
+
+$layerTotal = @{ '0_Core' = 0; '1_Domain' = 0; '2_Application' = 0 }
+$layerCovered = @{ '0_Core' = 0; '1_Domain' = 0; '2_Application' = 0 }
 $perFile = @()
 
 foreach ($class in $report.coverage.packages.package.classes.class) {
-    if (-not $coversKernel) { continue }
-
     $fileName = [string]$class.filename
+    $layer = Get-LayerOfFile -FileName $fileName
+    if ($layer -eq '') { continue }
 
     $fileTotal = 0
     $fileCovered = 0
@@ -81,10 +97,11 @@ foreach ($class in $report.coverage.packages.package.classes.class) {
         if ([int]$line.hits -gt 0) { $fileCovered++ }
     }
 
-    $totalLines += $fileTotal
-    $coveredLines += $fileCovered
+    $layerTotal[$layer] += $fileTotal
+    $layerCovered[$layer] += $fileCovered
     $rate = if ($fileTotal -gt 0) { $fileCovered / $fileTotal } else { 1.0 }
     $perFile += [pscustomobject]@{
+        Layer   = $layer
         File    = Split-Path $fileName -Leaf
         Covered = $fileCovered
         Lines   = $fileTotal
@@ -93,30 +110,41 @@ foreach ($class in $report.coverage.packages.package.classes.class) {
 }
 
 Write-Host ''
-Write-Host 'Card.Core line coverage (per file):' -ForegroundColor Cyan
-$perFile | Sort-Object File | Format-Table -AutoSize | Out-Host
+Write-Host 'Kernel line coverage (per file):' -ForegroundColor Cyan
+$perFile | Sort-Object Layer, File | Format-Table -AutoSize | Out-Host
 
-if ($totalLines -eq 0) {
+$coreTotal = $layerTotal['0_Core']
+$ruleTotal = $layerTotal['1_Domain'] + $layerTotal['2_Application']
+
+if ($coreTotal -eq 0) {
     Write-Host 'FAIL - coverage report contains no 0_Core lines.' -ForegroundColor Red
     exit 2
 }
 
-$overall = $coveredLines / $totalLines
-$summary = 'Card.Core line coverage: {0}/{1} = {2:P2} (threshold {3:P0})' -f $coveredLines, $totalLines, $overall, $MinimumLineRate
+$coreRate = $layerCovered['0_Core'] / $coreTotal
+$ruleCovered = $layerCovered['1_Domain'] + $layerCovered['2_Application']
+$ruleRate = if ($ruleTotal -gt 0) { $ruleCovered / $ruleTotal } else { 1.0 }
 
 Write-Host ''
-if ($overall -ge $MinimumLineRate -and $testExitCode -eq 0) {
-    Write-Host $summary -ForegroundColor Green
-    Write-Host 'PASS - kernel tests green and coverage gate satisfied.' -ForegroundColor Green
+Write-Host ('0_Core          : {0}/{1} = {2:P2} (gate {3:P0})' -f $layerCovered['0_Core'], $coreTotal, $coreRate, $MinimumLineRate)
+Write-Host ('Domain + App    : {0}/{1} = {2:P2} (gate {3:P0}, NFR-4)' -f $ruleCovered, $ruleTotal, $ruleRate, $MinimumRuleLayerRate)
+
+$gateOk = ($coreRate -ge $MinimumLineRate) -and ($ruleRate -ge $MinimumRuleLayerRate) -and ($testExitCode -eq 0)
+
+Write-Host ''
+if ($gateOk) {
+    Write-Host 'PASS - kernel tests green and coverage gates satisfied.' -ForegroundColor Green
     exit 0
 }
 
-Write-Host $summary -ForegroundColor Red
 if ($testExitCode -ne 0) {
     Write-Host ("FAIL - dotnet test exit code {0}." -f $testExitCode) -ForegroundColor Red
 }
-else {
-    Write-Host 'FAIL - coverage is below the threshold.' -ForegroundColor Red
+if ($coreRate -lt $MinimumLineRate) {
+    Write-Host 'FAIL - 0_Core coverage is below its threshold.' -ForegroundColor Red
+}
+if ($ruleRate -lt $MinimumRuleLayerRate) {
+    Write-Host 'FAIL - Domain + Application coverage is below its threshold (NFR-4).' -ForegroundColor Red
 }
 
 exit 1

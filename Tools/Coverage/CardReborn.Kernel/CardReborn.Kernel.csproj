@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The rule kernel compiled OUTSIDE Unity (M1-R2).
+
+    Sources are linked from Assets/_Project/0_Core, so this is the very same code Unity
+    compiles - no copy to drift. Building it here is also the FR-13.2/13.3 proof that the
+    kernel has no UnityEngine dependency (and it is the seed of Card.Server in M11).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>CardReborn.Kernel</AssemblyName>
+    <RootNamespace>CardReborn.Kernel</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\Assets\_Project\0_Core\**\*.cs" />
+    <Compile Include="..\..\..\Assets\_Project\1_Domain\**\*.cs" />
+    <Compile Include="..\..\..\Assets\_Project\2_Application\**\*.cs" />
+  </ItemGroup>
+
+</Project>

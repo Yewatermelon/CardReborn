@@ -54,6 +54,10 @@ desktop.ini
 #   Config/Excel/             Excel 配置源表，必须入库
 #   Assets/_Project/Config/   由工具导出的 JSON/SO，必须入库（生成物但需可运行）
 # Off-Unity coverage harness build output (M1-R2)
-Tools/Coverage/bin/
-Tools/Coverage/obj/
+Tools/Coverage/**/bin/
+Tools/Coverage/**/obj/
 Tools/Coverage/results/
+
+# Hand-written .NET tooling projects are tracked (see AGENTS.md section 6):
+# the blanket *.csproj rule above targets Unity-generated project files only.
+!Tools/**/*.csproj

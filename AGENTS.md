@@ -99,6 +99,10 @@ type: feat | fix | refactor | test | docs | chore | perf | build
 
 一次提交只做一件事；提交必须可编译；禁止提交 `Library/`、`Temp/`、`Logs/`、`*.csproj`、`*.sln`。
 
+> **例外**：`Tools/` 下**手工维护**的 .NET 工具工程（如 `Tools/Coverage/**/*.csproj`）应当入库——
+> 上面的规则针对的是 Unity 自动生成、每台机器各不相同的工程文件；工具工程是构建脚本的一部分，不入库就无法复现门禁。
+> `.gitignore` 里对应有 `!Tools/**/*.csproj` 的窄例外。
+
 ## 7. 遇到不确定时
 
 1. 先查 `Docs/01`（需求）与 `Docs/03`（规范）。
