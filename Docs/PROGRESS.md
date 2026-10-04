@@ -9,7 +9,7 @@
 | --- | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
-| M2 配置与数据管线 | 🟡 进行中 | 6/7 | — | M2-T1…T6 完成（Schema / CSV 模板 / 导入器 / 校验器 / CardDatabase / 热加载）；只剩 M2-T7 首版内容；累计 435 用例全过 |
+| M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
@@ -95,10 +95,12 @@
 | M2-T4 实现校验器 | ✅ | 任务卡 [tasks/M2-T4-Validators.md](./tasks/M2-T4-Validators.md)；代码 `Assets/_Project/1_Domain/Config/{ConfigSourceSet,ConfigValidationIssue,ConfigValidationReport,ConfigBundle,ConfigValidator,CardConfigValidator,HeroConfigValidator,RuleConfigValidator}.cs`（纯 BCL）；**一次列出全部问题**（表名/行号/列名/原因，`ToText()` 可直接贴日志与对话框）、有错则 `Result` 为 null（保证"不产生半成品数据"）；规则覆盖缺表、行解析、Id/Key 唯一、技能外键、费用与数值范围（含 `Cost ≤ ManaLimit` 跨表）、稀有度四档齐全、单行表约束、禁用卡只校验可解析性；新增 31 例（累计 359 passed / 0 failed），`check.ps1` PASS，`0_Core 97.45%` / `Domain + App 92.29%`；`Config/README.md` 补"导入前校验什么"清单 |
 | M2-T5 `CardDatabase` | ✅ | 任务卡 [tasks/M2-T5-CardDatabase.md](./tasks/M2-T5-CardDatabase.md)；`Core/JsonParser` + `JsonValue.Parse`（严格解析：位置化错误、容 BOM、拒小数与重复键）；`Domain/Config/{ConfigReadException,ConfigJsonReader,ConfigLookupException,CardDatabase}`（JSON→契约，失败含文件名+JSON 路径；id/key O(1) 索引、职业/稀有度/系列筛选、缺失给明确错误、重复 id/key 建库即抛）与 `Infrastructure/Config/{ConfigFileLoader,ConfigLoadResult}`（读 6 份生成物，损坏/缺字段汇成错误列表）；新增 57 例（累计 427 passed / 0 failed），含"导入 → 读回 → 查询"闭环与直接加载仓库生成物；`check.ps1` PASS；`0_Core 96.51%` / `Domain + App 93.05%`。覆盖率门禁在此任务中拦下过一次 Domain 76.32%（读取器单测被放到被排除的 Infrastructure），补测后恢复 |
 | M2-T6 热加载 | ✅ | 任务卡 [tasks/M2-T6-HotReload.md](./tasks/M2-T6-HotReload.md)；`Domain/Config/ConfigService`（`Current` 永不为 null；`TryReload()` **成功才换库**、失败保留旧库并记录报告；`Version` 供 UI 判断刷新；加载委托注入，故留在 Domain 可被工具链与服务端复用）；`ConfigLoadResult` 从 Infrastructure 移到 Domain（纯数据结果）；`Card.Editor` 新增菜单 `Tools > Card > 重载配置` + 无界面入口 `ReloadForAutomation`（加载失败弹窗列全部问题，成功给出卡牌/英雄/每包摘要）；新增 8 例（累计 435 passed / 0 failed）；`check.ps1` PASS；`0_Core 96.51%` / `Domain + App 92.36%` |
-| M2-T7 首版配置数据 | ⬜ | — |
+| M2-T7 首版配置数据 | ✅ | 任务卡 [tasks/M2-T7-FirstContent.md](./tasks/M2-T7-FirstContent.md)；`Config/Excel/Cards.csv` 扩到 37 行（35 启用：随从 23 + 法术 12；稀有度四档齐全；覆盖 5 个必备关键词与 8 种效果组件；含 2 张 `Enabled=FALSE` 的废弃卡）；`Config/README.md` 补效果串约定（`效果名[:参数/参数]`，多效果用 `\|`，复合用 `CompositeEffect:子效果+子效果`）；新增 `ConfigContentTests` 8 例把"内容达标"变成门禁（卡牌/启用数 ≥30、随从 ≥20 与法术 ≥10、四档稀有度、5 关键词、8 效果、英雄技能可查、职业池 ≥5 张、废弃卡不进启用池）；生成物重新导入入库（`cards.json` 17.4 KB）；累计 443 passed / 0 failed |
 
 > M2 门禁：`改 Excel → 导入 → 新卡出现在卡池 → 无需改代码` 全链路演示成功。
 > 覆盖率门禁（M1-R2 扩展）：`0_Core` 行覆盖率 ≥ 90%、`Domain + Application` ≥ 80%（NFR-4），由 `Tools/coverage.ps1` 强制。
+> **收尾结果**：全链路已打通并入库（37 行卡表 → 校验 → 生成物 → 加载 → 卡池查询；热加载成功才换库、失败保旧）；内容目标由 `ConfigContentTests` 锁定。
+> **遗留（P3）**：M2-R1（`CsvTable` 支持 `#` 注释行）、M2-R3（生成物 schema 自动迁移）、M1-R4（补齐未覆盖行）。
 
 ---
 
@@ -114,6 +116,7 @@
 | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | 2026-10-03 | [reviews/M0-工程基建-评审与复盘.md](./reviews/M0-工程基建-评审与复盘.md) | 桥接层补"文件触发"入口（M0-R2）；M1 起接入覆盖率与复杂度统计；提交前例行 `git diff ProjectSettings/` |
 | M1 核心基础层（Core） | 2026-10-04 | [reviews/M1-核心基础层-评审与复盘.md](./reviews/M1-核心基础层-评审与复盘.md) | 覆盖率工具纳入常规验证；构建配置改动必须"清缓存干净验证"；补齐未覆盖行（M1-R4） |
+| M2 配置与数据管线 | 2026-10-04 | [reviews/M2-配置与数据管线-评审与复盘.md](./reviews/M2-配置与数据管线-评审与复盘.md) | 测试按"被测代码所在层"组织；内容规模断言集中到 `ConfigContentTests`；`.gitignore` 区分手工与生成工程 |
 
 ## 变更日志（文档/架构）
 
@@ -146,3 +149,5 @@
 | 2026-10-04 | M2-T3 会话 B | 导入器落盘完成：`Card.Infrastructure/Config/ConfigFileImporter`（读 `Config/Excel/*.csv` → 校验 → 通过才写 `Assets/_Project/Config/*.json`；**校验失败零写出**且不创建输出目录、既有生成物保持原样；每个文件先写 `.tmp` 再替换；UTF-8 无 BOM；首行 `_generated` 勿手改标记）+ `ConfigImportResult`（成功与否、报告、写出列表、`ToText()`）+ `Card.Editor/ConfigImportMenu`（菜单 + **无界面入口** `ImportForAutomation`，可用 `-executeMethod` 在 CI 调用）；新增 11 例（累计 370 passed / 0 failed）；用无界面入口在工程副本上实跑并入库 6 个生成物；`7_Tests/EditMode/Infrastructure/**` 按设计排除出无 Unity 工具链（Infrastructure 允许用 Unity），并在 harness README 说明 | PROGRESS / Config/README / Tools/Coverage / Assets/_Project/3_Infrastructure / Assets/_Project/6_Editor / Assets/_Project/7_Tests / Assets/_Project/Config(生成物入库) |
 | 2026-10-04 | M2-T5 完成 | 运行时链路打通：`Core/JsonParser` + `JsonValue.Parse`（严格解析 + 位置化错误；拒小数/重复键/尾随逗号；容 BOM）、`Domain/Config/ConfigJsonReader`（JSON→契约，失败抛 `ConfigReadException` 含文件名与 `cards[2].cost` 这类 JSON 路径；schema 版本不匹配直接失败，不做自动迁移）、`Domain/Config/CardDatabase`（id/key O(1)、职业/稀有度/系列筛选、`Require*` 缺失给明确错误、重复 id/key 建库即抛）、`Infrastructure/Config/ConfigFileLoader` + `ConfigLoadResult`（读盘并把缺文件/损坏/缺字段汇成错误列表，不穿透异常）；新增 57 例（累计 427 passed / 0 failed），含"写出 → 读回 → 建库查询"闭环与直接加载仓库已入库生成物；[00 §4.2](./00-现状解构与架构再设计.md) 补注 CardDatabase 的拆分（纯查询 Domain / 读盘 Infrastructure）；覆盖率门禁拦下过一次 Domain 76.32%（读取器单测放错层），补 `ConfigJsonReaderTests` 后恢复 93.05% | PROGRESS / 00 / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/1_Domain / Assets/_Project/3_Infrastructure / Assets/_Project/7_Tests |
 | 2026-10-04 | M2-T6 完成 | 热加载：`Domain/Config/ConfigService`（构造即持有配置、`Current` 永不为 null；`TryReload()` 成功才换库并 `Version++`，失败保留旧库、记录 `LastReload`，绝不因坏配置清空卡池；加载委托由外部注入）；`ConfigLoadResult` 移入 Domain；`Card.Editor` 菜单 `Tools > Card > 重载配置`（+ `ReloadForAutomation` 无界面入口，成功摘要为"卡牌 N（启用 M）/英雄 H/每包 P"，失败弹窗列全部问题）；新增 8 例（累计 435 passed / 0 failed）；`Config/README.md` 补"导入 / 重载"两步说明 | PROGRESS / Config/README / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/3_Infrastructure / Assets/_Project/6_Editor / Assets/_Project/7_Tests |
+| 2026-10-04 | M2-T7 完成 | 首版内容入库：`Cards.csv` 37 行（35 启用 = 随从 23 + 法术 12；稀有度四档；5 必备关键词；8 种效果组件；2 张废弃卡），`Config/README.md` 补效果串约定；新增 `ConfigContentTests`（8 例）把内容目标变成自动化门禁；重新导入生成物（`cards.json` 17.4 KB）；两条绑定旧条数的加载测试改为"≥ 内容目标"式断言，内容规模统一由 `ConfigContentTests` 把关；累计 443 passed / 0 failed，清缓存 0 error/0 warning | PROGRESS / Config/Excel/Cards.csv / Config/README / Assets/_Project/Config(生成物) / Assets/_Project/7_Tests / tasks(新增) |
+| 2026-10-04 | M2 完成 | M2 七项任务全部关闭并通过门禁：`改 CSV → 导入（含校验）→ 生成物 → 加载 → 卡池查询` 全链路打通，热加载支持"成功才换库、失败保旧"，内容目标由测试锁定；累计 443 用例（M1 228 → M2 +215）；覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；新增 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) | PROGRESS / reviews(新增) |
