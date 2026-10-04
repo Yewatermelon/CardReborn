@@ -97,3 +97,18 @@
 | 外键 | `Heroes.HeroPowerKey` 必须存在于 `HeroPowers.Key` |
 | 数值范围 | 卡片费用 ≥ 0 且 ≤ `Rules.ManaLimit`；随从生命 ≥ 1、攻击 ≥ 0；非随从不得有攻击/生命；英雄生命 1..100；英雄技能费用 > 0；`HandLimit ≤ 10`、`BoardLimit ≤ 7`、`ManaLimit ≤ 10`、`HeroHealth` 1..100；稀有度权重 > 0 且四档齐全；抽卡 `PackSize`/`CoinCost`/`PityCount` > 0 |
 | 废弃数据 | `Enabled = FALSE` 的卡**只校验可解析性**，数值越界不报错（允许保留废弃内容） |
+
+## 6. 怎么导入
+
+**在 Unity 里**：菜单 `Tools > Card > 导入配置`。成功会提示写出的文件数，失败会弹出**全部**问题清单且不写任何文件。
+
+**无界面（CI / 自动化）**：
+
+```powershell
+Unity.exe -batchmode -quit -projectPath <工程根目录> `
+  -executeMethod Card.Editor.ConfigPipeline.ConfigImportMenu.ImportForAutomation `
+  -logFile <日志路径>
+```
+
+生成物落在 `Assets/_Project/Config/`：`cards.json`、`heroes.json`、`hero_powers.json`、`rarity_weights.json`、`gacha.json`、`rules.json`。
+每个文件首行是 `"_generated": "由 Tools/Card/导入配置 生成，请勿手改"`——**要改数据请改本目录的 CSV，然后重新导入**。

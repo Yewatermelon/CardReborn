@@ -129,7 +129,7 @@ namespace Card.Domain.Config
 ## 9. 完成定义（DoD 勾选）
 
 - [x] **会话 A**：`JsonValue` + `ConfigRowParser` + `ConfigJsonWriter` 与 41 个新用例全部完成并验证（见第 10 节）
-- [ ] **会话 B**：`Card.Editor` 导入菜单与文件产出（下一步）
+- [x] **会话 B**：`Card.Editor` 导入菜单 + 自动化入口 + 文件产出（见第 11 节）
 - [x] 编译 0 error / 0 warning（清缓存干净重编译）
 - [x] 通过 `Docs/03` 铁律与禁止清单自查
 - [x] 通过 [04-代码复盘Review规范](../04-代码复盘Review规范.md) 评审（会话 A 部分），无未关闭 P0/P1
@@ -200,3 +200,41 @@ namespace Card.Domain.Config
 ### 10.6 评审结论
 
 **通过（会话 A）**：无 P0/P1；门禁全绿。会话 B 完成后在 PROGRESS 关闭 M2-T3。
+
+---
+
+## 11. 会话 B 证据与评审结论（2026-10-04）
+
+### 11.1 交付
+
+- `Card.Infrastructure/Config/ConfigFileImporter`：`Import(sourceDirectory, outputDirectory)` —— 读 6 张 CSV → 校验 → 通过才写 6 个 JSON。**校验失败一个文件都不写**（连输出目录都不创建），既有生成物保持原样（有测试锁定）。
+- `Card.Infrastructure/Config/ConfigImportResult`：成功与否、校验报告、写出文件列表、`ToText()`。
+- `Card.Editor/ConfigImportMenu`：`Tools > Card > 导入配置` 菜单（对话框 + `GameLog`），以及**无界面入口** `ImportForAutomation()`，用法：
+  `Unity.exe -batchmode -quit -projectPath <工程> -executeMethod Card.Editor.ConfigPipeline.ConfigImportMenu.ImportForAutomation`
+- 生成物写入策略：先写 `<file>.tmp` 再替换，避免中途失败留下截断文件；UTF-8 无 BOM；每个文件首行是"由 Tools/Card/导入配置 生成，请勿手改"（03 §9.1 第 2 条）。
+- 实际产出：`Assets/_Project/Config/{cards,heroes,hero_powers,rarity_weights,gacha,rules}.json`（由无界面入口在副本上生成后入库，内容与仓库源表一致）。
+
+### 11.2 需求对齐（会话 B）
+
+| 编号 | 场景 | 是否满足 | 证据 |
+| --- | --- | --- | --- |
+| 一键导入 | 菜单一次完成 6 张表 | ✅ | 无界面入口实跑：`exit=0`，副本内生成 6 个 JSON（`cards.json` 2896 B 等） |
+| 生成物带 `schemaVersion` | 顶层字段 | ✅ | `Import_WhenValid_GeneratedFilesCarryVersionAndNoEditMarker` |
+| 非法数据导入必须失败且不产生半成品 | 校验失败 → 零文件写出 | ✅ | `Import_WhenValidationFails_WritesNothing`、`Import_WhenValidationFails_LeavesExistingOutputUntouched` |
+| 错误可定位（文件/行/字段/原因） | 报告含表名/行号/列名 | ✅ | 会话 A 的报告 + 会话 B 的 `Import_WhenCsvIsMalformed_ReportsCsvFormatIssue` |
+| 幂等 | 重复导入逐字节一致 | ✅ | `Import_WhenCalledTwice_WritesIdenticalContent` |
+
+### 11.3 测试证据
+
+| 阶段 | 结果 |
+| --- | --- |
+| Unity EditMode | 0 error / 0 warning / **370 passed / 0 failed**（新增 11 例：`ConfigFileImporterTests`） |
+| 无 Unity 工具链 | PASS（按设计排除 `7_Tests/EditMode/Infrastructure/**`）：`0_Core 97.45%`、`Domain + App 92.33%` |
+| 静态门禁 | `Tools/check.ps1` PASS（无文件 > 300 行、无方法 > 50 行） |
+| 真实导入 | 无界面入口在工程副本上跑通，6 个生成物入库 |
+
+### 11.4 评审结论
+
+**通过**：M2-T3 两个会话全部完成，无 P0/P1；生成物已入库，M2-T5 的 `CardDatabase` 可以直接读它们。
+
+> 说明：`ConfigFileImporterTests` 刻意写临时目录，不触碰仓库生成物；仓库里的 6 个 JSON 由 `-executeMethod` 入口产出，源表与生成物一一对应。
