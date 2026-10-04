@@ -172,7 +172,7 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | 项 | 值 |
 | --- | --- |
 | 标签 | `checkpoint/m2-complete`（annotated，**已推送远端**） |
-| 指向提交 | `3adfef5`（2026-10-04，M0–M2 完成） |
+| 指向提交 | `9eb3c13`（2026-10-04，M0–M2 完成 **+ 本交接/恢复文档**；代码状态与验证时一致，之后的提交只改文档） |
 | 标签说明 | 443 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain+App 92.36%`、配置管线与热加载可用 |
 
 查看方式：`git tag -n99 -l 'checkpoint/*'`；切过去：`git checkout checkpoint/m2-complete`。
@@ -183,7 +183,7 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | --- | --- | --- | --- | --- |
 | ① 远端标签 | 全部历史 + 标签 | — | 网络 + Git LFS | ✅ 已推送成功 |
 | ② **本地整目录复制（含 `.git/`）** | 源码 + 全部历史 + **LFS 对象**（`.git/lfs` 约 0.44 MB） | 不含 `Library/Temp/Logs` 约 30 MB（全量约 1.4 GB） | 无 | ✅ 本地克隆演练：索引 442 个文件、工作区 0 改动、`LiberationSans.ttf` 为真实 350 KB 内容（不是 LFS 指针） |
-| ③ 离线 bundle（本次已生成） | 全部历史 + 标签，**不含 LFS 对象** | 3.04 MB（SHA256 `68DAED61FF03A1DC8ECA1B0E3B39FB047DCC9E8939E65E5DC773945814A24433`） | 恢复时需另取 LFS 对象 | ⚠️ 实测：直接 `git clone <bundle>` 会在 LFS smudge 处中断，**索引为空**、工作区不干净；必须先联网 `git lfs fetch --all`（或 `GIT_LFS_SKIP_SMUDGE=1` 先出指针再补） |
+| ③ 离线 bundle（本文件提交时已重新生成） | 全部历史 + 标签，**不含 LFS 对象** | 3.04 MB（SHA256 `46DF7DFFF017A577A2A127AE3DA5ACC998FFA63A19E88EB87720EC15EBF2C417`） | 恢复时需另取 LFS 对象 | ⚠️ 实测：直接 `git clone <bundle>` 会在 LFS smudge 处中断，**索引为空**、工作区不干净；必须先联网 `git lfs fetch --all`（或 `GIT_LFS_SKIP_SMUDGE=1` 先出指针再补） |
 
 离线 bundle 位置：`E:\Unity\Project\CardReborn-backups\CardReborn-2026-10-04-m2-complete.bundle`
 
