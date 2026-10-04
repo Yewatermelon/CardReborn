@@ -98,16 +98,16 @@ namespace Card.Core
         /// <summary>借出对象；已达扩容上限且无闲置对象时抛 InvalidOperationException。</summary>
         public T Rent()
         {
-            if (TryRent(out T item))
+            if (TryRent(out T? item))
             {
-                return item;
+                return item!;
             }
 
             throw new InvalidOperationException("对象池已达扩容上限，无法借出：" + typeof(T).Name);
         }
 
         /// <summary>尝试借出对象；已达扩容上限且无闲置对象时返回 false。</summary>
-        public bool TryRent(out T item)
+        public bool TryRent(out T? item)
         {
             if (_idle.Count > 0)
             {

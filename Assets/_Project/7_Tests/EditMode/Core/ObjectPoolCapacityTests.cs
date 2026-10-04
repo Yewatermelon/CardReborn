@@ -69,7 +69,7 @@ namespace Card.Tests.EditMode.Core
             ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(factory.Create, maxCapacity: 1);
             pool.Rent();
 
-            bool rented = pool.TryRent(out PooledItem item);
+            bool rented = pool.TryRent(out PooledItem? item);
 
             Assert.That(rented, Is.False);
             Assert.That(item, Is.Null);
@@ -82,7 +82,7 @@ namespace Card.Tests.EditMode.Core
         {
             ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => new PooledItem(), maxCapacity: 1);
 
-            bool rented = pool.TryRent(out PooledItem item);
+            bool rented = pool.TryRent(out PooledItem? item);
 
             Assert.That(rented, Is.True);
             Assert.That(item, Is.Not.Null);
@@ -96,7 +96,7 @@ namespace Card.Tests.EditMode.Core
             PooledItem first = pool.Rent();
             pool.Return(first);
 
-            bool rented = pool.TryRent(out PooledItem item);
+            bool rented = pool.TryRent(out PooledItem? item);
 
             Assert.That(rented, Is.True);
             Assert.That(item, Is.SameAs(first));

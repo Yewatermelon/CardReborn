@@ -15,8 +15,8 @@ namespace Card.Tests.EditMode.Core
         {
             EventBus bus = new EventBus();
             int lateCalls = 0;
-            IDisposable lateToken = null;
-            bus.Subscribe<TestDamageEvent>(evt => lateToken.Dispose());
+            IDisposable? lateToken = null;
+            bus.Subscribe<TestDamageEvent>(evt => lateToken!.Dispose());
             lateToken = bus.Subscribe<TestDamageEvent>(evt => lateCalls++);
 
             bus.Publish(new TestDamageEvent(1));
@@ -30,11 +30,11 @@ namespace Card.Tests.EditMode.Core
             EventBus bus = new EventBus();
             int selfCalls = 0;
             int otherCalls = 0;
-            IDisposable selfToken = null;
+            IDisposable? selfToken = null;
             selfToken = bus.Subscribe<TestDamageEvent>(evt =>
             {
                 selfCalls++;
-                selfToken.Dispose();
+                selfToken!.Dispose();
             });
             bus.Subscribe<TestDamageEvent>(evt => otherCalls++);
 
@@ -122,12 +122,12 @@ namespace Card.Tests.EditMode.Core
         {
             EventBus bus = new EventBus();
             string log = string.Empty;
-            IDisposable third = null;
+            IDisposable? third = null;
             bus.Subscribe<TestDamageEvent>(evt => log += "a");
             bus.Subscribe<TestDamageEvent>(evt =>
             {
                 log += "b";
-                third.Dispose();
+                third!.Dispose();
             });
             third = bus.Subscribe<TestDamageEvent>(evt => log += "c");
             bus.Subscribe<TestDamageEvent>(evt =>

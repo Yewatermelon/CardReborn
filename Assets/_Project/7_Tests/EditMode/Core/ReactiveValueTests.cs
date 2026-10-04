@@ -64,7 +64,7 @@ namespace Card.Tests.EditMode.Core
             string received = "unset";
             value.Subscribe(v => received = v);
 
-            bool changed = value.Set(null);
+            bool changed = value.Set(null!);
 
             Assert.That(changed, Is.True);
             Assert.That(received, Is.Null);
@@ -125,7 +125,7 @@ namespace Card.Tests.EditMode.Core
             ReactiveValue<int> value = new ReactiveValue<int>(0);
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => value.Subscribe(null));
+                Assert.Throws<ArgumentNullException>(() => value.Subscribe(null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("handler"));
         }

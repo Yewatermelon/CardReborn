@@ -76,7 +76,7 @@ namespace Card.Tests.EditMode.Core
             EventBus bus = new EventBus();
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => bus.Subscribe<TestDamageEvent>(null));
+                Assert.Throws<ArgumentNullException>(() => bus.Subscribe<TestDamageEvent>(null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("handler"));
         }
@@ -86,7 +86,7 @@ namespace Card.Tests.EditMode.Core
         {
             EventBus bus = new EventBus();
 
-            Assert.Throws<ArgumentNullException>(() => bus.Publish<TestTurnEvent>(null));
+            Assert.Throws<ArgumentNullException>(() => bus.Publish<TestTurnEvent>(null!));
         }
 
         [Test]

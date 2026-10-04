@@ -34,7 +34,7 @@ namespace Card.Tests.EditMode.Core
         [Test]
         public void Success_WhenReferenceValueIsNull_IsStillSuccess()
         {
-            Result<string> result = Result<string>.Success(null);
+            Result<string> result = Result<string>.Success(null!);
 
             bool found = result.TryGetValue(out string value);
 
@@ -91,7 +91,7 @@ namespace Card.Tests.EditMode.Core
         public void Failure_WhenErrorCodeIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Result<int>.Failure(null));
+                Assert.Throws<ArgumentNullException>(() => Result<int>.Failure(null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("errorCode"));
         }

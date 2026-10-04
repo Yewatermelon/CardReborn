@@ -9,14 +9,14 @@ namespace Card.Editor.AgentBridge
     [Serializable]
     public sealed class TestRunSummary
     {
-        public string generatedAtUtc;
-        public string mode;
+        public string generatedAtUtc = string.Empty;
+        public string mode = string.Empty;
         public int passed;
         public int failed;
         public int skipped;
         public int inconclusive;
         public double durationSeconds;
-        public string result;
+        public string result = string.Empty;
         public List<string> failures = new List<string>();
     }
 
@@ -29,8 +29,8 @@ namespace Card.Editor.AgentBridge
     {
         private const string TestFileName = "agent-tests.json";
 
-        private static TestRunnerApi s_api;
-        private static TestCallbacks s_callbacks;
+        private static TestRunnerApi? s_api;
+        private static TestCallbacks? s_callbacks;
 
         [MenuItem("Tools/Card/Agent/Run EditMode Tests")]
         private static void MenuRunEditModeTests()

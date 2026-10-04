@@ -9,10 +9,10 @@ namespace Card.Core
     /// </summary>
     public readonly struct Result : IEquatable<Result>
     {
-        private readonly string _errorCode;
-        private readonly string _errorMessage;
+        private readonly string? _errorCode;
+        private readonly string? _errorMessage;
 
-        private Result(string errorCode, string errorMessage)
+        private Result(string? errorCode, string? errorMessage)
         {
             _errorCode = errorCode;
             _errorMessage = errorMessage;
@@ -49,7 +49,7 @@ namespace Card.Core
         }
 
         /// <summary>创建失败结果；<paramref name="errorCode"/> 不可为 null、空或空白。</summary>
-        public static Result Failure(string errorCode, string errorMessage = "")
+        public static Result Failure(string errorCode, string? errorMessage = "")
         {
             Guard.NotNullOrWhiteSpace(errorCode, nameof(errorCode));
             return new Result(errorCode, errorMessage ?? string.Empty);
@@ -108,10 +108,10 @@ namespace Card.Core
     public readonly struct Result<T> : IEquatable<Result<T>>
     {
         private readonly T _value;
-        private readonly string _errorCode;
-        private readonly string _errorMessage;
+        private readonly string? _errorCode;
+        private readonly string? _errorMessage;
 
-        private Result(T value, string errorCode, string errorMessage)
+        private Result(T value, string? errorCode, string? errorMessage)
         {
             _value = value;
             _errorCode = errorCode;
@@ -163,16 +163,16 @@ namespace Card.Core
         }
 
         /// <summary>创建失败结果；<paramref name="errorCode"/> 不可为 null、空或空白。</summary>
-        public static Result<T> Failure(string errorCode, string errorMessage = "")
+        public static Result<T> Failure(string errorCode, string? errorMessage = "")
         {
             Guard.NotNullOrWhiteSpace(errorCode, nameof(errorCode));
-            return new Result<T>(default, errorCode, errorMessage ?? string.Empty);
+            return new Result<T>(default!, errorCode, errorMessage ?? string.Empty);
         }
 
         /// <summary>尝试取值；失败时返回 false 并输出 <c>default</c>。</summary>
         public bool TryGetValue(out T value)
         {
-            value = IsSuccess ? _value : default;
+            value = IsSuccess ? _value : default!;
             return IsSuccess;
         }
 

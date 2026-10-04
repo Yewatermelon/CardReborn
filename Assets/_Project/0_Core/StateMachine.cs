@@ -35,13 +35,13 @@ namespace Card.Core
         /// <summary>当前状态到目标状态之间没有声明合法边时的错误码。</summary>
         public const string ErrorIllegalTransition = "ERROR_STATE_ILLEGAL_TRANSITION";
 
-        private readonly Dictionary<TState, IStateHandler<TState>> _handlers =
-            new Dictionary<TState, IStateHandler<TState>>();
+        private readonly Dictionary<TState, IStateHandler<TState>?> _handlers =
+            new Dictionary<TState, IStateHandler<TState>?>();
 
         private readonly HashSet<Transition> _allowedTransitions = new HashSet<Transition>();
 
         /// <summary>创建状态机；可选地直接为初始状态绑定处理器（否则需自行 <see cref="Register"/>）。</summary>
-        public StateMachine(TState initialState, IStateHandler<TState> initialHandler = null)
+        public StateMachine(TState initialState, IStateHandler<TState>? initialHandler = null)
         {
             Current = initialState;
 
@@ -55,7 +55,7 @@ namespace Card.Core
         public TState Current { get; private set; }
 
         /// <summary>注册状态（可同时绑定处理器）。重复注册属配置错误，抛 <see cref="ArgumentException"/>。</summary>
-        public void Register(TState state, IStateHandler<TState> handler = null)
+        public void Register(TState state, IStateHandler<TState>? handler = null)
         {
             ThrowIfNullState(state, nameof(state));
 
@@ -125,9 +125,9 @@ namespace Card.Core
             return Result.Success();
         }
 
-        private IStateHandler<TState> GetHandler(TState state)
+        private IStateHandler<TState>? GetHandler(TState state)
         {
-            return _handlers.TryGetValue(state, out IStateHandler<TState> handler) ? handler : null;
+            return _handlers.TryGetValue(state, out IStateHandler<TState>? handler) ? handler : null;
         }
 
         private static bool IsNullState(TState state)
@@ -138,7 +138,7 @@ namespace Card.Core
                 return false;
             }
 
-            object boxed = state;
+            object? boxed = state;
             return boxed == null;
         }
 

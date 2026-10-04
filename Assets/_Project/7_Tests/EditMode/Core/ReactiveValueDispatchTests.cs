@@ -110,8 +110,8 @@ namespace Card.Tests.EditMode.Core
         {
             ReactiveValue<int> value = new ReactiveValue<int>(0);
             int lateCalls = 0;
-            IDisposable lateToken = null;
-            value.Subscribe(v => lateToken.Dispose());
+            IDisposable? lateToken = null;
+            value.Subscribe(v => lateToken!.Dispose());
             lateToken = value.Subscribe(v => lateCalls++);
 
             value.Set(1);

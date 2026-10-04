@@ -18,7 +18,7 @@ namespace Card.Core
     public sealed class EventBus
     {
         private readonly Dictionary<Type, object> _channels = new Dictionary<Type, object>();
-        private readonly IEventDispatchFailureSink _failureSink;
+        private readonly IEventDispatchFailureSink? _failureSink;
         private int _dispatchDepth;
 
         /// <summary>创建不带失败出口的总线：失败只体现在 <see cref="PublishReport"/> 中。</summary>
@@ -145,7 +145,7 @@ namespace Card.Core
                 return;
             }
 
-            object boxed = evt;
+            object? boxed = evt;
             if (boxed == null)
             {
                 throw new ArgumentNullException(nameof(evt), "引用类型事件不能为 null。");

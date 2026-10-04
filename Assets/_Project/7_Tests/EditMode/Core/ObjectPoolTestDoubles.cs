@@ -10,7 +10,7 @@ namespace Card.Tests.EditMode.Core
 
         public int DespawnCount { get; private set; }
 
-        public string Payload { get; set; }
+        public string? Payload { get; set; }
 
         public void OnSpawn()
         {
@@ -27,7 +27,7 @@ namespace Card.Tests.EditMode.Core
     /// <summary>不实现 IPoolable 的普通类型：验证池不强制接口。</summary>
     internal sealed class PlainItem
     {
-        public string Payload { get; set; }
+        public string? Payload { get; set; }
     }
 
     /// <summary>可计数的工厂（借出次数断言用）。</summary>

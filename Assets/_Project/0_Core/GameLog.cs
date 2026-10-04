@@ -17,10 +17,10 @@ namespace Card.Core
     {
         private static readonly bool[] s_channelEnabled = CreateChannelTable();
 
-        private static ILogSink s_sink;
+        private static ILogSink? s_sink;
         private static LogLevel s_minimumLevel = LogLevel.Info;
         private static int s_sinkFailureCount;
-        private static Exception s_lastSinkFailure;
+        private static Exception? s_lastSinkFailure;
 
         /// <summary>当前最小等级：低于它的日志被过滤。</summary>
         public static LogLevel MinimumLevel
@@ -35,7 +35,7 @@ namespace Card.Core
         }
 
         /// <summary>最近一次后端异常；从未失败时为 null。</summary>
-        public static Exception LastSinkFailure
+        public static Exception? LastSinkFailure
         {
             get { return s_lastSinkFailure; }
         }
@@ -112,13 +112,13 @@ namespace Card.Core
         }
 
         /// <summary>错误；错误日志必须可定位（带上卡牌 Key / 玩家 Id / 命令类型，见 03 第 8 节规则 3）。</summary>
-        public static void Error(LogChannel channel, string message, Exception exception = null)
+        public static void Error(LogChannel channel, string message, Exception? exception = null)
         {
             Write(LogLevel.Error, channel, message, exception);
         }
 
         /// <summary>通用写入口：被过滤时直接返回（不校验参数、不拼接字符串）。</summary>
-        public static void Write(LogLevel level, LogChannel channel, string message, Exception exception = null)
+        public static void Write(LogLevel level, LogChannel channel, string message, Exception? exception = null)
         {
             if (!IsEnabled(channel, level))
             {
@@ -127,7 +127,7 @@ namespace Card.Core
 
             Guard.NotNullOrWhiteSpace(message, nameof(message));
 
-            ILogSink sink = s_sink;
+            ILogSink? sink = s_sink;
             if (sink == null)
             {
                 return;

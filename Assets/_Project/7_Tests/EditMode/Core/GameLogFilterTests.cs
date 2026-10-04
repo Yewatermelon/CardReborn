@@ -117,7 +117,7 @@ namespace Card.Tests.EditMode.Core
             GameLog.Configure(new RecordingLogSink(), LogLevel.Error);
 
             Assert.DoesNotThrow(
-                () => GameLog.Info(LogChannel.Boot, null),
+                () => GameLog.Info(LogChannel.Boot, null!),
                 "被过滤的日志不应付出校验与字符串拼接成本（03 第 8 节规则 5）");
         }
     }

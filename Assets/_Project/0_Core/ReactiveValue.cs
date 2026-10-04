@@ -16,7 +16,7 @@ namespace Card.Core
     /// </summary>
     public sealed class ReactiveValue<T>
     {
-        private readonly IEventDispatchFailureSink _failureSink;
+        private readonly IEventDispatchFailureSink? _failureSink;
         private readonly List<Subscription> _subscriptions = new List<Subscription>();
 
         private T _value;
@@ -31,7 +31,7 @@ namespace Card.Core
         }
 
         /// <summary>创建可观察值；<paramref name="failureSink"/> 用于上报订阅者异常（可空）。</summary>
-        public ReactiveValue(T initialValue, IEventDispatchFailureSink failureSink)
+        public ReactiveValue(T initialValue, IEventDispatchFailureSink? failureSink)
         {
             _value = initialValue;
             _failureSink = failureSink;

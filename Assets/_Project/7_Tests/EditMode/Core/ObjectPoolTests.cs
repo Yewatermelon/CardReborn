@@ -113,7 +113,7 @@ namespace Card.Tests.EditMode.Core
         public void Ctor_WhenFactoryIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(
-                () => new ObjectPool<PooledItem>(null));
+                () => new ObjectPool<PooledItem>(null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("factory"));
         }
@@ -130,7 +130,7 @@ namespace Card.Tests.EditMode.Core
         [Test]
         public void Ctor_WhenPrewarmExceedsCapacity_ThrowsArgumentException()
         {
-            ObjectPool<PooledItem> created = null;
+            ObjectPool<PooledItem>? created = null;
 
             ArgumentException exception = Assert.Throws<ArgumentException>(
                 () => created = new ObjectPool<PooledItem>(() => new PooledItem(), prewarmCount: 5, maxCapacity: 2));
@@ -142,7 +142,7 @@ namespace Card.Tests.EditMode.Core
         [Test]
         public void Factory_WhenReturnsNull_ThrowsInvalidOperationException()
         {
-            ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => null);
+            ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => null!);
 
             InvalidOperationException exception =
                 Assert.Throws<InvalidOperationException>(() => pool.Rent());
@@ -175,7 +175,7 @@ namespace Card.Tests.EditMode.Core
             ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => new PooledItem());
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => pool.Return(null));
+                Assert.Throws<ArgumentNullException>(() => pool.Return(null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("item"));
         }

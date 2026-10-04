@@ -15,7 +15,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNull_WhenNull_ThrowsArgumentNullExceptionWithParamName()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Guard.NotNull<string>(null, "value"));
+                Assert.Throws<ArgumentNullException>(() => Guard.NotNull<string>(null!, "value"));
 
             Assert.That(exception.ParamName, Is.EqualTo("value"));
         }
@@ -32,7 +32,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNullOrWhiteSpace_WhenNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Guard.NotNullOrWhiteSpace(null, "text"));
+                Assert.Throws<ArgumentNullException>(() => Guard.NotNullOrWhiteSpace(null!, "text"));
 
             Assert.That(exception.ParamName, Is.EqualTo("text"));
         }
@@ -60,7 +60,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNullOrEmpty_WhenNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(
-                () => Guard.NotNullOrEmpty<string>(null, "items"));
+                () => Guard.NotNullOrEmpty<string>(null!, "items"));
 
             Assert.That(exception.ParamName, Is.EqualTo("items"));
         }

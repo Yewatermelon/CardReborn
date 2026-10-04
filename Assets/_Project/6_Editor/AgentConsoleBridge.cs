@@ -10,35 +10,35 @@ namespace Card.Editor.AgentBridge
     [Serializable]
     public sealed class ConsoleEntry
     {
-        public string time;
-        public string type;
-        public string message;
-        public string stack;
+        public string time = string.Empty;
+        public string type = string.Empty;
+        public string message = string.Empty;
+        public string stack = string.Empty;
     }
 
     [Serializable]
     public sealed class CompilerEntry
     {
-        public string assembly;
-        public string severity;
-        public string file;
+        public string assembly = string.Empty;
+        public string severity = string.Empty;
+        public string file = string.Empty;
         public int line;
-        public string message;
+        public string message = string.Empty;
     }
 
     [Serializable]
     public sealed class AgentStatus
     {
-        public string generatedAtUtc;
-        public string unityVersion;
-        public string projectPath;
+        public string generatedAtUtc = string.Empty;
+        public string unityVersion = string.Empty;
+        public string projectPath = string.Empty;
         public bool isCompiling;
         public bool hasCompilerErrors;
         public int compilerErrorCount;
         public int compilerWarningCount;
         public int consoleErrorCount;
         public int consoleWarningCount;
-        public string lastTestSummary;
+        public string lastTestSummary = string.Empty;
         public List<CompilerEntry> compilerDiagnostics = new List<CompilerEntry>();
         public List<ConsoleEntry> recentConsoleErrors = new List<ConsoleEntry>();
     }

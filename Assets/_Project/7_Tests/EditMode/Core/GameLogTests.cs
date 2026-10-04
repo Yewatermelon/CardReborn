@@ -24,7 +24,7 @@ namespace Card.Tests.EditMode.Core
         public void Configure_WhenSinkIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(
-                () => GameLog.Configure(null, LogLevel.Info));
+                () => GameLog.Configure(null!, LogLevel.Info));
 
             Assert.That(exception.ParamName, Is.EqualTo("sink"));
         }
@@ -104,7 +104,7 @@ namespace Card.Tests.EditMode.Core
             GameLog.Configure(new RecordingLogSink(), LogLevel.Info);
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => GameLog.Info(LogChannel.Boot, null));
+                Assert.Throws<ArgumentNullException>(() => GameLog.Info(LogChannel.Boot, null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("message"));
         }
