@@ -8,7 +8,7 @@
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
-| M1 核心基础层（Core） | 🟡 进行中 | 8/9 | — | M1-T1…T8 完成（Result/Guard、EventBus、StateMachine、RandomProvider ★、GameLog ★、ObjectPool、ReactiveValue、IClock ★），累计新增 227 用例全过；只剩 M1-T9（内核解耦扫描规则）；M1-R1（Nullable）、M1-R2（覆盖率）按约定在 M1 收尾统一处理 |
+| M1 核心基础层（Core） | 🟡 进行中 | 9/9 | — | M1-T1…T9 全部完成（含 M1-T9 门禁加固），累计新增 227 用例全过；**待收尾**：M1-R1（启用 Nullable）、M1-R2（接入覆盖率，门槛 Core ≥ 90%）——按约定统一处理后再做 M1 里程碑评审 |
 | M2 配置与数据管线 | ⬜ 未开始 | 0/7 | — | — |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
@@ -75,9 +75,11 @@
 | M1-T6 `ObjectPool<T>` | ✅ | 任务卡 [tasks/M1-T6-ObjectPool.md](./tasks/M1-T6-ObjectPool.md)；代码 `Assets/_Project/0_Core/{IPoolable,ObjectPool}.cs`（纯 BCL）；预热、复用、`IPoolable` 归还清理、闲置上限（超限丢弃）与扩容上限（`Rent` 抛错 / `TryRent` 降级）、重复归还与外来对象立即报错、引用相等比较器保证不受 `Equals` 重写影响、超限首次经 `GameLog.Warn(Perf)` 留痕后只计数；EditMode 185 passed / 0 failed（新增 29 例），`warning CS` 0 处；`check.ps1` PASS |
 | M1-T7 `ReactiveValue<T>` | ✅ | 任务卡 [tasks/M1-T7-ReactiveValue.md](./tasks/M1-T7-ReactiveValue.md)；代码 `Assets/_Project/0_Core/ReactiveValue.cs`（纯 BCL）；值真正变化才通知（`EqualityComparer<T>.Default` 判定）、`Set` 返回"是否变化"、订阅返回 `IDisposable` 且解绑幂等、`notifyWithCurrentValue` 供 View 首帧渲染、派发期增删订阅与 `EventBus` 口径一致、派发期再次 `Set` 会中止旧派发（避免 View 收到过期值）、订阅者异常隔离并计数/上报；EditMode 210 passed / 0 failed（新增 25 例），`warning CS` 0 处；`check.ps1` PASS |
 | M1-T8 `IClock` ★ | ✅ | 任务卡 [tasks/M1-T8-IClock.md](./tasks/M1-T8-IClock.md)；代码 `Assets/_Project/0_Core/{IClock,ManualClock}.cs`（纯 BCL，签名与 03 §5.9.2 一致）；`Advance` 只允许前进且做溢出保护（不静默回绕）、`SetTo` 仅供测试/重放/恢复（可回拨）、tick 非负；EditMode 228 passed / 0 failed（新增 18 例，含"注入假时钟的消费者确定性到期"），`warning CS` 0 处；`check.ps1` PASS；并按 05 第 688 行如实记录"禁止 Time/DateTime"已部分撤销，不把扫描强制写死 |
-| M1-T9 内核解耦检查规则 ★ | ⬜ | — |
+| M1-T9 内核解耦检查规则 ★ | ✅ | `Tools/check.ps1` 重写加固：R1 扩展为完整五条禁令（Unity 类型/日志/序列化/随机/时间 + 系统时间）、新增 **R6 asmdef 守门**（内核必须 `noEngineReferences: true`、不得引用 Unity 程序集、不得向上依赖）、**扫描前剥离注释与字符串 + 词边界匹配**（修掉 M1-R3 的两类误报）；新增 `-SelfTest` 探针自检（R1–R6 逐条断言 + 干净样本零误报）；真实探针验证：故意在 `1_Domain` 放 `using UnityEngine` → 报 4 条违规且退出码 1，移除后恢复 PASS。文档同步：03 §5.9.5（规则清单与实现要求）、06 §7.3（提交前自检流程） |
 
-> M1 门禁：Core 覆盖率 ≥ 90%；★ 项通过"无 Unity 依赖"检查。覆盖率工具尚未接入，登记为 M1-R2（待办）。
+> M1 门禁：Core 覆盖率 ≥ 90%；★ 项通过"无 Unity 依赖"检查（R1/R6 已由 `check.ps1` 静态保证）。
+> 收尾待办：**M1-R1**（全仓启用 `<Nullable>enable</Nullable>`，P2）、**M1-R2**（接入覆盖率统计，需 ≥ 90%）。
+> **M1-R3 已关闭**：`check.ps1` 已剥离注释/字符串并改用词边界，且新增 `-SelfTest` 防止规则本身失效。
 
 ---
 
@@ -114,3 +116,4 @@
 | 2026-10-04 | M1-T6 完成 | `Card.Core` 新增 `IPoolable` + `ObjectPool<T>`（纯 BCL）：预热、复用、归还清理、闲置上限（超限丢弃并计数）与扩容上限（`Rent` 抛异常 / `TryRent` 返回 false，`RejectedCount` 计数）、重复归还与归还外来对象立即抛错、`ReferenceComparer` 保证引用相等判定不受 `Equals` 重写影响、超限首次经 `GameLog.Warn(LogChannel.Perf, …)` 留痕后仅计数（避免热路径刷屏）；新增 29 个 EditMode 用例（先红后绿，累计 185 passed / 0 failed） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
 | 2026-10-04 | M1-T7 完成 | `Card.Core` 新增 `ReactiveValue<T>`（纯 BCL 可观察标量值）：相同值不通知、`Set` 返回是否变化、订阅 `IDisposable` 幂等解绑、可选 `notifyWithCurrentValue` 立即推送、派发期新增/解绑订阅与 `EventBus` 一致、**派发期再次 `Set` 会中止旧派发避免过期值**、订阅者异常隔离（计数 + 可选上报）；新增 25 个 EditMode 用例（先红后绿，累计 210 passed / 0 failed） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
 | 2026-10-04 | M1-T8 完成 | `Card.Core` 新增 `IClock`（签名与 03 §5.9.2 一致）+ `ManualClock`（纯 BCL）：tick 非负、`Advance` 只前进并做 int 溢出保护、`SetTo` 仅供测试/重放/恢复（允许回拨）；新增 18 个 EditMode 用例（先红后绿，累计 228 passed / 0 failed），含"注入假时钟的消费者按 tick 精确到期且可重复"；同时记录扫描器精度问题（粗糙正则把 `Runtime.CompilerServices` 误判为 Unity 时间）并入 M1-R3 | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
+| 2026-10-04 | M1-T9 完成 | `Tools/check.ps1` 加固为内核解耦门禁：R1 覆盖 03 §5.9.1 五条禁令（Unity 类型/日志/序列化/随机/时间 + 系统时间）、新增 R6 asmdef 守门（内核 `noEngineReferences`、禁 Unity 程序集引用、禁向上依赖方向）、扫描前**剥离注释与字符串**并改用**词边界**（M1-R3 关闭）；新增 `-SelfTest` 探针自检（含"注释提到禁用 API 不得误报"的回归样本）；修复"违规时退出码为 0"的 bug（`Format-Table` 输出污染函数返回值 → 改 `Out-Host`）；真实探针：`1_Domain` 注入 `using UnityEngine` → 4 条违规 + exit 1，移除后 PASS | PROGRESS / Tools / Docs/03 §5.9.5 / Docs/06 §7.3 |
