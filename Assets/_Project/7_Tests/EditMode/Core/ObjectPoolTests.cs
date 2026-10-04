@@ -113,7 +113,7 @@ namespace Card.Tests.EditMode.Core
         public void Ctor_WhenFactoryIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(
-                () => new ObjectPool<PooledItem>(null!));
+                () => new ObjectPool<PooledItem>(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("factory"));
         }
@@ -122,7 +122,7 @@ namespace Card.Tests.EditMode.Core
         public void Ctor_WhenPrewarmCountIsNegative_ThrowsArgumentOutOfRangeException()
         {
             ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(
-                () => new ObjectPool<PooledItem>(() => new PooledItem(), prewarmCount: -1));
+                () => new ObjectPool<PooledItem>(() => new PooledItem(), prewarmCount: -1))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("prewarmCount"));
         }
@@ -133,7 +133,7 @@ namespace Card.Tests.EditMode.Core
             ObjectPool<PooledItem>? created = null;
 
             ArgumentException exception = Assert.Throws<ArgumentException>(
-                () => created = new ObjectPool<PooledItem>(() => new PooledItem(), prewarmCount: 5, maxCapacity: 2));
+                () => created = new ObjectPool<PooledItem>(() => new PooledItem(), prewarmCount: 5, maxCapacity: 2))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("prewarmCount"));
             Assert.That(created, Is.Null, "配置矛盾时不应产生半成品池");
@@ -145,7 +145,7 @@ namespace Card.Tests.EditMode.Core
             ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => null!);
 
             InvalidOperationException exception =
-                Assert.Throws<InvalidOperationException>(() => pool.Rent());
+                Assert.Throws<InvalidOperationException>(() => pool.Rent())!;
 
             Assert.That(exception.Message, Does.Contain("null"));
         }
@@ -175,7 +175,7 @@ namespace Card.Tests.EditMode.Core
             ObjectPool<PooledItem> pool = new ObjectPool<PooledItem>(() => new PooledItem());
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => pool.Return(null!));
+                Assert.Throws<ArgumentNullException>(() => pool.Return(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("item"));
         }

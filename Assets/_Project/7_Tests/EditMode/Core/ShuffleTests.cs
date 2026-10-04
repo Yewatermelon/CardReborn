@@ -17,7 +17,7 @@ namespace Card.Tests.EditMode.Core
             SeededRandomProvider provider = new SeededRandomProvider(1);
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => provider.Shuffle<int>(null!));
+                Assert.Throws<ArgumentNullException>(() => provider.Shuffle<int>(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("list"));
         }

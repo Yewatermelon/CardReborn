@@ -59,7 +59,7 @@ namespace Card.Tests.EditMode.Core
             Result<int> result = Result<int>.Failure("ERROR_TARGET_REQUIRED");
 
             InvalidOperationException exception =
-                Assert.Throws<InvalidOperationException>(() => _ = result.Value);
+                Assert.Throws<InvalidOperationException>(() => _ = result.Value)!;
 
             Assert.That(exception.Message, Does.Contain("ERROR_TARGET_REQUIRED"));
         }
@@ -91,7 +91,7 @@ namespace Card.Tests.EditMode.Core
         public void Failure_WhenErrorCodeIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Result<int>.Failure(null!));
+                Assert.Throws<ArgumentNullException>(() => Result<int>.Failure(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("errorCode"));
         }
@@ -101,7 +101,7 @@ namespace Card.Tests.EditMode.Core
         public void Failure_WhenErrorCodeIsBlank_ThrowsArgumentException(string errorCode)
         {
             ArgumentException exception =
-                Assert.Throws<ArgumentException>(() => Result<int>.Failure(errorCode));
+                Assert.Throws<ArgumentException>(() => Result<int>.Failure(errorCode))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("errorCode"));
         }

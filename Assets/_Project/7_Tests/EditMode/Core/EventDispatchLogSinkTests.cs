@@ -48,7 +48,7 @@ namespace Card.Tests.EditMode.Core
         public void Ctor_WhenChannelIsUndefined_ThrowsArgumentOutOfRangeException()
         {
             ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(
-                () => new EventDispatchLogSink((LogChannel)42));
+                () => new EventDispatchLogSink((LogChannel)42))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("channel"));
         }

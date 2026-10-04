@@ -15,7 +15,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNull_WhenNull_ThrowsArgumentNullExceptionWithParamName()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Guard.NotNull<string>(null!, "value"));
+                Assert.Throws<ArgumentNullException>(() => Guard.NotNull<string>(null!, "value"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("value"));
         }
@@ -32,7 +32,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNullOrWhiteSpace_WhenNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Guard.NotNullOrWhiteSpace(null!, "text"));
+                Assert.Throws<ArgumentNullException>(() => Guard.NotNullOrWhiteSpace(null!, "text"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("text"));
         }
@@ -43,7 +43,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNullOrWhiteSpace_WhenBlank_ThrowsArgumentException(string text)
         {
             ArgumentException exception =
-                Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhiteSpace(text, "text"));
+                Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhiteSpace(text, "text"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("text"));
         }
@@ -60,7 +60,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNullOrEmpty_WhenNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(
-                () => Guard.NotNullOrEmpty<string>(null!, "items"));
+                () => Guard.NotNullOrEmpty<string>(null!, "items"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("items"));
         }
@@ -71,7 +71,7 @@ namespace Card.Tests.EditMode.Core
             IReadOnlyCollection<string> items = new List<string>();
 
             ArgumentException exception =
-                Assert.Throws<ArgumentException>(() => Guard.NotNullOrEmpty(items, "items"));
+                Assert.Throws<ArgumentException>(() => Guard.NotNullOrEmpty(items, "items"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("items"));
         }
@@ -90,7 +90,7 @@ namespace Card.Tests.EditMode.Core
         public void Positive_WhenValueIsNotPositive_ThrowsArgumentOutOfRangeException(int value)
         {
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.Positive(value, "cost"));
+                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.Positive(value, "cost"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("cost"));
         }
@@ -107,7 +107,7 @@ namespace Card.Tests.EditMode.Core
         public void NotNegative_WhenValueIsNegative_ThrowsArgumentOutOfRangeException(int value)
         {
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotNegative(value, "damage"));
+                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotNegative(value, "damage"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("damage"));
         }
@@ -136,7 +136,7 @@ namespace Card.Tests.EditMode.Core
         public void InRange_WhenValueAtOrAboveMaxExclusive_ThrowsArgumentOutOfRangeException(int value)
         {
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.InRange(value, 5, 10, "index"));
+                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.InRange(value, 5, 10, "index"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("index"));
         }
@@ -145,7 +145,7 @@ namespace Card.Tests.EditMode.Core
         public void InRange_WhenValueBelowMin_ThrowsArgumentOutOfRangeException()
         {
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.InRange(4, 5, 10, "index"));
+                Assert.Throws<ArgumentOutOfRangeException>(() => Guard.InRange(4, 5, 10, "index"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("index"));
         }
@@ -166,7 +166,7 @@ namespace Card.Tests.EditMode.Core
         public void Require_WhenConditionIsFalse_ThrowsArgumentExceptionWithMessage()
         {
             ArgumentException exception = Assert.Throws<ArgumentException>(
-                () => Guard.Require(false, "state", "回合阶段不匹配"));
+                () => Guard.Require(false, "state", "回合阶段不匹配"))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("state"));
             Assert.That(exception.Message, Does.Contain("回合阶段不匹配"));

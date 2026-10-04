@@ -80,7 +80,7 @@ namespace Card.Tests.EditMode.Core
         public void SetChannelEnabled_WhenChannelIsUndefined_ThrowsArgumentOutOfRangeException()
         {
             ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(
-                () => GameLog.SetChannelEnabled((LogChannel)99, false));
+                () => GameLog.SetChannelEnabled((LogChannel)99, false))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("channel"));
         }

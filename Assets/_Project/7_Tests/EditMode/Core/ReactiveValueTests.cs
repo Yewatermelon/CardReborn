@@ -125,7 +125,7 @@ namespace Card.Tests.EditMode.Core
             ReactiveValue<int> value = new ReactiveValue<int>(0);
 
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => value.Subscribe(null!));
+                Assert.Throws<ArgumentNullException>(() => value.Subscribe(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("handler"));
         }

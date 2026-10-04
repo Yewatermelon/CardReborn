@@ -202,7 +202,8 @@ namespace Card.Core
                 int hash = (ErrorCode.GetHashCode() * 397) ^ ErrorMessage.GetHashCode();
                 if (IsSuccess)
                 {
-                    hash = (hash * 397) ^ EqualityComparer<T>.Default.GetHashCode(_value);
+                    hash = (hash * 397)
+                        ^ (_value is null ? 0 : EqualityComparer<T>.Default.GetHashCode(_value));
                 }
 
                 return hash;

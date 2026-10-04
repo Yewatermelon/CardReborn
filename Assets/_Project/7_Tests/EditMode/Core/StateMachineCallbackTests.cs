@@ -72,7 +72,7 @@ namespace Card.Tests.EditMode.Core
             machine.AllowTransition(TestPhase.Idle, TestPhase.Running);
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
-                () => machine.TransitionTo(TestPhase.Running));
+                () => machine.TransitionTo(TestPhase.Running))!;
 
             Assert.That(exception.Message, Does.Contain("exit failed"));
             Assert.That(log, Is.EqualTo(new[] { "Exit:Idle" }), "Exit 抛异常后不应再执行 Enter");
@@ -94,7 +94,7 @@ namespace Card.Tests.EditMode.Core
             machine.AllowTransition(TestPhase.Idle, TestPhase.Running);
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
-                () => machine.TransitionTo(TestPhase.Running));
+                () => machine.TransitionTo(TestPhase.Running))!;
 
             Assert.That(exception.Message, Does.Contain("enter failed"));
             Assert.That(log, Is.EqualTo(new[] { "Exit:Idle", "Enter:Running" }));

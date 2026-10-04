@@ -36,7 +36,7 @@ namespace Card.Tests.EditMode.Core
             machine.Register(TestPhase.Running);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(
-                () => machine.Register(TestPhase.Running));
+                () => machine.Register(TestPhase.Running))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("state"));
         }
@@ -48,7 +48,7 @@ namespace Card.Tests.EditMode.Core
             machine.Register(TestPhase.Running);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(
-                () => machine.AllowTransition(TestPhase.Idle, TestPhase.Running));
+                () => machine.AllowTransition(TestPhase.Idle, TestPhase.Running))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("from"));
         }
@@ -60,7 +60,7 @@ namespace Card.Tests.EditMode.Core
             machine.Register(TestPhase.Idle);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(
-                () => machine.AllowTransition(TestPhase.Idle, TestPhase.Running));
+                () => machine.AllowTransition(TestPhase.Idle, TestPhase.Running))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("to"));
         }

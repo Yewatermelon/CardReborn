@@ -51,7 +51,7 @@ namespace Card.Tests.EditMode.Core
         public void Failure_WhenErrorCodeIsNull_ThrowsArgumentNullException()
         {
             ArgumentNullException exception =
-                Assert.Throws<ArgumentNullException>(() => Result.Failure(null!));
+                Assert.Throws<ArgumentNullException>(() => Result.Failure(null!))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("errorCode"));
         }
@@ -61,7 +61,7 @@ namespace Card.Tests.EditMode.Core
         public void Failure_WhenErrorCodeIsBlank_ThrowsArgumentException(string errorCode)
         {
             ArgumentException exception =
-                Assert.Throws<ArgumentException>(() => Result.Failure(errorCode));
+                Assert.Throws<ArgumentException>(() => Result.Failure(errorCode))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("errorCode"));
         }

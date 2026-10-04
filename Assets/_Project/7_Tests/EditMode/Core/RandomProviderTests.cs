@@ -65,7 +65,7 @@ namespace Card.Tests.EditMode.Core
             SeededRandomProvider provider = new SeededRandomProvider(1);
 
             ArgumentException exception =
-                Assert.Throws<ArgumentException>(() => provider.NextInt(min, max));
+                Assert.Throws<ArgumentException>(() => provider.NextInt(min, max))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("minInclusive"));
         }

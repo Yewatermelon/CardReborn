@@ -1,3 +1,1 @@
-# Enables nullable reference types for every assembly compiled from Assets/ (M1-R1).
-# Rule: Docs/03 section 4 item 10 (public APIs validate null via Guard.NotNull).
 -nullable:enable

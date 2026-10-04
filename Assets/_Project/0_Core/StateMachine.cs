@@ -177,8 +177,9 @@ namespace Card.Core
             {
                 unchecked
                 {
-                    return (EqualityComparer<TState>.Default.GetHashCode(_from) * 397)
-                        ^ EqualityComparer<TState>.Default.GetHashCode(_to);
+                    int fromHash = _from is null ? 0 : EqualityComparer<TState>.Default.GetHashCode(_from);
+                    int toHash = _to is null ? 0 : EqualityComparer<TState>.Default.GetHashCode(_to);
+                    return (fromHash * 397) ^ toHash;
                 }
             }
         }

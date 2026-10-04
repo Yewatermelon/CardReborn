@@ -56,7 +56,7 @@ namespace Card.Tests.EditMode.Core
             pool.Rent();
 
             InvalidOperationException exception =
-                Assert.Throws<InvalidOperationException>(() => pool.Rent());
+                Assert.Throws<InvalidOperationException>(() => pool.Rent())!;
 
             Assert.That(exception.Message, Does.Contain("上限"));
             Assert.That(pool.CreatedCount, Is.EqualTo(2));

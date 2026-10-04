@@ -133,7 +133,9 @@ namespace Card.Core
                 return;
             }
 
-            string handlerName = handler.Method != null ? handler.Method.Name : handler.ToString();
+            string handlerName = handler.Method != null
+                ? handler.Method.Name
+                : handler.ToString() ?? handler.GetType().Name;
             _failureSink.OnHandlerFailed(new EventDispatchFailure(eventType, handlerName, exception));
         }
 

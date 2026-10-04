@@ -27,7 +27,7 @@ namespace Card.Tests.EditMode.Core
         public void Ctor_WhenInitialTickIsNegative_ThrowsArgumentOutOfRangeException()
         {
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => new ManualClock(-1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => new ManualClock(-1))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("initialTick"));
         }
@@ -58,7 +58,7 @@ namespace Card.Tests.EditMode.Core
             ManualClock clock = new ManualClock(7);
 
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => clock.Advance(-1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => clock.Advance(-1))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("ticks"));
             Assert.That(exception.Message, Does.Contain("SetTo"), "错误信息应指路回拨用 SetTo");
@@ -86,7 +86,7 @@ namespace Card.Tests.EditMode.Core
             ManualClock clock = new ManualClock(int.MaxValue - 1);
 
             InvalidOperationException exception =
-                Assert.Throws<InvalidOperationException>(() => clock.Advance(2));
+                Assert.Throws<InvalidOperationException>(() => clock.Advance(2))!;
 
             Assert.That(exception.Message, Does.Contain("溢出"));
             Assert.That(clock.CurrentTick, Is.EqualTo(int.MaxValue - 1), "溢出时不得改动状态");
@@ -128,7 +128,7 @@ namespace Card.Tests.EditMode.Core
             ManualClock clock = new ManualClock(10);
 
             ArgumentOutOfRangeException exception =
-                Assert.Throws<ArgumentOutOfRangeException>(() => clock.SetTo(-5));
+                Assert.Throws<ArgumentOutOfRangeException>(() => clock.SetTo(-5))!;
 
             Assert.That(exception.ParamName, Is.EqualTo("tick"));
             Assert.That(clock.CurrentTick, Is.EqualTo(10));
