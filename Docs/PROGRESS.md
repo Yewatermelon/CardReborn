@@ -3,12 +3,12 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M1（核心基础层 Core）｜M0 已于 2026-10-03 完成**
+**当前阶段：M2（配置与数据管线）｜M0、M1 已完成（2026-10-03 / 2026-10-04）**
 
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
-| M1 核心基础层（Core） | 🟡 进行中 | 9/9 | — | M1-T1…T9 全部完成（含 M1-T9 门禁加固），累计新增 227 用例全过；**待收尾**：M1-R1（启用 Nullable）、M1-R2（接入覆盖率，门槛 Core ≥ 90%）——按约定统一处理后再做 M1 里程碑评审 |
+| M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ⬜ 未开始 | 0/7 | — | — |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
@@ -78,8 +78,10 @@
 | M1-T9 内核解耦检查规则 ★ | ✅ | 任务卡 [tasks/M1-T9-GateRules.md](./tasks/M1-T9-GateRules.md)；`Tools/check.ps1` 重写加固：R1 扩展为完整五条禁令（Unity 类型/日志/序列化/随机/时间 + 系统时间）、新增 **R6 asmdef 守门**（内核必须 `noEngineReferences: true`、不得引用 Unity 程序集、不得向上依赖）、**扫描前剥离注释与字符串 + 词边界匹配**（修掉 M1-R3 的两类误报）；新增 `-SelfTest` 探针自检（R1–R6 逐条断言 + 干净样本零误报）；真实探针验证：故意在 `1_Domain` 放 `using UnityEngine` → 报 4 条违规且退出码 1，移除后恢复 PASS。文档同步：03 §5.9.5（规则清单与实现要求）、06 §7.3（提交前自检流程） |
 
 > M1 门禁：Core 覆盖率 ≥ 90%；★ 项通过"无 Unity 依赖"检查（R1/R6 已由 `check.ps1` 静态保证）。
-> 收尾待办：**M1-R1**（全仓启用 `<Nullable>enable</Nullable>`，P2）、**M1-R2**（接入覆盖率统计，需 ≥ 90%）。
-> **M1-R3 已关闭**：`check.ps1` 已剥离注释/字符串并改用词边界，且新增 `-SelfTest` 防止规则本身失效。
+> 收尾结果：**M1-R1 已关闭**（`Assets/csc.rsp` = `-nullable:enable`，64 条 CS86xx 全部修复，仍 0 warning）；
+> **M1-R2 已关闭**（`Tools/coverage.ps1` + `Tools/Coverage` 独立 .NET 工具链，行覆盖率 97.71%）；
+> **M1-R3 已关闭**（`check.ps1` 剥离注释/字符串 + 词边界 + `-SelfTest`）。
+> 新增遗留：**M1-R4（P3）** 未覆盖行补齐（`PublishReport.ToString` 70%、`StateMachine` 82%、`ObjectPool` 96%、`Result` 95%），M2 期间顺手补。
 
 ---
 
@@ -94,6 +96,7 @@
 | 里程碑 | 复盘日期 | 记录位置 | 主要改进项 |
 | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | 2026-10-03 | [reviews/M0-工程基建-评审与复盘.md](./reviews/M0-工程基建-评审与复盘.md) | 桥接层补"文件触发"入口（M0-R2）；M1 起接入覆盖率与复杂度统计；提交前例行 `git diff ProjectSettings/` |
+| M1 核心基础层（Core） | 2026-10-04 | [reviews/M1-核心基础层-评审与复盘.md](./reviews/M1-核心基础层-评审与复盘.md) | 覆盖率工具纳入常规验证；构建配置改动必须"清缓存干净验证"；补齐未覆盖行（M1-R4） |
 
 ## 变更日志（文档/架构）
 
@@ -117,3 +120,5 @@
 | 2026-10-04 | M1-T7 完成 | `Card.Core` 新增 `ReactiveValue<T>`（纯 BCL 可观察标量值）：相同值不通知、`Set` 返回是否变化、订阅 `IDisposable` 幂等解绑、可选 `notifyWithCurrentValue` 立即推送、派发期新增/解绑订阅与 `EventBus` 一致、**派发期再次 `Set` 会中止旧派发避免过期值**、订阅者异常隔离（计数 + 可选上报）；新增 25 个 EditMode 用例（先红后绿，累计 210 passed / 0 failed） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
 | 2026-10-04 | M1-T8 完成 | `Card.Core` 新增 `IClock`（签名与 03 §5.9.2 一致）+ `ManualClock`（纯 BCL）：tick 非负、`Advance` 只前进并做 int 溢出保护、`SetTo` 仅供测试/重放/恢复（允许回拨）；新增 18 个 EditMode 用例（先红后绿，累计 228 passed / 0 failed），含"注入假时钟的消费者按 tick 精确到期且可重复"；同时记录扫描器精度问题（粗糙正则把 `Runtime.CompilerServices` 误判为 Unity 时间）并入 M1-R3 | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
 | 2026-10-04 | M1-T9 完成 | `Tools/check.ps1` 加固为内核解耦门禁：R1 覆盖 03 §5.9.1 五条禁令（Unity 类型/日志/序列化/随机/时间 + 系统时间）、新增 R6 asmdef 守门（内核 `noEngineReferences`、禁 Unity 程序集引用、禁向上依赖方向）、扫描前**剥离注释与字符串**并改用**词边界**（M1-R3 关闭）；新增 `-SelfTest` 探针自检（含"注释提到禁用 API 不得误报"的回归样本）；修复"违规时退出码为 0"的 bug（`Format-Table` 输出污染函数返回值 → 改 `Out-Host`）；真实探针：`1_Domain` 注入 `using UnityEngine` → 4 条违规 + exit 1，移除后 PASS | PROGRESS / Tools / Docs/03 §5.9.5 / Docs/06 §7.3 |
+| 2026-10-04 | M1 收尾（R1/R2） | **M1-R1**：`Assets/csc.rsp` 开启 `-nullable:enable`，修复 64 条 CS86xx（Core 的可空字段/参数、编辑器桥 DTO、测试中"故意传 null"改用 `null!`），仍保持 0 warning；记录 Unity `csc.rsp` **不支持 `#` 注释**的限制（曾导致 200+ 编译错误）。**M1-R2**：新增 `Tools/Coverage`（内核库 + 测试工程，链接同一份源码）+ `Tools/coverage.ps1`，在 Unity 工程外用 .NET 9 + NUnit + coverlet 跑通 228 个测试并测出 `Card.Core` 行覆盖率 **97.71%**（分支 88.13%），顺带得到 FR-13.2/13.3 的直接证据；新增 [00 ADR-18](./00-现状解构与架构再设计.md)。**M1-R3 关闭**。新增 **M1-R4（P3）** | PROGRESS / 00(ADR-18) / 03(§4/§10/§5.9.5) / Tools / Assets/csc.rsp / Assets/_Project |
+| 2026-10-04 | M1 完成 | M1 九项任务全部关闭并通过门禁：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 97.71%（门禁 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 进程编译并跑通测试；新增 [M1 评审与复盘](./reviews/M1-核心基础层-评审与复盘.md)（含 3 个工具侧问题的 5 Why 与改进项） | PROGRESS / reviews(新增) |
