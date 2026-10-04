@@ -84,3 +84,16 @@
 | 关键词列写 `Taunt,Charge` | 拒绝：单元格内不能有逗号 | `Taunt\|Charge` |
 | `HeroPowerKey` 指向不存在的技能 | 拒绝：外键悬空 | 先在 `HeroPowers.csv` 建行 |
 | 删掉废弃卡的行 | 拒绝：破坏 `Id`/`Key` 稳定性 | `Enabled` 改 `FALSE` |
+
+## 5. 导入前会校验什么（M2-T4 已实现）
+
+导入器会在写生成物之前跑一遍校验，**一次列出全部问题**（形如 `Cards.csv 第 3 行 [Cost]：必须是整数，实际为 'abc'`），只要有一条就不产出任何文件。
+
+| 层 | 规则 |
+| --- | --- |
+| 表 | 六张表都必须存在；`GachaConfig.csv` 与 `Rules.csv` 必须是单行表 |
+| 行 | 每个字段都能解析（枚举禁止写数字、整数列必须是整数、`Enabled` 只接受 `TRUE`/`FALSE`/`1`/`0`、关键词/效果用 `\|` 分隔且关键词必须在枚举里） |
+| 唯一性 | 同一张表内 `Id` 与 `Key` 不得重复 |
+| 外键 | `Heroes.HeroPowerKey` 必须存在于 `HeroPowers.Key` |
+| 数值范围 | 卡片费用 ≥ 0 且 ≤ `Rules.ManaLimit`；随从生命 ≥ 1、攻击 ≥ 0；非随从不得有攻击/生命；英雄生命 1..100；英雄技能费用 > 0；`HandLimit ≤ 10`、`BoardLimit ≤ 7`、`ManaLimit ≤ 10`、`HeroHealth` 1..100；稀有度权重 > 0 且四档齐全；抽卡 `PackSize`/`CoinCost`/`PityCount` > 0 |
+| 废弃数据 | `Enabled = FALSE` 的卡**只校验可解析性**，数值越界不报错（允许保留废弃内容） |
