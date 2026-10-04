@@ -161,3 +161,80 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | 配置生成物（勿手改） | `Assets/_Project/Config/*.json` |
 | 编辑器工具（导入/重载） | `Assets/_Project/6_Editor/ConfigImportMenu.cs` |
 | 门禁与工具链 | `Tools/check.ps1`、`Tools/coverage.ps1`、`Tools/Coverage/README.md` |
+
+## 10. 检查点与恢复（已实测）
+
+> 目的：万一后续开发出问题（或需要换回旧 AI/旧版本），能**精确回到 M2 完成时的状态**并从那里继续。
+> 关键点：**不要依赖聊天记录**——本文件 + 仓库本身就能把项目恢复到可继续开发的状态。
+
+### 10.1 检查点标签
+
+| 项 | 值 |
+| --- | --- |
+| 标签 | `checkpoint/m2-complete`（annotated，**已推送远端**） |
+| 指向提交 | `3adfef5`（2026-10-04，M0–M2 完成） |
+| 标签说明 | 443 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain+App 92.36%`、配置管线与热加载可用 |
+
+查看方式：`git tag -n99 -l 'checkpoint/*'`；切过去：`git checkout checkpoint/m2-complete`。
+
+### 10.2 三种保底方式（按可靠性排序）
+
+| 方式 | 内容 | 体积 | 恢复时依赖 | 实测结论 |
+| --- | --- | --- | --- | --- |
+| ① 远端标签 | 全部历史 + 标签 | — | 网络 + Git LFS | ✅ 已推送成功 |
+| ② **本地整目录复制（含 `.git/`）** | 源码 + 全部历史 + **LFS 对象**（`.git/lfs` 约 0.44 MB） | 不含 `Library/Temp/Logs` 约 30 MB（全量约 1.4 GB） | 无 | ✅ 本地克隆演练：索引 442 个文件、工作区 0 改动、`LiberationSans.ttf` 为真实 350 KB 内容（不是 LFS 指针） |
+| ③ 离线 bundle（本次已生成） | 全部历史 + 标签，**不含 LFS 对象** | 3.04 MB（SHA256 `68DAED61FF03A1DC8ECA1B0E3B39FB047DCC9E8939E65E5DC773945814A24433`） | 恢复时需另取 LFS 对象 | ⚠️ 实测：直接 `git clone <bundle>` 会在 LFS smudge 处中断，**索引为空**、工作区不干净；必须先联网 `git lfs fetch --all`（或 `GIT_LFS_SKIP_SMUDGE=1` 先出指针再补） |
+
+离线 bundle 位置：`E:\Unity\Project\CardReborn-backups\CardReborn-2026-10-04-m2-complete.bundle`
+
+> **重要**：②和③目前都在**同一块硬盘**上。真要防硬件故障，请把它们复制到别处（移动硬盘 / 网盘 / 另一台机器）。
+
+### 10.3 恢复步骤
+
+**路线 A（有网络，最省事）**
+
+```bash
+git lfs install                                   # 机器上第一次用 LFS 时需要
+git clone https://github.com/Yewatermelon/CardReborn.git
+cd CardReborn
+git checkout checkpoint/m2-complete               # 回到 M2 完成时的精确状态
+```
+
+**路线 B（离线，用本地整目录副本）**
+
+1. 复制整个工程目录（**必须包含 `.git`**；`Library/`、`Temp/`、`Logs/` 可不带，Unity 会重建）；
+2. 直接打开该副本开发，或 `git clone <副本路径> <新目录>`（已实测 0 改动）；
+3. `git checkout checkpoint/m2-complete`。
+
+**路线 C（只有 bundle 时）**
+
+```bash
+git clone <bundle 文件> CardReborn
+cd CardReborn
+git remote add origin https://github.com/Yewatermelon/CardReborn.git
+git lfs fetch --all                               # 补齐 LFS 对象（需网络）
+git reset --hard checkpoint/m2-complete           # 重建索引与工作区
+```
+
+### 10.4 恢复后必做（确认真的可用）
+
+1. 用 **Unity 2022.3.54f1c1** 打开工程（首次会重建 `Library/`）；
+2. 跑第 4 节的三条命令：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`；
+3. 确认 `git status` 干净、`git log -1` 与预期提交一致；
+4. 读 `Docs/PROGRESS.md`（进度与证据）→ 从 **M3-T1** 继续；
+5. **更新本文件第 3 节的快照**（因为进度又往前走了，别让下一任接手人读到旧数字）。
+
+### 10.5 恢复时不需要的东西
+
+| 不需要 | 原因 |
+| --- | --- |
+| 聊天记录 / 上下文 | 本文件 + `Docs/` + 任务卡已覆盖决策与做法 |
+| `Logs/`（`agent-status.json` 等） | gitignore 的临时证据，恢复后重新生成即可 |
+| `%TEMP%\CardReborn_CI` | 批处理验证副本，按第 4.2 节重建 |
+| `Library/`、`Temp/`、`UserSettings/` | Unity 自动重建（`Assets/TextMesh Pro` 等资源已在 git 里） |
+
+### 10.6 环境三件套（恢复前先确认）
+
+1. **Unity 2022.3.54f1c1**（当前路径 `E:\Unity\2022.3.54f1c1\Editor\Unity.exe`），许可证已激活；
+2. **.NET SDK 9.x**（`Tools/coverage.ps1` 需要；首次联网还原 NuGet 包）；
+3. **Git + Git LFS**（`git lfs install` 至少执行过一次）。
