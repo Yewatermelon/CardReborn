@@ -8,7 +8,7 @@
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
-| M1 核心基础层（Core） | 🟡 进行中 | 6/9 | — | M1-T1…T6 完成（Result/Guard、EventBus、StateMachine、RandomProvider ★、GameLog ★、ObjectPool），累计新增 184 用例全过；M1-R1（Nullable）、M1-R2（覆盖率）按约定在 M1 收尾统一处理 |
+| M1 核心基础层（Core） | 🟡 进行中 | 7/9 | — | M1-T1…T7 完成（Result/Guard、EventBus、StateMachine、RandomProvider ★、GameLog ★、ObjectPool、ReactiveValue），累计新增 209 用例全过；M1-R1（Nullable）、M1-R2（覆盖率）按约定在 M1 收尾统一处理 |
 | M2 配置与数据管线 | ⬜ 未开始 | 0/7 | — | — |
 | M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
@@ -73,7 +73,7 @@
 | M1-T4 `IRandomProvider` ★ | ✅ | 任务卡 [tasks/M1-T4-RandomProvider.md](./tasks/M1-T4-RandomProvider.md)；代码 `Assets/_Project/0_Core/{IRandomProvider,SeededRandomProvider}.cs`（xorshift32 + 拒绝采样 + Fisher–Yates，纯 BCL，不用 `System.Random` 以保证跨运行时复现）；EditMode 127 passed / 0 failed（新增 23 例），`warning CS` 0 处；红状态为 `CS0246`；`check.ps1` PASS。含 [04 案例 3](./04-代码复盘Review规范.md) 回归（同种子两次"洗牌→按索引抽取"顺序一致） |
 | M1-T5 `GameLog` ★ | ✅ | 任务卡 [tasks/M1-T5-GameLog.md](./tasks/M1-T5-GameLog.md)；代码 `Assets/_Project/0_Core/{LogLevel,LogChannel,ILogSink,GameLog,EventDispatchLogSink}.cs`（纯 BCL，无 Unity 日志 API，也不用 `System.Console`）；`GameLog` 为 03 第 8 节规定的静态门面：分等级（Trace/Info/Warn/Error）、分通道（Boot…Perf，可开关）、`IsEnabled` 供热路径短路、sink 故障不穿透并计数；`EventDispatchLogSink` 闭合 M1-T2 的订阅者异常接缝；EditMode 156 passed / 0 failed（新增 29 例），`warning CS` 0 处；`check.ps1` PASS |
 | M1-T6 `ObjectPool<T>` | ✅ | 任务卡 [tasks/M1-T6-ObjectPool.md](./tasks/M1-T6-ObjectPool.md)；代码 `Assets/_Project/0_Core/{IPoolable,ObjectPool}.cs`（纯 BCL）；预热、复用、`IPoolable` 归还清理、闲置上限（超限丢弃）与扩容上限（`Rent` 抛错 / `TryRent` 降级）、重复归还与外来对象立即报错、引用相等比较器保证不受 `Equals` 重写影响、超限首次经 `GameLog.Warn(Perf)` 留痕后只计数；EditMode 185 passed / 0 failed（新增 29 例），`warning CS` 0 处；`check.ps1` PASS |
-| M1-T7 `ReactiveValue<T>` | ⬜ | — |
+| M1-T7 `ReactiveValue<T>` | ✅ | 任务卡 [tasks/M1-T7-ReactiveValue.md](./tasks/M1-T7-ReactiveValue.md)；代码 `Assets/_Project/0_Core/ReactiveValue.cs`（纯 BCL）；值真正变化才通知（`EqualityComparer<T>.Default` 判定）、`Set` 返回"是否变化"、订阅返回 `IDisposable` 且解绑幂等、`notifyWithCurrentValue` 供 View 首帧渲染、派发期增删订阅与 `EventBus` 口径一致、派发期再次 `Set` 会中止旧派发（避免 View 收到过期值）、订阅者异常隔离并计数/上报；EditMode 210 passed / 0 failed（新增 25 例），`warning CS` 0 处；`check.ps1` PASS |
 | M1-T8 `IClock` ★ | ⬜ | — |
 | M1-T9 内核解耦检查规则 ★ | ⬜ | — |
 
@@ -112,3 +112,4 @@
 | 2026-10-04 | M1-T4 完成 | `Card.Core` 新增 `IRandomProvider` + `SeededRandomProvider`（纯 BCL：xorshift32 序列 + 拒绝采样 `NextInt` + Fisher–Yates 洗牌；不用 `System.Random`，保证同种子跨运行时复现；`seed=0` 有兜底；空/单元素洗牌不消耗随机数）；新增 23 个 EditMode 用例（先红后绿，累计 127 passed / 0 failed）；登记 M1-R3（`check.ps1` R1 未剥离注释导致文档注释误报，并入 M1-T9） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
 | 2026-10-04 | M1-T5 完成 | `Card.Core` 新增日志抽象与门面：`LogLevel` / `LogChannel`（Boot…Perf）/ `ILogSink` / 静态门面 `GameLog`（分等级过滤、按通道开关、`IsEnabled` 热路径短路、未配置时静默、sink 故障不穿透并计数、消息契约校验）/ `EventDispatchLogSink`（把 M1-T2 的订阅者异常接到 `GameLog.Error`）；新增 29 个 EditMode 用例（先红后绿，累计 156 passed / 0 failed）；测试文件初版 306 行超出 300 行上限，已拆分为 `GameLogTests` + `GameLogFilterTests`（R5 门禁拦截后修复） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
 | 2026-10-04 | M1-T6 完成 | `Card.Core` 新增 `IPoolable` + `ObjectPool<T>`（纯 BCL）：预热、复用、归还清理、闲置上限（超限丢弃并计数）与扩容上限（`Rent` 抛异常 / `TryRent` 返回 false，`RejectedCount` 计数）、重复归还与归还外来对象立即抛错、`ReferenceComparer` 保证引用相等判定不受 `Equals` 重写影响、超限首次经 `GameLog.Warn(LogChannel.Perf, …)` 留痕后仅计数（避免热路径刷屏）；新增 29 个 EditMode 用例（先红后绿，累计 185 passed / 0 failed） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
+| 2026-10-04 | M1-T7 完成 | `Card.Core` 新增 `ReactiveValue<T>`（纯 BCL 可观察标量值）：相同值不通知、`Set` 返回是否变化、订阅 `IDisposable` 幂等解绑、可选 `notifyWithCurrentValue` 立即推送、派发期新增/解绑订阅与 `EventBus` 一致、**派发期再次 `Set` 会中止旧派发避免过期值**、订阅者异常隔离（计数 + 可选上报）；新增 25 个 EditMode 用例（先红后绿，累计 210 passed / 0 failed） | PROGRESS / tasks(新增) / Assets/_Project/0_Core / Assets/_Project/7_Tests |
