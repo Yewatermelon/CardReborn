@@ -2,14 +2,15 @@ using Card.Domain.Config;
 
 namespace Card.Tests.EditMode.Match
 {
-    /// <summary>M3-T2 测试辅助：构造最小可用卡牌定义。</summary>
+    /// <summary>M3-T2/T3 测试辅助：构造最小可用卡牌定义。</summary>
     internal static class MatchTestCards
     {
         public static CardDefinition Minion(
             string key = "TEST_MINION",
             int attack = 3,
             int health = 2,
-            int cost = 2)
+            int cost = 2,
+            Keyword keywords = Keyword.None)
         {
             return new CardDefinition
             {
@@ -18,7 +19,8 @@ namespace Card.Tests.EditMode.Match
                 Cost = cost,
                 Type = CardType.Minion,
                 Attack = attack,
-                Health = health
+                Health = health,
+                Keywords = keywords
             };
         }
 

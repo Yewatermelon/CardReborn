@@ -61,5 +61,43 @@ namespace Card.Tests.EditMode.Match
             Assert.Throws<ArgumentOutOfRangeException>(
                 () => CardInstance.FromDefinition(definition, instanceId: 1, ownerId: -1));
         }
+
+        [Test]
+        public void FromDefinition_CopiesKeywordsIntoKeywordSet()
+        {
+            CardDefinition definition = MatchTestCards.Minion(
+                "TAUNT_CHARGE", keywords: Keyword.Taunt | Keyword.Charge);
+
+            CardInstance card = CardInstance.FromDefinition(definition, 1, 0);
+
+            Assert.That(card.Keywords.Has(Keyword.Taunt), Is.True);
+            Assert.That(card.Keywords.Has(Keyword.Charge), Is.True);
+            Assert.That(card.Keywords.Has(Keyword.Windfury), Is.False);
+            Assert.That(card.Statuses.IsEmpty, Is.True);
+        }
+
+        [Test]
+        public void FromDefinition_WhenDivineShield_PreloadsConsumableStatus()
+        {
+            CardDefinition definition = MatchTestCards.Minion(
+                "SHIELDED", keywords: Keyword.DivineShield);
+
+            CardInstance card = CardInstance.FromDefinition(definition, 1, 0);
+
+            Assert.That(card.Statuses.Has(StatusFlags.DivineShield), Is.True);
+            Assert.That(card.Statuses.ConsumeDivineShield(), Is.True);
+            Assert.That(card.Statuses.Has(StatusFlags.DivineShield), Is.False);
+        }
+
+        [Test]
+        public void FromDefinition_Spell_HasNoKeywordsOrStatuses()
+        {
+            CardDefinition definition = MatchTestCards.Spell();
+
+            CardInstance card = CardInstance.FromDefinition(definition, 1, 0);
+
+            Assert.That(card.Keywords.IsEmpty, Is.True);
+            Assert.That(card.Statuses.IsEmpty, Is.True);
+        }
     }
 }
