@@ -1,18 +1,25 @@
 using Card.Core;
+using Card.Domain.Config;
 
 namespace Card.Domain.Match
 {
     /// <summary>
-    /// 玩家座位状态：固定 <see cref="Id"/>（0/1），聚合英雄与法力。
-    /// 卡牌分区（牌库/手牌/战场/坟场）在 M3-T2 接入。
+    /// 玩家座位状态：固定 <see cref="Id"/>（0/1），聚合英雄、法力与四个卡牌分区。
+    /// 分区容量由 <see cref="RulesConfig"/> 提供（手牌/场上限；牌库/坟场不限）。
     /// </summary>
     public sealed class PlayerState
     {
-        public PlayerState(int id, HeroState hero, ManaPool mana)
+        public PlayerState(int id, HeroState hero, ManaPool mana, RulesConfig? rules = null)
         {
             Id = id;
             Hero = Guard.NotNull(hero, nameof(hero));
             Mana = Guard.NotNull(mana, nameof(mana));
+
+            RulesConfig config = rules ?? new RulesConfig();
+            Deck = new Zone(ZoneType.Deck, capacity: null);
+            Hand = new Zone(ZoneType.Hand, config.HandLimit);
+            Board = new Zone(ZoneType.Board, config.BoardLimit);
+            Graveyard = new Zone(ZoneType.Graveyard, capacity: null);
         }
 
         /// <summary>座位 Id（0 = 先手候选位 / 1，业务标识，不是集合下标）。</summary>
@@ -21,5 +28,13 @@ namespace Card.Domain.Match
         public HeroState Hero { get; }
 
         public ManaPool Mana { get; }
+
+        public Zone Deck { get; }
+
+        public Zone Hand { get; }
+
+        public Zone Board { get; }
+
+        public Zone Graveyard { get; }
     }
 }
