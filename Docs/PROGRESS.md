@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M3（领域模型与规则内核）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
+**当前阶段：M3（领域模型与规则内核）🟡 进行中（1/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
+| M3 领域模型与规则内核 | 🟡 进行中 | 1/10 | 待评 | 质量门禁最严；2026-10-05 T1 落地：状态骨架可构造，Unity 467/467、工具链 447/447、覆盖率 0_Core 96.51% / Domain+App 92.65% |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -104,6 +104,16 @@
 > 覆盖率门禁（M1-R2 扩展）：`0_Core` 行覆盖率 ≥ 90%、`Domain + Application` ≥ 80%（NFR-4），由 `Tools/coverage.ps1` 强制。
 > **收尾结果**：全链路已打通并入库（37 行卡表 → 校验 → 生成物 → 加载 → 卡池查询；热加载成功才换库、失败保旧）；内容目标由 `ConfigContentTests` 锁定。
 > **遗留（P3）**：M2-R1（`CsvTable` 支持 `#` 注释行）、M2-R3（生成物 schema 自动迁移）、M1-R4（补齐未覆盖行）。
+
+---
+
+## M3 任务级状态（进行中 1/10）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M3-T1 对局状态模型 | ✅ | 任务卡 [tasks/M3-T1-MatchState.md](./tasks/M3-T1-MatchState.md)（含 AC 对齐、铁律扫描、边界推演、反向审查与评审结论）；代码 `Assets/_Project/1_Domain/Match/{TurnPhase,ManaPool,HeroState,PlayerState,MatchState}.cs`（纯 C#，命名空间 `Card.Domain.Match`）；先红（CS0234/CS0246）后绿，新增 24 例（ManaPoolTests 12 + MatchStateModelTests 12）。Unity 2022.3.54f1c1 批处理 **467 passed / 0 failed**、编译 0 error/0 warning；无 Unity 工具链 **447 passed / 0 failed**；ManaPool/MatchState/PlayerState 覆盖率 100%、HeroState 88%；汇总 0_Core 96.51% / Domain + App 92.65%；新增 9 个 .meta，全仓 206 GUID 无重复；`check.ps1` PASS |
+
+> M3 门禁：`RuleEngine` + 状态模型单测覆盖 ≥ 85%，含全部边界场景；不写任何 UI 代码；★ 项在无 Unity 环境下通过。
 
 ---
 
