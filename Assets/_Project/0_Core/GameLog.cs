@@ -55,6 +55,18 @@ namespace Card.Core
             s_sink = null;
         }
 
+        /// <summary>
+        /// 测试隔离用：清空后端、重置最小等级为 Info、归零失败计数与最近异常。
+        /// 生产代码不应调用。
+        /// </summary>
+        internal static void ResetForTests()
+        {
+            s_sink = null;
+            s_minimumLevel = LogLevel.Info;
+            s_sinkFailureCount = 0;
+            s_lastSinkFailure = null;
+        }
+
         /// <summary>枚举值是否是已定义的通道。</summary>
         public static bool IsDefinedChannel(LogChannel channel)
         {

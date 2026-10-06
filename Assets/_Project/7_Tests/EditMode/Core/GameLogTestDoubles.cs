@@ -70,7 +70,7 @@ namespace Card.Tests.EditMode.Core
     {
         public static void Reset()
         {
-            GameLog.Disable();
+            GameLog.ResetForTests();
             foreach (LogChannel channel in Enum.GetValues(typeof(LogChannel)))
             {
                 GameLog.SetChannelEnabled(channel, true);

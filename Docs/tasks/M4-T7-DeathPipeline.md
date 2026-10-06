@@ -95,7 +95,7 @@ EditMode，≥ 5 例；先红。
 
 - [x] 全部 AC 满足且附证据（见 11.1）
 - [x] 先红后绿（CS0246 `DeathProcessor` 不存在）
-- [x] 0 error / 0 warning（无 Unity 实跑；Unity 编辑器补验待回报）
+- [x] 0 error / 0 warning（无 Unity 实跑；Unity 编辑器 EditMode 补验 **728 passed / 0 failed**，2026-10-06 用户回报）
 - [x] Docs/03 铁律自查 + Docs/04 评审无 P0/P1（见 11.2/11.6）
 - [x] PROGRESS 更新
 
@@ -137,7 +137,7 @@ EditMode，≥ 5 例；先红。
 - 覆盖率：0_Core 96.51%、Domain+App **91.59%**。
 - 静态门禁：`check.ps1` PASS（193 文件）；2 个新 .meta，279 GUID 无重复。
 - 既有测试：零改动全绿。
-- Unity 权威：待编辑器 EditMode 补验，预期 **719 passed / 0 failed**（713 + 6）。
+- Unity 权威：2026-10-06 用户在 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）实跑回报 **728 passed / 0 failed**。比预期 719 多 9 例，原因是本次顺带修复了 M1 遗留的 GameLog 静态状态隔离缺陷（`ResetForTests()` 归零 `SinkFailureCount`），之前被静默跳过的 GameLog 参数化用例现在全部执行。无 Unity 侧仍为 708（该侧测试顺序未触发跳过）。
 
 ### 11.5 影响面
 
@@ -154,4 +154,4 @@ EditMode，≥ 5 例；先红。
 
 ### 11.7 评审结论
 
-**通过**（AI 自审）：无 P0/P1；无新增遗留项。无 Unity 708/0 + Unity 编辑器补验数字回填后关闭。
+**通过**（AI 自审）：无 P0/P1；无新增遗留项。双环境证据齐备（无 Unity 708/0、Unity EditMode 728/0），本任务关闭。附带修复 M1 GameLog 测试隔离缺陷（`SinkFailureCount` 未归零导致 Unity 侧用例被跳过）。
