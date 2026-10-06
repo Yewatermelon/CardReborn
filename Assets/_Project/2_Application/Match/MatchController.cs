@@ -24,6 +24,7 @@ namespace Card.Application.Match
         private readonly List<MatchStepRecord> _history = new List<MatchStepRecord>();
         private readonly EventLog _events = new EventLog();
         private readonly TriggerDispatcher _dispatcher = new TriggerDispatcher();
+        private readonly DeathProcessor _deaths = new DeathProcessor();
 
         public MatchController(MatchState state, CardDatabase database)
         {
@@ -101,7 +102,9 @@ namespace Card.Application.Match
                 ?? throw new InvalidOperationException(
                     "命令已通过校验但缺少结算器（宿主装配错误）：" + command.GetType().Name);
 
-            settler.Settle(new SettlementContext(_state, _database, _phases, _events, _dispatcher), command);
+            SettlementContext ctx = new SettlementContext(_state, _database, _phases, _events, _dispatcher);
+            settler.Settle(ctx, command);
+            _deaths.Process(ctx);
             FinishIfDecided(command);
             return CommandResult.Valid();
         }
