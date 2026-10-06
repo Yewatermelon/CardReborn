@@ -53,6 +53,9 @@ namespace Card.Domain.Match
         /// <summary>运行时状态集合（召唤失调/冻结/圣盾）。</summary>
         public StatusSet Statuses { get; }
 
+        /// <summary>本回合已攻击次数（回合切换时重置；RuleEngine 校验用）。</summary>
+        public int AttacksUsedThisTurn { get; set; }
+
         /// <summary>从配置定义创建实例：复制初始攻防与关键词，配置变化不影响已生成实例。
         /// 配置含圣盾时，在状态集合中预置可消耗的圣盾状态（关键词=来源，状态=结算实例）。</summary>
         public static CardInstance FromDefinition(
