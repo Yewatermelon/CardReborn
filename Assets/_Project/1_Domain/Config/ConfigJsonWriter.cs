@@ -120,7 +120,15 @@ namespace Card.Domain.Config
                 .Add("heroHealth", JsonValue.From(rules.HeroHealth))
                 .Add("handLimit", JsonValue.From(rules.HandLimit))
                 .Add("boardLimit", JsonValue.From(rules.BoardLimit))
-                .Add("manaLimit", JsonValue.From(rules.ManaLimit));
+                .Add("manaLimit", JsonValue.From(rules.ManaLimit))
+                .Add("deckSize", JsonValue.From(rules.DeckSize))
+                .Add("startingHandFirst", JsonValue.From(rules.StartingHandFirst))
+                .Add("startingHandSecond", JsonValue.From(rules.StartingHandSecond))
+                .Add(
+                    "theCoinCardKey",
+                    rules.TheCoinCardKey == null
+                        ? JsonValue.Null()
+                        : JsonValue.From(rules.TheCoinCardKey));
 
             return Envelope("rules", body);
         }

@@ -744,6 +744,27 @@
       "artKey": "art_spell_037",
       "audioKey": "sfx_cast_037",
       "enabled": false
+    },
+    {
+      "id": 38,
+      "key": "NEUTRAL_THE_COIN",
+      "nameKey": "CARD_038_NAME",
+      "descKey": "CARD_038_DESC",
+      "cost": 0,
+      "type": "Spell",
+      "rarity": "Common",
+      "class": "Neutral",
+      "attack": 0,
+      "health": 0,
+      "keywords": "",
+      "targetRule": "None",
+      "effects": [
+        "GainManaEffect:1"
+      ],
+      "setKey": "Core",
+      "artKey": "art_spell_coin",
+      "audioKey": "sfx_cast_coin",
+      "enabled": false
     }
   ]
 }

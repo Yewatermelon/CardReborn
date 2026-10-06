@@ -104,6 +104,11 @@ namespace Card.Domain.Config
             CheckRange(issues, line, "HandLimit", rules.HandLimit, 1, 10);
             CheckRange(issues, line, "BoardLimit", rules.BoardLimit, 1, 7);
             CheckRange(issues, line, "ManaLimit", rules.ManaLimit, 1, 10);
+            CheckRange(issues, line, "DeckSize", rules.DeckSize, 1, 100);
+            CheckRange(issues, line, "StartingHandFirst", rules.StartingHandFirst, 0, rules.HandLimit);
+            CheckRange(issues, line, "StartingHandSecond", rules.StartingHandSecond, 0, rules.HandLimit);
+
+            // TheCoinCardKey 为 null 表示配置未提供（旧表兼容）：不报错，外键检查一并跳过。
             return rules;
         }
 

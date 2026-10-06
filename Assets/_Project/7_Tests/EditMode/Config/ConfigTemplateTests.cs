@@ -227,18 +227,31 @@ namespace Card.Tests.EditMode.Config
         {
             CsvTable table = ConfigTemplates.Load(ConfigTemplates.RulesFile);
 
-            Assert.That(table.Header, Is.EqualTo(new[] { "HeroHealth", "HandLimit", "BoardLimit", "ManaLimit" }));
+            Assert.That(
+                table.Header,
+                Is.EqualTo(new[]
+                {
+                    "HeroHealth", "HandLimit", "BoardLimit", "ManaLimit",
+                    "DeckSize", "StartingHandFirst", "StartingHandSecond", "TheCoinCardKey"
+                }));
             Assert.That(table.RowCount, Is.EqualTo(1), "规则表是单行表");
 
             int heroHealth = int.Parse(table.GetCell(0, "HeroHealth"));
             int handLimit = int.Parse(table.GetCell(0, "HandLimit"));
             int boardLimit = int.Parse(table.GetCell(0, "BoardLimit"));
             int manaLimit = int.Parse(table.GetCell(0, "ManaLimit"));
+            int deckSize = int.Parse(table.GetCell(0, "DeckSize"));
+            int startFirst = int.Parse(table.GetCell(0, "StartingHandFirst"));
+            int startSecond = int.Parse(table.GetCell(0, "StartingHandSecond"));
 
             Assert.That(heroHealth, Is.InRange(1, 100));
             Assert.That(handLimit, Is.InRange(1, 10), "手牌上限不得超过 10（Docs/01 第 3.2 节）");
             Assert.That(boardLimit, Is.InRange(1, 7), "场面上限不得超过 7（Docs/01 第 3.3 节）");
             Assert.That(manaLimit, Is.InRange(1, 10), "法力上限不得超过 10");
+            Assert.That(deckSize, Is.EqualTo(30), "卡组严格 30 张（Docs/01 §7.2）");
+            Assert.That(startFirst, Is.InRange(0, handLimit));
+            Assert.That(startSecond, Is.InRange(0, handLimit));
+            Assert.That(table.GetCell(0, "TheCoinCardKey"), Is.EqualTo("NEUTRAL_THE_COIN"));
         }
     }
 }

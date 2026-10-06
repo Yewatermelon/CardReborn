@@ -36,3 +36,4 @@ Id,Key,NameKey,DescKey,Cost,Type,Rarity,Class,Attack,Health,Keywords,TargetRule,
 35,MAGE_TIME_WARP,CARD_035_NAME,CARD_035_DESC,10,Spell,Legendary,Mage,0,0,,None,DrawEffect:3,Expansion,art_spell_035,sfx_cast_035,TRUE
 36,NEUTRAL_OLD_TEST,CARD_036_NAME,CARD_036_DESC,1,Minion,Common,Neutral,1,1,,None,,Legacy,art_card_036,sfx_play_036,FALSE
 37,MAGE_OLD_SPELL,CARD_037_NAME,CARD_037_DESC,2,Spell,Common,Mage,0,0,,EnemyMinion,DamageEffect:99,Legacy,art_spell_037,sfx_cast_037,FALSE
+38,NEUTRAL_THE_COIN,CARD_038_NAME,CARD_038_DESC,0,Spell,Common,Neutral,0,0,,None,GainManaEffect:1,Core,art_spell_coin,sfx_cast_coin,FALSE

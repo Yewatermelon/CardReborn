@@ -10,7 +10,7 @@ namespace Card.Domain.Config
     /// 说明：Docs/03 第 9.1 节提到版本不匹配时"警告并尝试迁移"；当前**不做自动迁移**，直接失败（登记为 M2-R3），
     /// 避免把不同版本的字段静默读成错值。
     /// </summary>
-    public static class ConfigJsonReader
+    public static partial class ConfigJsonReader
     {
         public static IReadOnlyList<CardDefinition> ReadCards(JsonValue document, string source)
         {
@@ -111,31 +111,25 @@ namespace Card.Domain.Config
             return weights;
         }
 
-        public static GachaConfig ReadGacha(JsonValue document, string source)
-        {
-            RequireSchemaVersion(document, source);
-            JsonValue body = RequireObject(document, "gacha", source);
-
-            return new GachaConfig
-            {
-                PackSize = RequireInt(body, "packSize", source, "gacha"),
-                CoinCost = RequireInt(body, "coinCost", source, "gacha"),
-                PityCount = RequireInt(body, "pityCount", source, "gacha"),
-                PityRarity = RequireEnum<CardRarity>(body, "pityRarity", source, "gacha")
-            };
-        }
-
         public static RulesConfig ReadRules(JsonValue document, string source)
         {
             RequireSchemaVersion(document, source);
             JsonValue body = RequireObject(document, "rules", source);
+            RulesConfig fallback = new RulesConfig();
 
             return new RulesConfig
             {
                 HeroHealth = RequireInt(body, "heroHealth", source, "rules"),
                 HandLimit = RequireInt(body, "handLimit", source, "rules"),
                 BoardLimit = RequireInt(body, "boardLimit", source, "rules"),
-                ManaLimit = RequireInt(body, "manaLimit", source, "rules")
+                ManaLimit = RequireInt(body, "manaLimit", source, "rules"),
+                DeckSize = OptionalInt(body, "deckSize", fallback.DeckSize, source),
+                StartingHandFirst = OptionalInt(
+                    body, "startingHandFirst", fallback.StartingHandFirst, source),
+                StartingHandSecond = OptionalInt(
+                    body, "startingHandSecond", fallback.StartingHandSecond, source),
+                TheCoinCardKey = OptionalString(
+                    body, "theCoinCardKey", fallback.TheCoinCardKey, source)
             };
         }
 

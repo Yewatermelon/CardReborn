@@ -84,12 +84,21 @@ namespace Card.Domain.Config
 
         public static RulesConfig ParseRules(CsvTable table, int rowIndex, string tableName)
         {
+            RulesConfig fallback = new RulesConfig();
+
             return new RulesConfig
             {
                 HeroHealth = RequiredInt(table, rowIndex, tableName, "HeroHealth"),
                 HandLimit = RequiredInt(table, rowIndex, tableName, "HandLimit"),
                 BoardLimit = RequiredInt(table, rowIndex, tableName, "BoardLimit"),
-                ManaLimit = RequiredInt(table, rowIndex, tableName, "ManaLimit")
+                ManaLimit = RequiredInt(table, rowIndex, tableName, "ManaLimit"),
+                DeckSize = OptionalIntOrDefault(table, rowIndex, tableName, "DeckSize", fallback.DeckSize),
+                StartingHandFirst = OptionalIntOrDefault(
+                    table, rowIndex, tableName, "StartingHandFirst", fallback.StartingHandFirst),
+                StartingHandSecond = OptionalIntOrDefault(
+                    table, rowIndex, tableName, "StartingHandSecond", fallback.StartingHandSecond),
+                TheCoinCardKey = OptionalTextOrDefault(
+                    table, rowIndex, "TheCoinCardKey", fallback.TheCoinCardKey)
             };
         }
 
@@ -148,6 +157,34 @@ namespace Card.Domain.Config
         {
             string value = Cell(table, rowIndex, tableName, column);
             return value.Length == 0 ? 0 : ParseInt(value, table, rowIndex, tableName, column);
+        }
+
+        /// <summary>缺列或空单元格时回落 <paramref name="fallback"/>；有值则严格解析。</summary>
+        private static int OptionalIntOrDefault(
+            CsvTable table, int rowIndex, string tableName, string column, int fallback)
+        {
+            if (!table.HasColumn(column))
+            {
+                return fallback;
+            }
+
+            string value = table.GetCell(rowIndex, column);
+            return value.Length == 0
+                ? fallback
+                : ParseInt(value, table, rowIndex, tableName, column);
+        }
+
+        /// <summary>缺列或空单元格时回落 <paramref name="fallback"/>。</summary>
+        private static string OptionalTextOrDefault(
+            CsvTable table, int rowIndex, string column, string fallback)
+        {
+            if (!table.HasColumn(column))
+            {
+                return fallback;
+            }
+
+            string value = table.GetCell(rowIndex, column);
+            return value.Length == 0 ? fallback : value;
         }
 
         private static int ParseInt(string value, CsvTable table, int rowIndex, string tableName, string column)

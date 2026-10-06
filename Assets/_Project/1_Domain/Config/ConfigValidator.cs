@@ -37,6 +37,11 @@ namespace Card.Domain.Config
                 sources.HeroPowers != null,
                 issues);
             List<CardDefinition> cards = CardConfigValidator.ValidateCards(sources.Cards, rules, issues);
+            if (rules != null)
+            {
+                CheckTheCoinReference(rules, cards, issues);
+            }
+
             List<RarityWeight> weights = RuleConfigValidator.ValidateRarityWeights(sources.RarityWeights, issues);
             GachaConfig? gacha = RuleConfigValidator.ValidateGacha(sources.GachaConfig, issues);
 
@@ -99,6 +104,51 @@ namespace Card.Domain.Config
             string message)
         {
             issues.Add(new ConfigValidationIssue(tableName, line, column, message));
+        }
+
+        /// <summary>跨表外键：仅当 Rules 显式配置 TheCoinCardKey 时检查其在 Cards 表存在且为法术。
+        /// 未配置（旧表/隔离构造）时跳过；Cards 列表为空（源表缺失或整表解析失败）时不叠加。</summary>
+        private static void CheckTheCoinReference(
+            RulesConfig rules,
+            List<CardDefinition> cards,
+            List<ConfigValidationIssue> issues)
+        {
+            if (string.IsNullOrWhiteSpace(rules.TheCoinCardKey) || cards.Count == 0)
+            {
+                return;
+            }
+
+            CardDefinition? coin = null;
+            string coinKey = rules.TheCoinCardKey;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (cards[i].Key == coinKey)
+                {
+                    coin = cards[i];
+                    break;
+                }
+            }
+
+            if (coin == null)
+            {
+                Add(
+                    issues,
+                    RulesTable,
+                    0,
+                    "TheCoinCardKey",
+                    "幸运币 Key 在 Cards 表中不存在：" + rules.TheCoinCardKey);
+                return;
+            }
+
+            if (coin.Type != CardType.Spell)
+            {
+                Add(
+                    issues,
+                    RulesTable,
+                    0,
+                    "TheCoinCardKey",
+                    "幸运币必须是法术，实际为 " + coin.Type);
+            }
         }
     }
 }

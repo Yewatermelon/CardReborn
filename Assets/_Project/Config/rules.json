@@ -5,6 +5,10 @@
     "heroHealth": 30,
     "handLimit": 10,
     "boardLimit": 7,
-    "manaLimit": 10
+    "manaLimit": 10,
+    "deckSize": 30,
+    "startingHandFirst": 3,
+    "startingHandSecond": 4,
+    "theCoinCardKey": "NEUTRAL_THE_COIN"
   }
 }
