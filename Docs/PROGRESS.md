@@ -14,7 +14,7 @@
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
-| M4 回合状态机与效果系统 | 🟡 进行中 | 6/10 | 通过（T1–T6） | 2026-10-06 T6 完成：CardInstance.TakeDamage（圣盾抵消+剧毒必杀）+ AttackSettler（攻击英雄/随从交换/同时伤害/消耗次数）；无 Unity 702 例、Unity EditMode 待补验；质量门禁最严 |
+| M4 回合状态机与效果系统 | 🟡 进行中 | 6/10 | 通过（T1–T6） | 2026-10-06 T6 完成：CardInstance.TakeDamage（圣盾抵消+剧毒必杀）+ AttackSettler（攻击英雄/随从交换/同时伤害/消耗次数）；无 Unity 702 例、Unity EditMode 713 例全过；质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
