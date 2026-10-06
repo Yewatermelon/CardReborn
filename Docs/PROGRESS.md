@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M3（领域模型与规则内核）🟡 进行中（7/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
+**当前阶段：M3（领域模型与规则内核）🟡 进行中（8/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | 🟡 进行中 | 7/10 | 待评 | 质量门禁最严；2026-10-05 T1/T2/T3/T4 落地：状态骨架 + 卡牌实例四分区 + 关键词/状态集合 + 命令与结果模型；2026-07-01 T5 开局初始化落地：牌库构建 + 种子洗牌 + 掷先后手 + 抽起手 + 幸运币；2026-07-02 T6 RuleEngine.Validate 落地：出牌/攻击/英雄技能/结束回合合法性校验；2026-07-02 T7 胜负判定落地：MatchEvaluator（Ongoing/Player0Wins/Player1Wins/Draw）、终局后命令拒绝、HeroState 允许构造后归零；Unity 批处理验证受 M3-B1 阻塞暂缓，T7 以无 Unity 工具链 555/555、0_Core 96.51% / Domain+App 89.88%、check.ps1 PASS 为证 |
+| M3 领域模型与规则内核 | 🟡 进行中 | 8/10 | 待评 | 质量门禁最严；2026-10-05 T1/T2/T3/T4 落地：状态骨架 + 卡牌实例四分区 + 关键词/状态集合 + 命令与结果模型；2026-07-01 T5 开局初始化落地；2026-07-02 T6 RuleEngine.Validate 落地：四种命令合法性校验；2026-07-02 T7 胜负判定落地：MatchEvaluator + 终局命令拒绝；2026-10-06 T8 疲劳与爆牌落地：CardDrawService（抽牌/爆牌入坟场/空库递增疲劳伤害）、DrawOutcome 纯数据；Unity 批处理验证受 M3-B1 阻塞暂缓，T8 以无 Unity 工具链 566/566、0_Core 96.51% / Domain+App 90.13%、check.ps1 PASS 为证 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -117,7 +117,8 @@
 | M3-T4 命令与结果模型 | ✅ | 任务卡 [tasks/M3-T4-Command-Result.md](./tasks/M3-T4-Command-Result.md)；代码 `1_Domain/Match/{IGameCommand,TargetRef,GameCommands,CommandResult}.cs`（新增 4 文件：接口 + 目标引用 + 命令类型 + 结果与 CommandError）；先红（CS0246/CS0103）后绿，新增 20 例。Unity 批处理验证同样受 **M3-B1** 阻塞暂缓（.meta 按 Unity 标准格式手写、GUID 唯一，非 Unity 生成）；无 Unity 工具链 **511 passed / 0 failed**；TargetRef/GameCommands/CommandResult 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 93.71%；新增 6 .meta，Assets 223 GUID 无重复；`check.ps1` PASS（138 文件）。关键决策：命令引用卡牌/角色用 InstanceId/座位 Id 而非集合索引（任务卡 §5.1） |
 | M3-T5 开局初始化 ★ | ✅ | 任务卡 [tasks/M3-T5-Match-Setup.md](./tasks/M3-T5-Match-Setup.md)；代码 `2_Application/Match/{MatchSetupRequest,MatchFactory}.cs`（新增）+ 配置链路追加 4 Rules 字段与幸运币卡（RulesConfig/Parser/Writer/Reader/校验器 + Rules.csv/Cards.csv + 生成物）；先红（CS0234/CS0246）后绿，新增 14 例。Unity 批处理验证受 **M3-B1** 阻塞暂缓（5 个新 .meta 手写，含 Application/Match 新文件夹，GUID 经 228 个 meta 去重）；无 Unity 工具链 **525 passed / 0 failed**；MatchFactory/MatchSetupRequest 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 92.84%；`check.ps1` PASS（142 文件）。关键约定：随机序固定（双方洗牌→掷先手）、InstanceId 分段、末位=牌库顶、TheCoinCardKey 缺列=null 跳过外键但真实 CSV 强制（任务卡 §10-4） |
 | M3-T6 `RuleEngine.Validate` | ✅ | 任务卡 [tasks/M3-T6-RuleEngine-Validate.md](./tasks/M3-T6-RuleEngine-Validate.md)；代码 `2_Application/Match/{RuleEngine,RuleEngine.Attack,RuleEngine.HeroPower,RuleEngine.Target}.cs`（partial 拆分，主文件 105 行）+ `1_Domain/Match/CardInstance.cs` 补 `AttacksUsedThisTurn`；测试拆三文件（PlayCard/Attack/HeroPower+EndTurn）+ 共享 helper。先红（CS0234）后绿，新增 21 例（出牌 9 + 攻击 7 + 技能/结束回合 5）。Unity 批处理验证受 **M3-B1** 阻塞暂缓（7 个新 .meta 手写，全仓 GUID 无重复）；无 Unity 工具链 **546 passed / 0 failed**；RuleEngine 各 partial 覆盖率 85%–100%；汇总 0_Core 96.51% / Domain + App 89.77%；`check.ps1` PASS。关键决策：阶段不符复用 `NotYourTurn`；风怒已支持（关键词检查 2 次）；潜行目标校验未做（P1，任务卡 §4） |
-| M3-T7 `MatchEvaluator` 胜负判定 | ✅ | 任务卡 [tasks/M3-T7-Match-Evaluator.md](./tasks/M3-T7-Match-Evaluator.md)；代码 `1_Domain/Match/{MatchResult,MatchOutcome}.cs` + `2_Application/Match/MatchEvaluator.cs` + `PlayerState.FatigueCounter` + `MatchState.IsFinished` + `RuleEngine` 终局检查；`HeroState` 构造器下限从 1 放宽到 0（运行期允许归零）。先红（CS0246/CS0234）后绿，新增 9 例（Evaluator 5 + RuleEngine 终局 2 + 字段默认 2）。Unity 批处理验证受 **M3-B1** 阻塞暂缓（4 个新 .meta 手写，全仓 GUID 无重复）；无 Unity 工具链 **555 passed / 0 failed**；MatchEvaluator 100% 覆盖；汇总 0_Core 96.51% / Domain + App 89.88%；`check.ps1` PASS。关键决策：终局后所有命令统一 `InvalidTarget`；Draw 测试用负数血量需构造后设置（HeroState 不允许负数构造） |
+| M3-T7 `MatchEvaluator` 胜负判定 | ✅ | 任务卡 [tasks/M3-T7-Match-Evaluator.md](./tasks/M3-T7-Match-Evaluator.md)；代码 `1_Domain/Match/{MatchResult,MatchOutcome}.cs` + `2_Application/Match/MatchEvaluator.cs` + `PlayerState.FatigueCounter` + `MatchState.IsFinished` + `RuleEngine` 终局检查；`HeroState` 构造器下限从 1 放宽到 0（运行期允许归零）。先红（CS0246/CS0234）后绿，新增 9 例。无 Unity 工具链 **555 passed / 0 failed**；MatchEvaluator 100% 覆盖；汇总 0_Core 96.51% / Domain + App 89.88%；`check.ps1` PASS |
+| M3-T8 疲劳与爆牌 | ✅ | 任务卡 [tasks/M3-T8-Fatigue-Overdraw.md](./tasks/M3-T8-Fatigue-Overdraw.md)；代码 `1_Domain/Match/DrawOutcome.cs`（纯数据：入手/爆牌实例、疲劳伤害、计数、致死）+ `2_Application/Match/CardDrawService.cs`（逐张结算：顶牌入手/手牌满爆牌入坟场/空库 `FatigueCounter+1` 并扣等量生命）。先红（CS0246/CS0234）后绿，新增 11 例（疲劳 5 + 抽牌 1 + 爆牌 3 + 参数 2）。无 Unity 工具链 **566 passed / 0 failed**；DrawOutcome/CardDrawService **100%** 覆盖；汇总 0_Core 96.51% / Domain + App 90.13%；`check.ps1` PASS；3 个新 .meta，243 GUID 无重复。关键决策：爆牌 Deck→Graveyard（不入手、不触发亡语）；疲劳直接扣生命（护甲 M4 伤害系统处理）；Docs/02 验收 1/2/3 已锁 |
 
 > M3 门禁：`RuleEngine` + 状态模型单测覆盖 ≥ 85%，含全部边界场景；不写任何 UI 代码；★ 项在无 Unity 环境下通过。
 
@@ -127,7 +128,7 @@
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| M3-B1 | P2 | M3-T3/T4/T5/T6/T7 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 555/555 与覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
+| M3-B1 | P2 | M3-T3/T4/T5/T6/T7/T8 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 566/566 与覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
 
 ## 里程碑复盘记录索引
 
@@ -174,3 +175,4 @@
 | 2026-10-04 | 检查点与备份 | 建立可精确回退的检查点：**标签 `checkpoint/m2-complete`**（annotated，指向 `3adfef5`）已推送远端；HANDOFF 新增第 10 节"检查点与恢复（已实测）"，含三种保底方式对比与恢复步骤。实测结论：**本地整目录复制（含 `.git/`，内有 LFS 对象）可离线恢复到 0 改动的干净工作区**（本地克隆演练：索引 442 文件、工作区 0 改动、LFS 文件为真内容）；**离线 bundle（3.04 MB，SHA256 `68DA…4433`）不含 LFS 对象**，直接克隆会在 smudge 处中断（索引为空），需先 `git lfs fetch --all` 或跳过 smudge | Docs/HANDOFF / PROGRESS |
 | 2026-07-02 | M3-T6 完成 | `RuleEngine.Validate` 四种命令合法性校验落地：出牌（费用/满场/目标规则）/攻击（失调/次数/嘲讽）/英雄技能（已用/费用/目标）/结束回合；代码 `2_Application/Match/RuleEngine{,Attack,HeroPower,Target}.cs`（partial 拆分，主文件 105 行）+ `CardInstance.AttacksUsedThisTurn`；测试 21 例（出牌 9 + 攻击 7 + 技能/结束 5）；无 Unity 工具链 **546 passed / 0 failed**、0_Core 96.51% / Domain+App 89.77%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/2_Application / Assets/_Project/1_Domain / Assets/_Project/7_Tests |
 | 2026-07-02 | M3-T7 完成 | `MatchEvaluator` 胜负判定落地：`1_Domain/Match/{MatchResult,MatchOutcome}.cs` + `2_Application/Match/MatchEvaluator.cs`；`PlayerState.FatigueCounter` + `MatchState.IsFinished`；`RuleEngine` 终局后拒绝所有命令；`HeroState` 构造器下限放宽到 0；测试 9 例；无 Unity 工具链 **555 passed / 0 failed**、0_Core 96.51% / Domain+App 89.88%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
+| 2026-10-06 | M3-T8 完成 | `CardDrawService` 疲劳与爆牌落地：`1_Domain/Match/DrawOutcome.cs`（纯数据）+ `2_Application/Match/CardDrawService.cs`（顶牌入手/手牌满爆牌入坟场/空库递增疲劳 1/2/3…，疲劳可致死）；测试 11 例；无 Unity 工具链 **566 passed / 0 failed**、0_Core 96.51% / Domain+App 90.13%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
