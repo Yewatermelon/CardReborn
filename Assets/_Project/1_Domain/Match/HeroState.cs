@@ -18,7 +18,7 @@ namespace Card.Domain.Match
             HeroKey = Guard.NotNullOrWhiteSpace(heroKey, nameof(heroKey));
             HeroPowerKey = Guard.NotNullOrWhiteSpace(heroPowerKey, nameof(heroPowerKey));
             MaxHealth = Guard.Positive(maxHealth, nameof(maxHealth));
-            Health = Guard.InRange(health, 1, maxHealth + 1, nameof(health));
+            Health = Guard.InRange(health, 0, maxHealth + 1, nameof(health));
         }
 
         /// <summary>英雄配置 Key（指向 Heroes 表）。</summary>

@@ -18,6 +18,11 @@ namespace Card.Application.Match
                 return CommandResult.Invalid(CommandError.UnknownCommand, "命令不能为 null。");
             }
 
+            if (state.IsFinished)
+            {
+                return CommandResult.Invalid(CommandError.InvalidTarget, "对局已结束，无法执行任何命令。");
+            }
+
             PlayerState player;
             try
             {

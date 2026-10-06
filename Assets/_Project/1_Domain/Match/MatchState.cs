@@ -34,6 +34,9 @@ namespace Card.Domain.Match
         /// <summary>当前行动方座位 Id。</summary>
         public int ActivePlayerId { get; set; }
 
+        /// <summary>对局是否已结束（M3-T7）。</summary>
+        public bool IsFinished { get; set; }
+
         /// <summary>当前行动方。</summary>
         public PlayerState ActivePlayer => GetPlayer(ActivePlayerId);
 

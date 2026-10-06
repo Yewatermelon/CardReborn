@@ -38,7 +38,7 @@ namespace Card.Tests.EditMode.Match
             Assert.Throws<ArgumentException>(() => new HeroState(" ", "POWER", 30));
             Assert.Throws<ArgumentException>(() => new HeroState("MAGE", " ", 30));
             Assert.Throws<ArgumentOutOfRangeException>(() => new HeroState("MAGE", "POWER", maxHealth: 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new HeroState("MAGE", "POWER", 30, health: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new HeroState("MAGE", "POWER", 30, health: -1));
             Assert.Throws<ArgumentOutOfRangeException>(() => new HeroState("MAGE", "POWER", 30, health: 31));
         }
 

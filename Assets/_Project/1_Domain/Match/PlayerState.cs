@@ -36,5 +36,8 @@ namespace Card.Domain.Match
         public Zone Board { get; }
 
         public Zone Graveyard { get; }
+
+        /// <summary>疲劳计数：牌库空时每次抽牌递增，M4 结算用（M3-T7 先提供字段）。</summary>
+        public int FatigueCounter { get; set; }
     }
 }
