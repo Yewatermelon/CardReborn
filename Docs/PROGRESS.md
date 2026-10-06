@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M3（领域模型与规则内核）🟡 进行中（9/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
+**当前阶段：M3（领域模型与规则内核）🔵 待评审（10/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | 🟡 进行中 | 9/10 | 待评 | 质量门禁最严；2026-10-05 T1～T4 落地：状态骨架/四分区/关键词状态/命令模型；2026-07-01 T5 开局初始化；2026-07-02 T6 RuleEngine.Validate、T7 MatchEvaluator 胜负判定；2026-10-06 T8 疲劳与爆牌（CardDrawService）、T9 MatchState 可序列化（JSON 快照往返，纯 BCL，version 1）；Unity 批处理验证受 M3-B1 阻塞暂缓，T9 以无 Unity 工具链 576/576、0_Core 96.51% / Domain+App 90.29%、check.ps1 PASS 为证 |
+| M3 领域模型与规则内核 | 🔵 待评审 | 10/10 | 待评 | 质量门禁最严；2026-10-05 T1～T4 落地：状态骨架/四分区/关键词状态/命令模型；2026-07-01 T5 开局初始化；2026-07-02 T6 RuleEngine.Validate、T7 MatchEvaluator 胜负判定；2026-10-06 T8 疲劳与爆牌（CardDrawService）、T9 MatchState 可序列化（JSON 快照往返，version 1）、T10 状态增量（MatchStateDiffer，确定性顺序 StateChange 列表）；★ 项均在无 Unity 环境通过；Unity 批处理验证受 M3-B1 阻塞暂缓，最终以无 Unity 工具链 588/588、0_Core 96.51% / Domain+App 90.65%、check.ps1 PASS 为证；待整体评审后打 checkpoint/m3-complete |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -120,6 +120,7 @@
 | M3-T7 `MatchEvaluator` 胜负判定 | ✅ | 任务卡 [tasks/M3-T7-Match-Evaluator.md](./tasks/M3-T7-Match-Evaluator.md)；代码 `1_Domain/Match/{MatchResult,MatchOutcome}.cs` + `2_Application/Match/MatchEvaluator.cs` + `PlayerState.FatigueCounter` + `MatchState.IsFinished` + `RuleEngine` 终局检查；`HeroState` 构造器下限从 1 放宽到 0（运行期允许归零）。先红（CS0246/CS0234）后绿，新增 9 例。无 Unity 工具链 **555 passed / 0 failed**；MatchEvaluator 100% 覆盖；汇总 0_Core 96.51% / Domain + App 89.88%；`check.ps1` PASS |
 | M3-T8 疲劳与爆牌 | ✅ | 任务卡 [tasks/M3-T8-Fatigue-Overdraw.md](./tasks/M3-T8-Fatigue-Overdraw.md)；代码 `1_Domain/Match/DrawOutcome.cs`（纯数据：入手/爆牌实例、疲劳伤害、计数、致死）+ `2_Application/Match/CardDrawService.cs`（逐张结算：顶牌入手/手牌满爆牌入坟场/空库 `FatigueCounter+1` 并扣等量生命）。先红（CS0246/CS0234）后绿，新增 11 例（疲劳 5 + 抽牌 1 + 爆牌 3 + 参数 2）。无 Unity 工具链 **566 passed / 0 failed**；DrawOutcome/CardDrawService **100%** 覆盖；汇总 0_Core 96.51% / Domain + App 90.13%；`check.ps1` PASS；3 个新 .meta，243 GUID 无重复。关键决策：爆牌 Deck→Graveyard（不入手、不触发亡语）；疲劳直接扣生命（护甲 M4 伤害系统处理）；Docs/02 验收 1/2/3 已锁 |
 | M3-T9 MatchState 可序列化 ★ | ✅ | 任务卡 [tasks/M3-T9-State-Serialization.md](./tasks/M3-T9-State-Serialization.md)；代码 `2_Application/Match/MatchStateSerializer{,.Write,.Read}.cs`（partial，version 1，枚举名/flags 整数，不冗余存 currentZone）+ `1_Domain/Match/CardInstance.Restore(...)` 反序列化工厂。先红（CS0234/CS0246）后绿，新增 10 例（丰富往返/顺序/确定性/空分区/分区还原/终局/Factory 对局+RuleEngine 一致/非法 JSON/版本不符/对象树独立）。无 Unity 工具链 **576 passed / 0 failed / 0 warning**；Serializer 入口/写入 100%、读取 86%；汇总 0_Core 96.51% / Domain + App 90.29%；`check.ps1` PASS；5 个新 .meta，248 GUID 无重复。关键决策：全量快照（裁剪留阶段二）；还原对象树零共享；NUnit Throws 精确类型匹配改 try/catch 断言 |
+| M3-T10 状态增量计算 ★ | ✅ | 任务卡 [tasks/M3-T10-State-Diff.md](./tasks/M3-T10-State-Diff.md)；代码 `1_Domain/Match/StateChange.cs`（ChangeKind + Path + JsonValue 新旧值）+ `2_Application/Match/MatchStateDiffer.cs`（根字段/玩家字段/分区成员增删/卡牌字段逐项 diff，路径键与序列化器一致，顺序确定）。先红（CS0246）后绿，新增 12 例（相同空列表/单字段各 1 条/英雄三路径/法力两路径/分区增删/卡牌四字段/顺序确定/参数 null）。无 Unity 工具链 **588 passed / 0 failed / 0 warning**；StateChange/MatchStateDiffer **100%** 覆盖；汇总 0_Core 96.51% / Domain + App 90.65%；`check.ps1` PASS；3 个新 .meta，251 GUID 无重复。关键决策：分区按实例 Id 集合比较（牌库顺序不算变更，FR-14.5）；跨区移动 = 旧区 Removed + 新区 Added；M3 全部 10 任务完成，待整体评审 |
 
 > M3 门禁：`RuleEngine` + 状态模型单测覆盖 ≥ 85%，含全部边界场景；不写任何 UI 代码；★ 项在无 Unity 环境下通过。
 
@@ -129,7 +130,7 @@
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| M3-B1 | P2 | M3-T3/T4/T5/T6/T7/T8/T9 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 576/576 与覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
+| M3-B1 | P2 | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 588/588 与覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证（M3 里程碑评审项） | AI | 待环境修复 |
 
 ## 里程碑复盘记录索引
 
@@ -178,3 +179,4 @@
 | 2026-07-02 | M3-T7 完成 | `MatchEvaluator` 胜负判定落地：`1_Domain/Match/{MatchResult,MatchOutcome}.cs` + `2_Application/Match/MatchEvaluator.cs`；`PlayerState.FatigueCounter` + `MatchState.IsFinished`；`RuleEngine` 终局后拒绝所有命令；`HeroState` 构造器下限放宽到 0；测试 9 例；无 Unity 工具链 **555 passed / 0 failed**、0_Core 96.51% / Domain+App 89.88%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M3-T8 完成 | `CardDrawService` 疲劳与爆牌落地：`1_Domain/Match/DrawOutcome.cs`（纯数据）+ `2_Application/Match/CardDrawService.cs`（顶牌入手/手牌满爆牌入坟场/空库递增疲劳 1/2/3…，疲劳可致死）；测试 11 例；无 Unity 工具链 **566 passed / 0 failed**、0_Core 96.51% / Domain+App 90.13%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M3-T9 完成 | `MatchStateSerializer` 状态可序列化落地：`2_Application/Match/MatchStateSerializer{,.Write,.Read}.cs`（JSON 快照往返，version 1，纯 BCL）+ `CardInstance.Restore`；测试 10 例；无 Unity 工具链 **576 passed / 0 failed / 0 warning**、0_Core 96.51% / Domain+App 90.29%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
+| 2026-10-06 | M3-T10 完成（M3 任务全部完成） | `MatchStateDiffer` 状态增量落地：`1_Domain/Match/StateChange.cs` + `2_Application/Match/MatchStateDiffer.cs`（路径键与序列化器一致，根→玩家 0→玩家 1 确定性顺序）；测试 12 例；无 Unity 工具链 **588 passed / 0 failed / 0 warning**、0_Core 96.51% / Domain+App 90.65%；`check.ps1` PASS；M3 进入待评审状态 | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
