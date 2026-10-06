@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M3（领域模型与规则内核）🟡 进行中（5/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
+**当前阶段：M3（领域模型与规则内核）🟡 进行中（6/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | 🟡 进行中 | 5/10 | 待评 | 质量门禁最严；2026-10-05 T1/T2/T3/T4 落地：状态骨架 + 卡牌实例四分区 + 关键词/状态集合 + 命令与结果模型；2026-07-01 T5 开局初始化落地：牌库构建 + 种子洗牌 + 掷先后手 + 抽起手 + 幸运币；Unity 批处理验证受 M3-B1 阻塞暂缓，T5 以无 Unity 工具链 525/525、新文件 100% 覆盖、0_Core 96.51% / Domain+App 92.84%、check.ps1 PASS 为证 |
+| M3 领域模型与规则内核 | 🟡 进行中 | 6/10 | 待评 | 质量门禁最严；2026-10-05 T1/T2/T3/T4 落地：状态骨架 + 卡牌实例四分区 + 关键词/状态集合 + 命令与结果模型；2026-07-01 T5 开局初始化落地：牌库构建 + 种子洗牌 + 掷先后手 + 抽起手 + 幸运币；2026-07-02 T6 RuleEngine.Validate 落地：出牌/攻击/英雄技能/结束回合合法性校验，覆盖全部非法场景；Unity 批处理验证受 M3-B1 阻塞暂缓，T6 以无 Unity 工具链 546/546、0_Core 96.51% / Domain+App 89.77%、check.ps1 PASS 为证 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -116,6 +116,7 @@
 | M3-T3 关键词与状态集合 | ✅ | 任务卡 [tasks/M3-T3-Keyword-Status.md](./tasks/M3-T3-Keyword-Status.md)；代码 `1_Domain/Match/{StatusFlags,KeywordSet,StatusSet}.cs`（新增）+ `CardInstance` 接入 Keywords/Statuses（工厂按定义初始化关键词，含圣盾关键词预置可消耗状态）；先红后绿，新增 24 例（KeywordSetTests + StatusSetTests）。**Unity 批处理验证暂缓**（M3-B1：TRAE 沙箱拦截 bee/upm 致 `isUpdating` 恒真、`EditorApplication.update` 不执行，多轮未解决，经用户同意跳过该步）；无 Unity 工具链 **491 passed / 0 failed**；KeywordSet/StatusSet/CardInstance 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 93.41%；新增 5 .meta；`check.ps1` PASS（132 文件） |
 | M3-T4 命令与结果模型 | ✅ | 任务卡 [tasks/M3-T4-Command-Result.md](./tasks/M3-T4-Command-Result.md)；代码 `1_Domain/Match/{IGameCommand,TargetRef,GameCommands,CommandResult}.cs`（新增 4 文件：接口 + 目标引用 + 命令类型 + 结果与 CommandError）；先红（CS0246/CS0103）后绿，新增 20 例。Unity 批处理验证同样受 **M3-B1** 阻塞暂缓（.meta 按 Unity 标准格式手写、GUID 唯一，非 Unity 生成）；无 Unity 工具链 **511 passed / 0 failed**；TargetRef/GameCommands/CommandResult 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 93.71%；新增 6 .meta，Assets 223 GUID 无重复；`check.ps1` PASS（138 文件）。关键决策：命令引用卡牌/角色用 InstanceId/座位 Id 而非集合索引（任务卡 §5.1） |
 | M3-T5 开局初始化 ★ | ✅ | 任务卡 [tasks/M3-T5-Match-Setup.md](./tasks/M3-T5-Match-Setup.md)；代码 `2_Application/Match/{MatchSetupRequest,MatchFactory}.cs`（新增）+ 配置链路追加 4 Rules 字段与幸运币卡（RulesConfig/Parser/Writer/Reader/校验器 + Rules.csv/Cards.csv + 生成物）；先红（CS0234/CS0246）后绿，新增 14 例。Unity 批处理验证受 **M3-B1** 阻塞暂缓（5 个新 .meta 手写，含 Application/Match 新文件夹，GUID 经 228 个 meta 去重）；无 Unity 工具链 **525 passed / 0 failed**；MatchFactory/MatchSetupRequest 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 92.84%；`check.ps1` PASS（142 文件）。关键约定：随机序固定（双方洗牌→掷先手）、InstanceId 分段、末位=牌库顶、TheCoinCardKey 缺列=null 跳过外键但真实 CSV 强制（任务卡 §10-4） |
+| M3-T6 `RuleEngine.Validate` | ✅ | 任务卡 [tasks/M3-T6-RuleEngine-Validate.md](./tasks/M3-T6-RuleEngine-Validate.md)；代码 `2_Application/Match/{RuleEngine,RuleEngine.Attack,RuleEngine.HeroPower,RuleEngine.Target}.cs`（partial 拆分，主文件 105 行）+ `1_Domain/Match/CardInstance.cs` 补 `AttacksUsedThisTurn`；测试拆三文件（PlayCard/Attack/HeroPower+EndTurn）+ 共享 helper。先红（CS0234）后绿，新增 21 例（出牌 9 + 攻击 7 + 技能/结束回合 5）。Unity 批处理验证受 **M3-B1** 阻塞暂缓（7 个新 .meta 手写，全仓 GUID 无重复）；无 Unity 工具链 **546 passed / 0 failed**；RuleEngine 各 partial 覆盖率 85%–100%（未覆盖行为未触发的 `Enemy`/`Friendly`/`AnyMinion` 分支与嘲讽边界）；汇总 0_Core 96.51% / Domain + App 89.77%；`check.ps1` PASS。关键决策：阶段不符复用 `NotYourTurn`；风怒已支持（关键词检查 2 次）；潜行目标校验未做（P1，任务卡 §4） |
 
 > M3 门禁：`RuleEngine` + 状态模型单测覆盖 ≥ 85%，含全部边界场景；不写任何 UI 代码；★ 项在无 Unity 环境下通过。
 
@@ -125,7 +126,7 @@
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| M3-B1 | P2 | M3-T3/T4/T5 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 525/525 与新文件 100% 覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
+| M3-B1 | P2 | M3-T3/T4/T5/T6 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 546/546 与覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
 
 ## 里程碑复盘记录索引
 
@@ -170,3 +171,4 @@
 | 2026-10-04 | M2 完成 | M2 七项任务全部关闭并通过门禁：`改 CSV → 导入（含校验）→ 生成物 → 加载 → 卡池查询` 全链路打通，热加载支持"成功才换库、失败保旧"，内容目标由测试锁定；累计 443 用例（M1 228 → M2 +215）；覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；新增 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) | PROGRESS / reviews(新增) |
 | 2026-10-04 | 交接准备 | 新增 [Docs/HANDOFF.md](./HANDOFF.md)（面向接手 AI 的交接说明：现状快照、两种验证跑法与命令、开发流程约定、10 条已知坑、M3 与 P3 待办、接手准备与需用户确认的三件事、快速文件地图）；入口接入 `AGENTS.md` 必读顺序与 `Docs/README.md` 索引；`Docs/02` M2 段加"实施说明"批注（CSV/JSON 取代 xlsx/SO，以 ADR-19/20 为准）；`PROGRESS` 顶部加交接指引并把当前阶段切到 M3；交接前重跑验证：Unity 清缓存 0 error/0 warning + 443 passed、工具链 `0_Core 96.51%` / `Domain + App 92.36%`、`check.ps1` 与 `-SelfTest` PASS、工作区干净且与 `origin/main` 一致 | AGENTS / Docs/README / Docs/02 / Docs/HANDOFF(新增) / PROGRESS |
 | 2026-10-04 | 检查点与备份 | 建立可精确回退的检查点：**标签 `checkpoint/m2-complete`**（annotated，指向 `3adfef5`）已推送远端；HANDOFF 新增第 10 节"检查点与恢复（已实测）"，含三种保底方式对比与恢复步骤。实测结论：**本地整目录复制（含 `.git/`，内有 LFS 对象）可离线恢复到 0 改动的干净工作区**（本地克隆演练：索引 442 文件、工作区 0 改动、LFS 文件为真内容）；**离线 bundle（3.04 MB，SHA256 `68DA…4433`）不含 LFS 对象**，直接克隆会在 smudge 处中断（索引为空），需先 `git lfs fetch --all` 或跳过 smudge | Docs/HANDOFF / PROGRESS |
+| 2026-07-02 | M3-T6 完成 | `RuleEngine.Validate` 四种命令合法性校验落地：出牌（费用/满场/目标规则）/攻击（失调/次数/嘲讽）/英雄技能（已用/费用/目标）/结束回合；代码 `2_Application/Match/RuleEngine{,Attack,HeroPower,Target}.cs`（partial 拆分，主文件 105 行）+ `CardInstance.AttacksUsedThisTurn`；测试 21 例（出牌 9 + 攻击 7 + 技能/结束 5）；无 Unity 工具链 **546 passed / 0 failed**、0_Core 96.51% / Domain+App 89.77%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/2_Application / Assets/_Project/1_Domain / Assets/_Project/7_Tests |
