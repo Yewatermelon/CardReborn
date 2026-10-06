@@ -35,10 +35,10 @@ namespace Card.Tests.EditMode.Match
                 rules: new RulesConfig()));
         }
 
-        public static MatchState BuildState(int activePlayerId = 0, TurnPhase phase = TurnPhase.Main)
+        public static MatchState BuildState(int activePlayerId = 0, TurnPhase phase = TurnPhase.Main, RulesConfig? rules = null)
         {
-            PlayerState p0 = new PlayerState(0, new HeroState("HERO_A", "POWER_A", 30), new ManaPool(max: 10, current: 10));
-            PlayerState p1 = new PlayerState(1, new HeroState("HERO_B", "POWER_B", 30), new ManaPool(max: 10, current: 10));
+            PlayerState p0 = new PlayerState(0, new HeroState("HERO_A", "POWER_A", 30), new ManaPool(max: 10, current: 10), rules);
+            PlayerState p1 = new PlayerState(1, new HeroState("HERO_B", "POWER_B", 30), new ManaPool(max: 10, current: 10), rules);
             return new MatchState(p0, p1, activePlayerId) { Phase = phase, TurnNumber = 1 };
         }
 

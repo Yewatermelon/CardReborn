@@ -1,3 +1,4 @@
+using Card.Application.Match.Effects;
 using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
@@ -21,17 +22,23 @@ namespace Card.Application.Match
     }
 
     /// <summary>
-    /// 结算上下文：向结算器暴露当前对局、配置数据库与回合阶段机。
+    /// 结算上下文：向结算器暴露当前对局、配置数据库、回合阶段机、事件日志与触发分发器。
     /// <see cref="CardDrawService"/> 等为既有静态服务，不在此注入。
     /// </summary>
     public sealed class SettlementContext
     {
-        public SettlementContext(MatchState state, CardDatabase database, TurnStateMachine phases, EventLog events)
+        public SettlementContext(
+            MatchState state,
+            CardDatabase database,
+            TurnStateMachine phases,
+            EventLog events,
+            TriggerDispatcher dispatcher)
         {
             State = Guard.NotNull(state, nameof(state));
             Database = Guard.NotNull(database, nameof(database));
             Phases = Guard.NotNull(phases, nameof(phases));
             Events = Guard.NotNull(events, nameof(events));
+            Dispatcher = Guard.NotNull(dispatcher, nameof(dispatcher));
         }
 
         /// <summary>当前权威对局状态。</summary>
@@ -45,5 +52,8 @@ namespace Card.Application.Match
 
         /// <summary>事件接收器：结算器产出的状态变更事件由此收集。</summary>
         public EventLog Events { get; }
+
+        /// <summary>触发分发器：战吼/亡语/回合开始结束等效果由此统一执行（T5）。</summary>
+        public TriggerDispatcher Dispatcher { get; }
     }
 }

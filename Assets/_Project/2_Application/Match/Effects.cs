@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Card.Application.Match;
 using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
@@ -19,7 +20,8 @@ namespace Card.Application.Match.Effects
             EventLog events,
             CardInstance sourceCard,
             int selfSeat,
-            TargetRef commandTarget)
+            TargetRef commandTarget,
+            SettlementContext? settlement = null)
         {
             State = Guard.NotNull(state, nameof(state));
             Database = Guard.NotNull(database, nameof(database));
@@ -27,6 +29,7 @@ namespace Card.Application.Match.Effects
             SourceCard = Guard.NotNull(sourceCard, nameof(sourceCard));
             SelfSeat = selfSeat;
             CommandTarget = commandTarget;
+            Settlement = settlement;
         }
 
         public MatchState State { get; }
@@ -43,6 +46,12 @@ namespace Card.Application.Match.Effects
 
         /// <summary>出牌命令指定的目标（战吼目标来源）。</summary>
         public TargetRef CommandTarget { get; }
+
+        /// <summary>
+        /// 结算上下文（可选）：用于效果执行期间回调触发分发器（如召唤后触发 OnSummon）。
+        /// 直接调用 EffectExecutor 的测试可为 null。
+        /// </summary>
+        public SettlementContext? Settlement { get; }
 
         /// <summary>按 InstanceId 在双方战场查找随从；找不到返回 null。</summary>
         public CardInstance? FindMinion(int instanceId)
@@ -238,6 +247,9 @@ namespace Card.Application.Match.Effects
                 {
                     throw new InvalidOperationException("召唤失败（战场已满）：" + add.ErrorCode);
                 }
+
+                // 召唤进场触发 OnSummon（链式触发，深度由 TriggerDispatcher 限制）。
+                context.Settlement?.Dispatcher.RaiseOnSummon(context.Settlement, minion);
             }
         }
     }

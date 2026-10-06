@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Card.Application.Match.Effects;
 using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
@@ -22,6 +23,7 @@ namespace Card.Application.Match
         private readonly List<ICommandSettler> _settlers = new List<ICommandSettler>();
         private readonly List<MatchStepRecord> _history = new List<MatchStepRecord>();
         private readonly EventLog _events = new EventLog();
+        private readonly TriggerDispatcher _dispatcher = new TriggerDispatcher();
 
         public MatchController(MatchState state, CardDatabase database)
         {
@@ -98,7 +100,7 @@ namespace Card.Application.Match
                 ?? throw new InvalidOperationException(
                     "命令已通过校验但缺少结算器（宿主装配错误）：" + command.GetType().Name);
 
-            settler.Settle(new SettlementContext(_state, _database, _phases, _events), command);
+            settler.Settle(new SettlementContext(_state, _database, _phases, _events, _dispatcher), command);
             FinishIfDecided(command);
             return CommandResult.Valid();
         }

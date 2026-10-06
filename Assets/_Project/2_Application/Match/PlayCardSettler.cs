@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
-using Card.Application.Match.Effects;
 using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
-using Card.Domain.Match.Effects;
 
 namespace Card.Application.Match
 {
@@ -16,8 +13,6 @@ namespace Card.Application.Match
     /// </summary>
     public sealed class PlayCardSettler : ICommandSettler
     {
-        private readonly EffectExecutor _effects = new EffectExecutor();
-
         public bool CanSettle(IGameCommand command) => command is PlayCardCommand;
 
         public void Settle(SettlementContext context, IGameCommand command)
@@ -57,16 +52,8 @@ namespace Card.Application.Match
                 player.Graveyard.Add(card);
             }
 
-            IReadOnlyList<IEffectData> effects = EffectParser.Parse(definition.Effects);
-            if (effects.Count > 0)
-            {
-                EffectContext effectContext = new EffectContext(
-                    context.State, context.Database, context.Events, card, cmd.PlayerId, cmd.Target);
-                for (int i = 0; i < effects.Count; i++)
-                {
-                    _effects.Execute(effects[i], effectContext);
-                }
-            }
+            // 战吼：通过触发分发器执行该卡的 OnPlay 效果（其余时机不在出牌时触发）。
+            context.Dispatcher.RaiseOnPlay(context, card, cmd.Target);
 
             context.Events.Emit(new CardPlayedEvent(cmd.PlayerId, card.InstanceId));
         }

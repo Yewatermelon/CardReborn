@@ -32,6 +32,8 @@ namespace Card.Application.Match
             RequireMove(context.Phases, TurnPhase.TurnEnd);
             context.Events.Emit(new PhaseChangedEvent(TurnPhase.Main, TurnPhase.TurnEnd));
             context.Events.Emit(new TurnEndedEvent(oldTurn, oldSeat));
+            // 回合结束触发：执行旧行动方场上随从的 OnTurnEnd 效果。
+            context.Dispatcher.RaiseOnTurnEnd(context, oldSeat);
 
             int nextSeat = oldSeat == 0 ? 1 : 0;
             context.State.ActivePlayerId = nextSeat;
@@ -41,6 +43,8 @@ namespace Card.Application.Match
             context.Events.Emit(new PhaseChangedEvent(TurnPhase.TurnEnd, TurnPhase.TurnStart));
             context.Events.Emit(new TurnStartedEvent(context.State.TurnNumber, nextSeat));
             BeginTurnFor(context.State.GetPlayer(nextSeat), context.Database.Rules);
+            // 回合开始触发：执行新行动方场上随从的 OnTurnStart 效果。
+            context.Dispatcher.RaiseOnTurnStart(context, nextSeat);
 
             RequireMove(context.Phases, TurnPhase.Draw);
             context.Events.Emit(new PhaseChangedEvent(TurnPhase.TurnStart, TurnPhase.Draw));
