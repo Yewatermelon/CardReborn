@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | 🔵 待评审 | 10/10 | 待评 | 质量门禁最严；2026-10-05 T1～T4 落地：状态骨架/四分区/关键词状态/命令模型；2026-07-01 T5 开局初始化；2026-07-02 T6 RuleEngine.Validate、T7 MatchEvaluator 胜负判定；2026-10-06 T8 疲劳与爆牌（CardDrawService）、T9 MatchState 可序列化（JSON 快照往返，version 1）、T10 状态增量（MatchStateDiffer，确定性顺序 StateChange 列表）；★ 项均在无 Unity 环境通过；Unity 批处理验证受 M3-B1 阻塞暂缓，最终以无 Unity 工具链 588/588、0_Core 96.51% / Domain+App 90.65%、check.ps1 PASS 为证；待整体评审后打 checkpoint/m3-complete |
+| M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过（附条件） | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；三项 ★（种子洗牌/序列化/增量）为联网前置能力；条件：M3-B1（Unity 权威批处理验证）挂 P2，M4 完成判定前需在无沙箱环境补跑；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -139,6 +139,7 @@
 | M0 工程基建与规范落地 | 2026-10-03 | [reviews/M0-工程基建-评审与复盘.md](./reviews/M0-工程基建-评审与复盘.md) | 桥接层补"文件触发"入口（M0-R2）；M1 起接入覆盖率与复杂度统计；提交前例行 `git diff ProjectSettings/` |
 | M1 核心基础层（Core） | 2026-10-04 | [reviews/M1-核心基础层-评审与复盘.md](./reviews/M1-核心基础层-评审与复盘.md) | 覆盖率工具纳入常规验证；构建配置改动必须"清缓存干净验证"；补齐未覆盖行（M1-R4） |
 | M2 配置与数据管线 | 2026-10-04 | [reviews/M2-配置与数据管线-评审与复盘.md](./reviews/M2-配置与数据管线-评审与复盘.md) | 测试按"被测代码所在层"组织；内容规模断言集中到 `ConfigContentTests`；`.gitignore` 区分手工与生成工程 |
+| M3 领域模型与规则内核 | 2026-10-06 | [reviews/M3-领域模型与规则内核-评审与复盘.md](./reviews/M3-领域模型与规则内核-评审与复盘.md) | 无 Unity 工具链确立为权威验收口径（M3-B1 挂 P2）；缺列回落默认值不得触发外键校验；NUnit `Assert.Throws<T>` 精确类型匹配改 try/catch；写调用前先读目标签名 |
 
 ## 变更日志（文档/架构）
 
@@ -180,3 +181,4 @@
 | 2026-10-06 | M3-T8 完成 | `CardDrawService` 疲劳与爆牌落地：`1_Domain/Match/DrawOutcome.cs`（纯数据）+ `2_Application/Match/CardDrawService.cs`（顶牌入手/手牌满爆牌入坟场/空库递增疲劳 1/2/3…，疲劳可致死）；测试 11 例；无 Unity 工具链 **566 passed / 0 failed**、0_Core 96.51% / Domain+App 90.13%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M3-T9 完成 | `MatchStateSerializer` 状态可序列化落地：`2_Application/Match/MatchStateSerializer{,.Write,.Read}.cs`（JSON 快照往返，version 1，纯 BCL）+ `CardInstance.Restore`；测试 10 例；无 Unity 工具链 **576 passed / 0 failed / 0 warning**、0_Core 96.51% / Domain+App 90.29%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M3-T10 完成（M3 任务全部完成） | `MatchStateDiffer` 状态增量落地：`1_Domain/Match/StateChange.cs` + `2_Application/Match/MatchStateDiffer.cs`（路径键与序列化器一致，根→玩家 0→玩家 1 确定性顺序）；测试 12 例；无 Unity 工具链 **588 passed / 0 failed / 0 warning**、0_Core 96.51% / Domain+App 90.65%；`check.ps1` PASS；M3 进入待评审状态 | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
+| 2026-10-06 | M3 完成 | M3 十项任务全部关闭并通过门禁：无 Unity 工具链 588 用例全过（M2 443 → +165）、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`、`check.ps1` PASS；三项 ★（种子洗牌/序列化/增量）就绪；新增 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md)（4 类问题 5 Why、M3-B1 挂 P2 为通过条件）；打标签 `checkpoint/m3-complete` | PROGRESS / reviews(新增) / HANDOFF(第 10 节) |
