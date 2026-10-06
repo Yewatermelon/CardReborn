@@ -196,7 +196,7 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | --- | --- |
 | 标签 | `checkpoint/m3-complete`（annotated） |
 | 指向提交 | 本文档所在提交（2026-10-06，M0–M3 完成 + 本交接/恢复文档更新；提交后立即打标签，代码状态与验证时一致） |
-| 标签说明 | 无 Unity 工具链 588 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain+App 90.65%`、规则内核与状态契约（洗牌/序列化/增量）可用；Unity 权威批处理验证受 M3-B1 阻塞（P2，M4 完成判定前补跑） |
+| 标签说明 | 无 Unity 工具链 588 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain+App 90.65%`、规则内核与状态契约（洗牌/序列化/增量）可用；同日 Unity 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除，.meta 导入与程序集编译实跑无误 |
 
 > 历史检查点：`checkpoint/m2-complete`（annotated，**已推送远端**，指向 `9eb3c13`，443 用例、覆盖率 92.36%）保持不动；`checkpoint/*` 标签一律不移动、不删除。
 

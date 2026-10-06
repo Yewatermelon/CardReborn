@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过（附条件） | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；三项 ★（种子洗牌/序列化/增量）为联网前置能力；条件：M3-B1（Unity 权威批处理验证）挂 P2，M4 完成判定前需在无沙箱环境补跑；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
+| M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -130,7 +130,7 @@
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| M3-B1 | P2 | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 588/588 与覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证（M3 里程碑评审项） | AI | 待环境修复 |
+| M3-B1 | P2（已解除 2026-10-06） | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。T3 起各任务以无 Unity 工具链（588/588）为验收口径；**2026-10-06 用户在编辑器 Test Runner（EditMode）手动补验 608 passed / 0 failed，.meta 导入与程序集编译实跑无误，阻塞解除** | AI | ✅ 已解除 |
 
 ## 里程碑复盘记录索引
 
@@ -182,3 +182,4 @@
 | 2026-10-06 | M3-T9 完成 | `MatchStateSerializer` 状态可序列化落地：`2_Application/Match/MatchStateSerializer{,.Write,.Read}.cs`（JSON 快照往返，version 1，纯 BCL）+ `CardInstance.Restore`；测试 10 例；无 Unity 工具链 **576 passed / 0 failed / 0 warning**、0_Core 96.51% / Domain+App 90.29%；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M3-T10 完成（M3 任务全部完成） | `MatchStateDiffer` 状态增量落地：`1_Domain/Match/StateChange.cs` + `2_Application/Match/MatchStateDiffer.cs`（路径键与序列化器一致，根→玩家 0→玩家 1 确定性顺序）；测试 12 例；无 Unity 工具链 **588 passed / 0 failed / 0 warning**、0_Core 96.51% / Domain+App 90.65%；`check.ps1` PASS；M3 进入待评审状态 | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M3 完成 | M3 十项任务全部关闭并通过门禁：无 Unity 工具链 588 用例全过（M2 443 → +165）、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`、`check.ps1` PASS；三项 ★（种子洗牌/序列化/增量）就绪；新增 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md)（4 类问题 5 Why、M3-B1 挂 P2 为通过条件）；打标签 `checkpoint/m3-complete` | PROGRESS / reviews(新增) / HANDOFF(第 10 节) |
+| 2026-10-06 | M3-B1 解除 | Unity 权威验证补跑完成：编辑器 Test Runner（EditMode）**608 passed / 0 failed**（kernel 588 + Infrastructure 20），.meta 导入与程序集编译在真实 Unity 2022.3.54f1c1 中实跑无误；评审文档、PROGRESS、HANDOFF 同步回填；经验：批处理被沙箱阻塞时"编辑器手动跑 + 结果回填"为有效补验路径 | PROGRESS / reviews / HANDOFF |
