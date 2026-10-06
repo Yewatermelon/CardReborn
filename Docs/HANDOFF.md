@@ -8,19 +8,19 @@
 
 > 细节都在本文后续章节；这一节只给"按顺序做什么"。带 ✅ 的是**已经完成**的。
 
-- [x] **1. 冻结当前状态**：确认工作区干净、`main` 与远端一致、门禁与测试全绿。命令：`git status -sb`、`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
-- [x] **2. 打检查点标签**：`checkpoint/m2-complete`（已推送远端，指向 `9eb3c13`，见第 10 节）。
-- [x] **3. 生成离线备份**：`E:\Unity\Project\CardReborn-backups\CardReborn-2026-10-04-m2-complete.bundle`（3.04 MB，SHA256 见第 10 节）。
+- [x] **1. 冻结当前状态**：确认工作区干净、门禁与测试全绿。命令：`git status -sb`、`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。注意：本地 `main` 领先 `origin/main`（M2 收官后未推送，推送需用户明确要求）。
+- [x] **2. 打检查点标签**：`checkpoint/m2-complete`（已推送远端，`9eb3c13`）+ `checkpoint/m3-complete`（本地，`422f4f4`，见第 10 节）。
+- [x] **3. 生成离线备份**：m2 时点 bundle 已有；m3 时点 bundle 未重新生成（需要时用 `Tools/checkpoint.ps1`，注意它会推远端）。
 - [ ] **4. 把备份复制到异地**（**唯一还没做的关键一步**）：把整个工程目录（**含 `.git`**）和 bundle 一起复制到移动硬盘 / 网盘 / 另一台机器。现在两份备份都在同一块硬盘上，防不了硬件故障。
 - [ ] **5. 确认环境三件套**（第 10.6 节）：Unity `2022.3.54f1c1`（许可证已激活）、.NET SDK 9.x、Git + Git LFS（`git lfs install` 至少执行过一次）。
 - [ ] **6. 确认新 AI 的访问与授权**（第 8 节）：仓库访问权限（私有仓库需给凭据）；是否允许联网（首次 `dotnet restore`、`git push`、`git lfs fetch`）；是否允许必要时聚焦 Unity 窗口（多数验证已做成无界面方式）。
 - [ ] **7. 把"开场指令"粘给新 AI**（可直接复制下面这段）：
 
-  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M2，下一步是 M3。
-  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M3 任务表。
+  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M3，下一步是 M4 回合状态机与效果系统。
+  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M4 任务表。
   > 然后跑三条命令确认环境：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
-  > 期望结果：静态门禁 PASS、自检 PASS、443 用例全过、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`。
-  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M3-T1**，按仓库既有流程：先写任务卡、先写测试再实现。
+  > 期望结果：静态门禁 PASS、自检 PASS、588 用例全过、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`（Unity 侧 EditMode 为 608 例）。
+  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M4-T1**（以 `Docs/02` 任务表为准），按仓库既有流程：先写任务卡、先写测试再实现。
   > 约束：不要移动或删除 `checkpoint/*` 标签；每个任务结束更新 `Docs/PROGRESS.md` 并在任务卡里写结论；里程碑结束写 `Docs/reviews/` 复盘。
 
 - [ ] **8. 让新 AI 做一次"交接验收"**：跑第 7 步的三条命令并把**实际输出**贴回来；数字对得上才算交接成功（对不上先查环境，不要急着改代码）。
@@ -32,10 +32,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 项目 | `Card`：炉石式回合制卡牌游戏（Unity 2022.3 LTS），仓库 `E:\Unity\Project\CardReborn`（GitHub: `https://github.com/Yewatermelon/CardReborn.git`） |
-| 当前阶段 | **阶段一（PVE）已完成 M0、M1、M2；下一步是 M3 领域模型与规则内核** |
+| 当前阶段 | **阶段一（PVE）已完成 M0–M3；下一步是 M4 回合状态机与效果系统** |
 | 交付方式 | 每个任务一张任务卡（`Docs/tasks/`）+ 先写测试 + 双环境验证 + 提交里带证据 |
-| 已具备的能力 | 规则内核（Core）、配置管线（CSV → 校验 → JSON → 卡池 → 热加载）、测试 443 例、静态门禁、无 Unity 覆盖率工具链 |
-| 下一步第一件事 | 读 `Docs/02` 的 M3 任务表 → 按任务卡流程从 **M3-T1** 开始（详见本文第 5 节） |
+| 已具备的能力 | 规则内核（Core）、配置管线（CSV → 校验 → JSON → 卡池 → 热加载）、**对局规则内核（MatchState/MatchFactory/RuleEngine/CardDrawService/MatchEvaluator/序列化/增量）**、测试 588 例（Unity 侧 608）、静态门禁、无 Unity 覆盖率工具链 |
+| 下一步第一件事 | 读 `Docs/02` 的 M4 任务表 → 按任务卡流程从 **M4-T1** 开始（详见本文第 5 节） |
 
 ## 2. 你的第一步（建议按顺序做）
 
@@ -45,19 +45,19 @@
    - `Tools/check.ps1`（静态门禁）
    - `Tools/check.ps1 -SelfTest`（门禁自身是否有效）
    - `Tools/coverage.ps1`（无 Unity 跑内核测试 + 覆盖率）
-4. 读 `Docs/02` 的 **M3 任务表**，写第一张任务卡，再动手。
+4. 读 `Docs/02` 的 **M4 任务表**，写第一张任务卡，再动手。
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-04。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-06。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` = `origin/main`，工作区干净（验证时的 HEAD 是 `6246914`；本交接文档提交后 SHA 会前进，以 `git log -1` 为准） |
-| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7；**M3 ⬜ 未开始** |
-| 编译 | Unity 2022.3.54f1c1 清缓存重编译：**0 error / 0 warning** |
-| 测试 | **443 passed / 0 failed**（EditMode）；其中 215 例是 M2 新增 |
-| 覆盖率 | `0_Core 96.51%`、`Domain + Application 92.36%`（门禁 90% / 80%） |
+| 分支 / 提交 | `main` 领先 `origin/main`（M2 收官后按用户要求未推送），工作区干净（验证时的 HEAD 是 `3931264`；以 `git log -1` 为准） |
+| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（评审通过、`checkpoint/m3-complete`）；**M4 ⬜ 未开始** |
+| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（608 用例实跑验证）；无 Unity kernel 工程 0 warning |
+| 测试 | **Unity EditMode 608 passed / 0 failed**；无 Unity 工具链 **588 passed / 0 failed**（排除 Infrastructure 20 例） |
+| 覆盖率 | `0_Core 96.51%`、`Domain + Application 90.65%`（门禁 90% / 80%） |
 | 静态门禁 | `Tools/check.ps1` PASS（R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用 |
 | 未关闭项 | 均为 P3（见第 7 节） |
@@ -126,12 +126,15 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | 8 | 效果串里写 `\|` 导致被拆成两个效果 | `\|` 是"多效果"分隔符 | 效果内参数用 `/`：`DamageEffect:5/GainArmorEffect:5`（约定见 `Config/README.md`） |
 | 9 | 抢用户窗口焦点/反复弹审批很烦 | 沙箱下写 `.git`、读 `%LOCALAPPDATA%`、联网都要批准 | 用批处理副本 + `-executeMethod` + `Tools/*.ps1`，把需要批准的次数压到最少；确需 GUI 时一次合并多步 |
 | 10 | 改内容后一批测试红了 | 早期测试断言了"恰好 N 张卡"这类绝对值 | 内容规模统一由 `ConfigContentTests`（≥ 阈值）把关；单测只断言特定对象的值 |
+| 11 | TRAE 沙箱里 Unity 批处理 `-runTests` exit 0 但无结果（M3-B1） | 沙箱拦截 `bee\trash`/`upm.log`，`isUpdating` 恒真、测试调度器不启动 | 优先用无 Unity 工具链（第 4.1 节）；Unity 权威验证请用户在编辑器 Test Runner（EditMode）手动跑并回报数字（M3 收官即用此路径：608/608）；禁沙箱跑批处理仍会因项目被编辑器占用而崩溃 |
 
 ## 7. 还没做的事（交接时请确认）
 
-### 7.1 立即要做（M3）
+### 7.1 立即要做（M4）
 
-`Docs/02` M3（领域模型与规则内核，质量门禁最严）10 项任务：`MatchState` / `PlayerState` / `CardInstance` / `Zone` / `ManaPool` / `HeroState`、`GameCommand` + `CommandResult`、`RuleEngine.Validate`（出牌/攻击/技能的费用·目标·场位校验）、胜负判定、状态序列化往返测试。
+`Docs/02` M4（回合状态机与效果系统）：回合流转（TurnStart→Draw→Main→TurnEnd，接入 `CardDrawService` 结算疲劳/爆牌）、效果组件（效果串 → 效果实例注册与结算，接入 `RuleEngine`）、事件模型（GameEvent，随效果系统设计）、护甲/伤害细化（疲劳护甲抵扣、爆牌亡语——M3-T8 遗留衔接）、潜行等目标规则接入（M3-T6 遗留衔接）。
+
+> M3 已交付的直接前置：`MatchFactory`（开局含幸运币）、`RuleEngine.Validate`（四类命令校验）、`CardDrawService` + `DrawOutcome`（抽牌/疲劳/爆牌）、`MatchEvaluator`（终局）、`MatchStateSerializer`/`MatchStateDiffer`（快照/增量，路径键一致）。
 
 > 注意：M3 起状态必须**可序列化、可裁剪、可增量**（阶段二状态同步的前置，见 `Docs/03` §5.9.4 与 `Docs/05`）。`MatchState` 里禁止出现 Unity 类型或 UI 引用。
 
@@ -187,7 +190,7 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 
 ## 10. 检查点与恢复（已实测）
 
-> 目的：万一后续开发出问题（或需要换回旧 AI/旧版本），能**精确回到 M2 完成时的状态**并从那里继续。
+> 目的：万一后续开发出问题（或需要换回旧 AI/旧版本），能**精确回到里程碑完成时的状态**并从那里继续。
 > 关键点：**不要依赖聊天记录**——本文件 + 仓库本身就能把项目恢复到可继续开发的状态。
 
 ### 10.1 检查点标签
