@@ -124,7 +124,7 @@ EditMode，≥ 10 例；先红；T4 测试按需调整 EffectParser 返回类型
 
 - [x] 全部 AC 满足且附证据（见 11.1）
 - [x] 先红后绿（CS0246/CS7036 `TriggeredEffect`/`Trigger`/`SettlementContext` 5 参）；T4 EffectParserTests 合理演进（返回 TriggeredEffect）
-- [x] 0 error / 0 warning（无 Unity 实跑；Unity 编辑器补验待回报）
+- [x] 0 error / 0 warning（无 Unity 实跑；Unity 编辑器 EditMode 补验 **701 passed / 0 failed**，2026-10-06 用户回报）
 - [x] Docs/03 铁律自查 + Docs/04 评审无 P0/P1（见 11.2/11.6）
 - [x] PROGRESS 更新
 
@@ -171,7 +171,7 @@ EditMode，≥ 10 例；先红；T4 测试按需调整 EffectParser 返回类型
 - 覆盖率：0_Core 96.51%、Domain+App **91.44%**；GameEffects.cs 85%（EffectParser 部分错误分支未覆）。
 - 静态门禁：`check.ps1` PASS（188 文件）；3 个新 .meta，274 GUID 无重复。
 - 既有测试：T4 EffectParserTests 适配返回类型（断言 .Effect）；其余 T2/T3/T4 测试零改动全绿。
-- Unity 权威：待编辑器 EditMode 补验，预期 **701 passed / 0 failed**（690 + 11）。
+- Unity 权威：2026-10-06 用户在 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）实跑回报 **701 passed / 0 failed**（690 + 11），新增脚本与 .meta 导入识别无误。
 
 ### 11.5 影响面
 
@@ -191,4 +191,4 @@ EditMode，≥ 10 例；先红；T4 测试按需调整 EffectParser 返回类型
 
 ### 11.7 评审结论
 
-**通过**（AI 自审）：无 P0/P1；无新增遗留项。无 Unity 690/0 + Unity 编辑器补验数字回填后关闭。
+**通过**（AI 自审）：无 P0/P1；无新增遗留项。双环境证据齐备（无 Unity 690/0、Unity EditMode 701/0），本任务关闭。
