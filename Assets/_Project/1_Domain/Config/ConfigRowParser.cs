@@ -174,9 +174,9 @@ namespace Card.Domain.Config
                 : ParseInt(value, table, rowIndex, tableName, column);
         }
 
-        /// <summary>缺列或空单元格时回落 <paramref name="fallback"/>。</summary>
-        private static string OptionalTextOrDefault(
-            CsvTable table, int rowIndex, string column, string fallback)
+        /// <summary>缺列或空单元格时回落 <paramref name="fallback"/>（可为 null）。</summary>
+        private static string? OptionalTextOrDefault(
+            CsvTable table, int rowIndex, string column, string? fallback)
         {
             if (!table.HasColumn(column))
             {

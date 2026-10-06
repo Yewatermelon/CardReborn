@@ -15,7 +15,7 @@ namespace Card.Tests.PlayMode
         public IEnumerator PlayModeRunner_IsWired_Up()
         {
             yield return null;
-            Assert.That(Application.isPlaying, Is.True);
+            Assert.That(UnityEngine.Application.isPlaying, Is.True);
         }
     }
 }

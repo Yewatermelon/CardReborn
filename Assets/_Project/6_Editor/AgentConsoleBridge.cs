@@ -67,7 +67,7 @@ namespace Card.Editor.AgentBridge
 
         static AgentConsoleBridge()
         {
-            Application.logMessageReceived += OnLogMessage;
+            UnityEngine.Application.logMessageReceived += OnLogMessage;
             CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.quitting += Flush;
@@ -79,8 +79,8 @@ namespace Card.Editor.AgentBridge
         {
             get
             {
-                DirectoryInfo parent = Directory.GetParent(Application.dataPath);
-                return parent != null ? parent.FullName : Application.dataPath;
+                DirectoryInfo parent = Directory.GetParent(UnityEngine.Application.dataPath);
+                return parent != null ? parent.FullName : UnityEngine.Application.dataPath;
             }
         }
 
@@ -162,7 +162,7 @@ namespace Card.Editor.AgentBridge
                 AgentStatus status = new AgentStatus
                 {
                     generatedAtUtc = DateTime.UtcNow.ToString("o"),
-                    unityVersion = Application.unityVersion,
+                    unityVersion = UnityEngine.Application.unityVersion,
                     projectPath = ProjectRoot,
                     isCompiling = EditorApplication.isCompiling,
                     lastTestSummary = s_lastTestSummary

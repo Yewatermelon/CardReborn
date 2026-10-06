@@ -36,7 +36,7 @@ namespace Card.Editor.ConfigPipeline
 
         private static bool ImportConfig(bool showDialog)
         {
-            string projectRoot = Directory.GetParent(Application.dataPath)!.FullName;
+            string projectRoot = Directory.GetParent(UnityEngine.Application.dataPath)!.FullName;
             string sourceDirectory = Path.Combine(projectRoot, SourceRelativePath.Replace('/', Path.DirectorySeparatorChar));
             string outputDirectory = Path.Combine(projectRoot, OutputRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
@@ -82,7 +82,7 @@ namespace Card.Editor.ConfigPipeline
 
         private static bool ReloadConfig(bool showDialog)
         {
-            string projectRoot = Directory.GetParent(Application.dataPath)!.FullName;
+            string projectRoot = Directory.GetParent(UnityEngine.Application.dataPath)!.FullName;
             string outputDirectory = Path.Combine(projectRoot, OutputRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
             ConfigLoadResult result = ConfigFileLoader.Load(outputDirectory);
