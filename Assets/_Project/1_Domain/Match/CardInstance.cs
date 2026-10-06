@@ -56,6 +56,33 @@ namespace Card.Domain.Match
         /// <summary>本回合已攻击次数（回合切换时重置；RuleEngine 校验用）。</summary>
         public int AttacksUsedThisTurn { get; set; }
 
+        /// <summary>
+        /// 承受伤害（M4-T6）：圣盾抵消一次伤害后消失；剧毒对随从必杀。
+        /// </summary>
+        /// <param name="amount">伤害量；≤0 时不修改状态、不消耗圣盾、不触发剧毒。</param>
+        /// <param name="poisonous">攻击者是否带剧毒。</param>
+        /// <returns>实际扣除的生命值（圣盾抵消时返回 0）。</returns>
+        public int TakeDamage(int amount, bool poisonous)
+        {
+            if (amount <= 0)
+            {
+                return 0;
+            }
+
+            if (Statuses.ConsumeDivineShield())
+            {
+                return 0;
+            }
+
+            Health -= amount;
+            if (poisonous)
+            {
+                Health = 0;
+            }
+
+            return amount;
+        }
+
         /// <summary>从配置定义创建实例：复制初始攻防与关键词，配置变化不影响已生成实例。
         /// 配置含圣盾时，在状态集合中预置可消耗的圣盾状态（关键词=来源，状态=结算实例）。</summary>
         public static CardInstance FromDefinition(
