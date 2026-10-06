@@ -26,11 +26,12 @@ namespace Card.Application.Match
     /// </summary>
     public sealed class SettlementContext
     {
-        public SettlementContext(MatchState state, CardDatabase database, TurnStateMachine phases)
+        public SettlementContext(MatchState state, CardDatabase database, TurnStateMachine phases, IEventSink events)
         {
             State = Guard.NotNull(state, nameof(state));
             Database = Guard.NotNull(database, nameof(database));
             Phases = Guard.NotNull(phases, nameof(phases));
+            Events = Guard.NotNull(events, nameof(events));
         }
 
         /// <summary>当前权威对局状态。</summary>
@@ -41,5 +42,8 @@ namespace Card.Application.Match
 
         /// <summary>回合阶段机（与 <see cref="State"/> 同步）。</summary>
         public TurnStateMachine Phases { get; }
+
+        /// <summary>事件接收器：结算器产出的状态变更事件由此收集。</summary>
+        public IEventSink Events { get; }
     }
 }

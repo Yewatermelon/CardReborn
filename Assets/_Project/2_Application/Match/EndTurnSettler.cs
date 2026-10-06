@@ -26,19 +26,30 @@ namespace Card.Application.Match
             Guard.NotNull(context, nameof(context));
             Guard.NotNull(command, nameof(command));
 
-            RequireMove(context.Phases, TurnPhase.TurnEnd);
+            int oldSeat = context.State.ActivePlayerId;
+            int oldTurn = context.State.TurnNumber;
 
-            int nextSeat = context.State.ActivePlayerId == 0 ? 1 : 0;
+            RequireMove(context.Phases, TurnPhase.TurnEnd);
+            context.Events.Emit(new PhaseChangedEvent(TurnPhase.Main, TurnPhase.TurnEnd));
+            context.Events.Emit(new TurnEndedEvent(oldTurn, oldSeat));
+
+            int nextSeat = oldSeat == 0 ? 1 : 0;
             context.State.ActivePlayerId = nextSeat;
             context.State.TurnNumber += 1;
 
             RequireMove(context.Phases, TurnPhase.TurnStart);
+            context.Events.Emit(new PhaseChangedEvent(TurnPhase.TurnEnd, TurnPhase.TurnStart));
+            context.Events.Emit(new TurnStartedEvent(context.State.TurnNumber, nextSeat));
             BeginTurnFor(context.State.GetPlayer(nextSeat), context.Database.Rules);
 
             RequireMove(context.Phases, TurnPhase.Draw);
-            CardDrawService.Draw(context.State.GetPlayer(nextSeat), CardsDrawnPerTurn);
+            context.Events.Emit(new PhaseChangedEvent(TurnPhase.TurnStart, TurnPhase.Draw));
+            DrawOutcome outcome = CardDrawService.Draw(
+                context.State.GetPlayer(nextSeat), CardsDrawnPerTurn);
+            EmitDrawEvents(context, nextSeat, outcome);
 
             RequireMove(context.Phases, TurnPhase.Main);
+            context.Events.Emit(new PhaseChangedEvent(TurnPhase.Draw, TurnPhase.Main));
         }
 
         /// <summary>
@@ -68,6 +79,29 @@ namespace Card.Application.Match
             {
                 throw new InvalidOperationException(
                     "回合阶段流转失败：" + target + "（" + result.ErrorCode + "）");
+            }
+        }
+
+        /// <summary>
+        /// 按 DrawOutcome 产出抽牌/爆牌/疲劳事件；顺序与 CardDrawService 内部结算顺序一致
+        /// （每张牌逐张处理：入手 → 爆牌 → 空库疲劳）。
+        /// </summary>
+        private static void EmitDrawEvents(SettlementContext context, int seat, DrawOutcome outcome)
+        {
+            for (int i = 0; i < outcome.DrawnInstanceIds.Count; i++)
+            {
+                context.Events.Emit(new CardDrawnEvent(seat, outcome.DrawnInstanceIds[i]));
+            }
+
+            for (int i = 0; i < outcome.BurnedInstanceIds.Count; i++)
+            {
+                context.Events.Emit(new CardBurnedEvent(seat, outcome.BurnedInstanceIds[i]));
+            }
+
+            if (outcome.FatigueDamage > 0)
+            {
+                context.Events.Emit(
+                    new FatigueEvent(seat, outcome.FatigueDamage, outcome.FinalFatigueCounter));
             }
         }
     }

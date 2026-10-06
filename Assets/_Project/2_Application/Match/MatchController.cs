@@ -21,6 +21,7 @@ namespace Card.Application.Match
         private readonly Queue<IGameCommand> _pending = new Queue<IGameCommand>();
         private readonly List<ICommandSettler> _settlers = new List<ICommandSettler>();
         private readonly List<MatchStepRecord> _history = new List<MatchStepRecord>();
+        private readonly EventLog _events = new EventLog();
 
         public MatchController(MatchState state, CardDatabase database)
         {
@@ -47,6 +48,9 @@ namespace Card.Application.Match
 
         /// <summary>命令处理台账（含被拒命令），按处理顺序。</summary>
         public IReadOnlyList<MatchStepRecord> History => _history;
+
+        /// <summary>状态变更事件流（按结算顺序，序号单调）。</summary>
+        public IReadOnlyList<GameEvent> Events => _events.Events;
 
         /// <summary>追加结算器（M4-T4/T6 用）；先注册者优先匹配；null 抛异常。</summary>
         public void RegisterSettler(ICommandSettler settler)
@@ -93,7 +97,7 @@ namespace Card.Application.Match
                 ?? throw new InvalidOperationException(
                     "命令已通过校验但缺少结算器（宿主装配错误）：" + command.GetType().Name);
 
-            settler.Settle(new SettlementContext(_state, _database, _phases), command);
+            settler.Settle(new SettlementContext(_state, _database, _phases, _events), command);
             FinishIfDecided(command);
             return CommandResult.Valid();
         }
@@ -125,6 +129,9 @@ namespace Card.Application.Match
                     throw new InvalidOperationException(
                         "终局后阶段流转失败：" + endResult.ErrorCode);
                 }
+
+                _events.Emit(new MatchEndedEvent(
+                    outcome.Result, outcome.WinnerId, outcome.TurnNumber, outcome.Reason));
             }
 
             Record(command, CommandResult.Valid(), finished);
