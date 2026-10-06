@@ -83,5 +83,39 @@ namespace Card.Domain.Match
                 keywords,
                 statuses);
         }
+
+        /// <summary>
+        /// 反序列化工厂（M3-T9）：绕过配置定义直接还原全部运行时字段，供快照/重连恢复使用。
+        /// 仅做最小契约校验（Id 非负、key 非空）；运行时字段允许负值等中间结算状态。
+        /// </summary>
+        public static CardInstance Restore(
+            int instanceId,
+            string cardKey,
+            int ownerId,
+            int attack,
+            int maxHealth,
+            int health,
+            Keyword keywords,
+            StatusFlags statuses,
+            int attacksUsedThisTurn)
+        {
+            Guard.NotNull(cardKey, nameof(cardKey));
+            Guard.NotNegative(instanceId, nameof(instanceId));
+            Guard.NotNegative(ownerId, nameof(ownerId));
+            Guard.NotNegative(attacksUsedThisTurn, nameof(attacksUsedThisTurn));
+
+            return new CardInstance(
+                instanceId,
+                cardKey,
+                ownerId,
+                attack,
+                maxHealth,
+                health,
+                new KeywordSet(keywords),
+                new StatusSet(statuses))
+            {
+                AttacksUsedThisTurn = attacksUsedThisTurn
+            };
+        }
     }
 }
