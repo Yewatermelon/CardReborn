@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M3（领域模型与规则内核）🟡 进行中（4/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
+**当前阶段：M3（领域模型与规则内核）🟡 进行中（5/10）｜M0、M1、M2 已完成（2026-10-03 / 10-04）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -13,7 +13,7 @@
 | M0 工程基建与规范落地 | ✅ 完成 | 8/8 | 通过 | 2026-10-03 验证：编译 0 error/0 warning、EditMode/PlayMode 冒烟各 1 通过、空场景出包成功（76.5 MB / 0 error）、`check.ps1` PASS、TMP Essentials 已导入；详见 [评审与复盘](./reviews/M0-工程基建-评审与复盘.md) |
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
-| M3 领域模型与规则内核 | 🟡 进行中 | 4/10 | 待评 | 质量门禁最严；2026-10-05 T1/T2/T3/T4 落地：状态骨架 + 卡牌实例四分区 + 关键词/状态集合 + 命令与结果模型；Unity 批处理验证受 M3-B1 阻塞暂缓，T4 以无 Unity 工具链 511/511、新文件 100% 覆盖、0_Core 96.51% / Domain+App 93.71% 为证 |
+| M3 领域模型与规则内核 | 🟡 进行中 | 5/10 | 待评 | 质量门禁最严；2026-10-05 T1/T2/T3/T4 落地：状态骨架 + 卡牌实例四分区 + 关键词/状态集合 + 命令与结果模型；2026-07-01 T5 开局初始化落地：牌库构建 + 种子洗牌 + 掷先后手 + 抽起手 + 幸运币；Unity 批处理验证受 M3-B1 阻塞暂缓，T5 以无 Unity 工具链 525/525、新文件 100% 覆盖、0_Core 96.51% / Domain+App 92.84%、check.ps1 PASS 为证 |
 | M4 回合状态机与效果系统 | ⬜ 未开始 | 0/10 | — | 质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
@@ -107,14 +107,15 @@
 
 ---
 
-## M3 任务级状态（进行中 4/10）
+## M3 任务级状态（进行中 5/10）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M3-T1 对局状态模型 | ✅ | 任务卡 [tasks/M3-T1-MatchState.md](./tasks/M3-T1-MatchState.md)（含 AC 对齐、铁律扫描、边界推演、反向审查与评审结论）；代码 `Assets/_Project/1_Domain/Match/{TurnPhase,ManaPool,HeroState,PlayerState,MatchState}.cs`（纯 C#，命名空间 `Card.Domain.Match`）；先红（CS0234/CS0246）后绿，新增 24 例（ManaPoolTests 12 + MatchStateModelTests 12）。Unity 2022.3.54f1c1 批处理 **467 passed / 0 failed**、编译 0 error/0 warning；无 Unity 工具链 **447 passed / 0 failed**；ManaPool/MatchState/PlayerState 覆盖率 100%、HeroState 88%；汇总 0_Core 96.51% / Domain + App 92.65%；新增 9 个 .meta，全仓 206 GUID 无重复；`check.ps1` PASS |
 | M3-T2 卡牌实例与分区 | ✅ | 任务卡 [tasks/M3-T2-CardInstance-Zone.md](./tasks/M3-T2-CardInstance-Zone.md)；代码 `1_Domain/Match/{ZoneType,CardInstance,Zone}.cs`（新增）+ `PlayerState.cs` 接入四分区（容量取自 RulesConfig；牌库/坟场不限）；先红（CS0246/CS1729）后绿，新增 20 例（CardInstanceTests 5 + ZoneMovementTests 15）。Unity 批处理 **487 passed / 0 failed**、最终编译 0 error/0 warning（首次导入前一过性 CS0246 已在任务卡 §10.6 核实时序）；无 Unity 工具链 **467 passed / 0 failed**；CardInstance/PlayerState 100%、Zone 97%；汇总 0_Core 96.51% / Domain + App 93.04%；新增 6 .meta，全仓 212 GUID 无重复；`check.ps1` PASS |
 | M3-T3 关键词与状态集合 | ✅ | 任务卡 [tasks/M3-T3-Keyword-Status.md](./tasks/M3-T3-Keyword-Status.md)；代码 `1_Domain/Match/{StatusFlags,KeywordSet,StatusSet}.cs`（新增）+ `CardInstance` 接入 Keywords/Statuses（工厂按定义初始化关键词，含圣盾关键词预置可消耗状态）；先红后绿，新增 24 例（KeywordSetTests + StatusSetTests）。**Unity 批处理验证暂缓**（M3-B1：TRAE 沙箱拦截 bee/upm 致 `isUpdating` 恒真、`EditorApplication.update` 不执行，多轮未解决，经用户同意跳过该步）；无 Unity 工具链 **491 passed / 0 failed**；KeywordSet/StatusSet/CardInstance 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 93.41%；新增 5 .meta；`check.ps1` PASS（132 文件） |
-| M3-T4 命令与结果模型 | ✅ | 任务卡 [tasks/M3-T4-Command-Result.md](./tasks/M3-T4-Command-Result.md)；代码 `1_Domain/Match/{IGameCommand,TargetRef,GameCommands,CommandResult}.cs`（新增 4 文件：接口 + 目标引用 + 出牌/攻击/英雄技能/结束回合四命令 + 结果与 CommandError）；先红（CS0246/CS0103）后绿，新增 20 例。Unity 批处理验证同样受 **M3-B1** 阻塞暂缓（.meta 按 Unity 标准格式手写、GUID 唯一，非 Unity 生成）；无 Unity 工具链 **511 passed / 0 failed**；TargetRef/GameCommands/CommandResult 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 93.71%；新增 6 .meta，Assets 223 GUID 无重复；`check.ps1` PASS（138 文件）。关键决策：命令引用卡牌/角色用 InstanceId/座位 Id 而非集合索引（任务卡 §5.1） |
+| M3-T4 命令与结果模型 | ✅ | 任务卡 [tasks/M3-T4-Command-Result.md](./tasks/M3-T4-Command-Result.md)；代码 `1_Domain/Match/{IGameCommand,TargetRef,GameCommands,CommandResult}.cs`（新增 4 文件：接口 + 目标引用 + 命令类型 + 结果与 CommandError）；先红（CS0246/CS0103）后绿，新增 20 例。Unity 批处理验证同样受 **M3-B1** 阻塞暂缓（.meta 按 Unity 标准格式手写、GUID 唯一，非 Unity 生成）；无 Unity 工具链 **511 passed / 0 failed**；TargetRef/GameCommands/CommandResult 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 93.71%；新增 6 .meta，Assets 223 GUID 无重复；`check.ps1` PASS（138 文件）。关键决策：命令引用卡牌/角色用 InstanceId/座位 Id 而非集合索引（任务卡 §5.1） |
+| M3-T5 开局初始化 ★ | ✅ | 任务卡 [tasks/M3-T5-Match-Setup.md](./tasks/M3-T5-Match-Setup.md)；代码 `2_Application/Match/{MatchSetupRequest,MatchFactory}.cs`（新增）+ 配置链路追加 4 Rules 字段与幸运币卡（RulesConfig/Parser/Writer/Reader/校验器 + Rules.csv/Cards.csv + 生成物）；先红（CS0234/CS0246）后绿，新增 14 例。Unity 批处理验证受 **M3-B1** 阻塞暂缓（5 个新 .meta 手写，含 Application/Match 新文件夹，GUID 经 228 个 meta 去重）；无 Unity 工具链 **525 passed / 0 failed**；MatchFactory/MatchSetupRequest 覆盖率 **100%**；汇总 0_Core 96.51% / Domain + App 92.84%；`check.ps1` PASS（142 文件）。关键约定：随机序固定（双方洗牌→掷先手）、InstanceId 分段、末位=牌库顶、TheCoinCardKey 缺列=null 跳过外键但真实 CSV 强制（任务卡 §10-4） |
 
 > M3 门禁：`RuleEngine` + 状态模型单测覆盖 ≥ 85%，含全部边界场景；不写任何 UI 代码；★ 项在无 Unity 环境下通过。
 
@@ -124,7 +125,7 @@
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| M3-B1 | P2 | M3-T3/T4 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 511/511 与新文件 100% 覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
+| M3-B1 | P2 | M3-T3/T4/T5 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。影响 T3 起各任务；功能代码已由无 Unity 工具链 525/525 与新文件 100% 覆盖率验证。待在无沙箱/干净 Library 环境统一补做 Unity 权威验证 | AI | 待环境修复 |
 
 ## 里程碑复盘记录索引
 
