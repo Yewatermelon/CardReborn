@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M4（回合状态机与效果系统）🟡 进行中（3/10）｜M0–M3 已完成（M3 评审通过，2026-10-06）**
+**当前阶段：M4（回合状态机与效果系统）🟡 进行中（4/10）｜M0–M3 已完成（M3 评审通过，2026-10-06）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -14,7 +14,7 @@
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
-| M4 回合状态机与效果系统 | 🟡 进行中 | 3/10 | 通过（T1/T2/T3） | 2026-10-06 T3 完成：GameEvent 家族 12 类型 + EventLog 接入控制器，事件序列与结算顺序一致；无 Unity 653 例、Unity EditMode 673 例全过；质量门禁最严 |
+| M4 回合状态机与效果系统 | 🟡 进行中 | 4/10 | 通过（T1/T2/T3/T4） | 2026-10-06 T4 完成：效果框架 IEffectData/EffectExecutor/EffectContext + PlayCardSettler 端到端，出牌→进场→战吼全链路；无 Unity 679 例、Unity EditMode 待补验；质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
@@ -126,13 +126,14 @@
 
 ---
 
-## M4 任务级状态（进行中 3/10）
+## M4 任务级状态（进行中 4/10）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M4-T1 `TurnStateMachine` | ✅ | 任务卡 [tasks/M4-T1-TurnStateMachine.md](./tasks/M4-T1-TurnStateMachine.md)（含 AC 对齐、铁律扫描、边界推演、反向审查与评审结论）；代码 `2_Application/Match/TurnStateMachine.cs`（封装 M1-T3 `StateMachine<TurnPhase>`，声明 Docs/01 §3.2 六阶段边：顺序 `MatchStart→TurnStart→Draw→Main→TurnEnd→TurnStart` 回环 + 任意非终局阶段→`MatchEnd`、MatchEnd 无出边；成功转移才写回 `MatchState.Phase`，不含阶段业务）；先红（CS0246 × 32）后绿，新增 26 例。无 Unity 工具链 **614 passed / 0 failed / 0 warning**，`TurnStateMachine.cs` 覆盖率 **100%**（57/57），汇总 0_Core 96.51% / Domain + App 90.86%；Unity 编辑器 Test Runner（EditMode）用户实跑补验 **634 passed / 0 failed**；`check.ps1` PASS（167 文件）；2 个新 .meta，全仓 253 GUID 无重复。关键边界：阶段业务（水晶/抽牌/行动方切换）明确留到 M4-T2/T8，AC-12 测试锁定零副作用 |
 | M4-T2 `MatchController` ★ | ✅ | 任务卡 [tasks/M4-T2-MatchController.md](./tasks/M4-T2-MatchController.md)（含 AC 对齐、铁律扫描、边界推演、反向审查、Q1–Q4 范围决策）；代码 `2_Application/Match/`：`MatchController`（FIFO 命令队列：RuleEngine 校验→ICommandSettler 结算→MatchEvaluator 终局判定单入口→MatchStepRecord 台账）、`EndTurnSettler`（Main→TurnEnd→切行动方/回合+1→TurnStart 簿记：ManaPool.BeginTurn+技能/攻击次数/召唤失调清零→Draw 抽 1→Main）、`ICommandSettler`+`SettlementContext` 接缝（出牌/攻击/技能留 M4-T4/T6，缺失即抛装配异常）、`MatchStepRecord` 步骤台账（非 T3 GameEvent）；先红 CS0246 后绿，新增 19 例。无 Unity **633 passed / 0 failed / 0 warning**，`MatchController` 覆盖 97%（3 行不可达防御），汇总 0_Core 96.51% / Domain+App 91.20%；Unity EditMode 补验 **653 passed / 0 failed**；`check.ps1` PASS（175 文件）；8 个新 .meta，261 GUID 无重复；M3 生产代码零改动。完整疲劳脚本（真实配置同种子）：67 步终局于回合 68，后手第 8 次疲劳 −6 死亡，两局状态+台账全等；覆盖 §4.2 边界 1/2/10 |
 | M4-T3 `GameEvent` 事件模型 | ✅ | 任务卡 [tasks/M4-T3-GameEvents.md](./tasks/M4-T3-GameEvents.md)；Domain 新增 `GameEvents.cs`（`GameEvent` 基类 + 12 派生：PhaseChanged/TurnStarted/TurnEnded/CardDrawn/CardBurned/Fatigue/Damage/Healing/CardDeath/CardPlayed/AttackDeclared/MatchEnded + `IEventSink` + `EventLog` 单调序号）；Application 增量接线：`SettlementContext` 加 `Events`、`MatchController` 持有 `EventLog` 并暴露 `Events`、终局 emit `MatchEndedEvent`、`EndTurnSettler` 在各阶段/抽牌/爆牌/疲劳产出事件；事件与 `MatchStepRecord` 台账职责分离，拒绝命令零事件。先红 CS0246 后绿，新增 20 例（家族 12 + 事件流 8：单步 7 事件固定序列、序号单调、拒绝零事件、疲劳递增、完整脚本末尾 MatchEnded）。无 Unity **653 passed / 0 failed / 0 warning**，GameEvent/EventLog 覆盖 100%、Domain+App 91.70%；Unity EditMode 补验 **673 passed / 0 failed**；`check.ps1` PASS（178 文件）；3 个新 .meta，264 GUID 无重复；T2 既有 19 例零改动
+| M4-T4 效果框架 | ✅ | 任务卡 [tasks/M4-T4-EffectFramework.md](./tasks/M4-T4-EffectFramework.md)；Domain 新增 `GameEffects.cs`（`IEffectData` + 5 效果数据：Damage/Heal/DrawCard/Summon/Buff + `EffectParser`）；Application 新增 `Effects.cs`（`EffectContext` + `IEffectExecutor` + `EffectExecutor` 类型字典分发 + 5 执行器）、`PlayCardSettler.cs`（消费法力→进场/入坟场→战吼效果→CardPlayedEvent）；Domain 改 `HeroState`（+TakeDamage 护甲先抵/+Heal 不超上限）、`MatchState`（+AllocateInstanceId）；Application 改 `MatchFactory`/`MatchController`。先红后绿，新增 26 例；无 Unity **679 passed / 0 failed**，Domain+App 91.25%；`check.ps1` PASS（185 文件）；7 个新 .meta，277 GUID 无重复。T2 接缝测试改为验证出牌成功 |
 
 > M4 门禁：可用脚本驱动一整局（无 UI）并输出事件日志；覆盖率 ≥ 85%；进程内"客户端 ↔ 服务器"模拟可完整跑完一局（M4-T10 ★）。
 
@@ -198,3 +199,4 @@
 | 2026-10-06 | M4-T1 完成 | `TurnStateMachine` 回合阶段流转落地：`2_Application/Match/TurnStateMachine.cs`（组合 Core `StateMachine<TurnPhase>`，六阶段显式边：严格顺序 + TurnEnd→TurnStart 回环 + 任意非终局→MatchEnd、MatchEnd 无出边；成功转移同步写回 `MatchState.Phase`，非法转移两状态不变；不含阶段业务）；测试 26 例（含 6 非法边/5 终局起点参数化、自转移、终局终点、与 RuleEngine 阶段集成、业务零副作用）；先红 CS0246 × 32 后绿；无 Unity 工具链 **614 passed / 0 failed**、新文件 100% 覆盖、Domain+App 90.86%；Unity 编辑器补验 **634 passed / 0 failed**；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M4-T2 ★ 完成 | `MatchController` 命令驱动权威入口落地：FIFO 队列 + RuleEngine 校验 + ICommandSettler 结算（输入与结算解耦）+ 终局判定单入口 + MatchStepRecord 步骤台账；`EndTurnSettler` 完成回合流全接线（行动方切换、法力增长/回满、技能/攻击/失调回合开始清零、Draw 抽 1）；出牌/攻击/技能只留接缝（M4-T4/T6 注册）；测试 19 例（回合流/拒绝路径/FIFO/终局截断），完整疲劳脚本同种子两局状态与台账逐项全等（67 步终局、后手疲劳 8 死亡、含爆牌路径）；先红后绿；无 Unity **633 passed / 0 failed**、控制器覆盖 97%、Domain+App 91.20%；Unity 编辑器补验 **653 passed / 0 failed**；Docs/02 加 M4 实施说明（T8 范围收窄为技能命令端到端） | PROGRESS / tasks(新增) / 02-开发计划步骤文档 / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M4-T3 完成 | `GameEvent` 事件模型落地：Domain 新增 GameEvents.cs（基类 + 12 派生事件 + IEventSink + EventLog 单调序号）；Application 增量接线 SettlementContext/MatchController/EndTurnSettler 产出阶段/回合/抽牌/爆牌/疲劳/终局事件，事件序列与结算顺序严格一致，拒绝命令零事件；新增 20 例；先红后绿；无 Unity **653 passed / 0 failed**、GameEvent/EventLog 覆盖 100%、Domain+App 91.70%；Unity 编辑器补验 **673 passed / 0 failed**；`check.ps1` PASS | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
+| 2026-10-06 | M4-T4 完成 | 效果框架落地：Domain `GameEffects.cs`（IEffectData + 5 效果数据 + EffectParser）；Application `Effects.cs`（EffectContext/IEffectExecutor/EffectExecutor 分发 + 5 执行器）+ `PlayCardSettler`（出牌端到端：法力→进场/坟场→战吼效果→事件）；Domain 改 HeroState（TakeDamage 护甲先抵/Heal 不超上限）、MatchState（AllocateInstanceId）；新增 26 例；先红后绿；无 Unity **679 passed / 0 failed**、Domain+App 91.25%；`check.ps1` PASS（185 文件）；T2 接缝测试改为验证出牌成功 | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
