@@ -46,7 +46,8 @@ namespace Card.Application.Match
             {
                 Phase = TurnPhase.Main,
                 TurnNumber = 1,
-                ActivePlayerId = activePlayerId
+                ActivePlayerId = activePlayerId,
+                NextInstanceId = rules.DeckSize * 2 + 1
             };
         }
 

@@ -29,6 +29,7 @@ namespace Card.Application.Match
             _database = Guard.NotNull(database, nameof(database));
             _phases = new TurnStateMachine(state);
             RegisterSettler(new EndTurnSettler());
+            RegisterSettler(new PlayCardSettler());
         }
 
         /// <summary>当前权威对局状态。</summary>

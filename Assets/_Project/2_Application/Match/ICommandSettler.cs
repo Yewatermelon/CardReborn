@@ -26,7 +26,7 @@ namespace Card.Application.Match
     /// </summary>
     public sealed class SettlementContext
     {
-        public SettlementContext(MatchState state, CardDatabase database, TurnStateMachine phases, IEventSink events)
+        public SettlementContext(MatchState state, CardDatabase database, TurnStateMachine phases, EventLog events)
         {
             State = Guard.NotNull(state, nameof(state));
             Database = Guard.NotNull(database, nameof(database));
@@ -44,6 +44,6 @@ namespace Card.Application.Match
         public TurnStateMachine Phases { get; }
 
         /// <summary>事件接收器：结算器产出的状态变更事件由此收集。</summary>
-        public IEventSink Events { get; }
+        public EventLog Events { get; }
     }
 }

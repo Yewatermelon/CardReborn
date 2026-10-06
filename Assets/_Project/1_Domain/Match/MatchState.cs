@@ -37,6 +37,18 @@ namespace Card.Domain.Match
         /// <summary>对局是否已结束（M3-T7）。</summary>
         public bool IsFinished { get; set; }
 
+        /// <summary>
+        /// 下一个可用的卡牌实例 Id。开局由 MatchFactory 设为 2*DeckSize+1
+        /// （避开起手牌库与幸运币的分段 Id），运行时召唤/生成卡牌时递增。
+        /// </summary>
+        public int NextInstanceId { get; set; }
+
+        /// <summary>分配一个全场唯一的卡牌实例 Id 并递增计数器。</summary>
+        public int AllocateInstanceId()
+        {
+            return NextInstanceId++;
+        }
+
         /// <summary>当前行动方。</summary>
         public PlayerState ActivePlayer => GetPlayer(ActivePlayerId);
 

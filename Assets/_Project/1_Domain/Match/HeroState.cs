@@ -1,3 +1,4 @@
+using System;
 using Card.Core;
 
 namespace Card.Domain.Match
@@ -37,5 +38,42 @@ namespace Card.Domain.Match
 
         /// <summary>英雄技能本回合是否已使用（FR-5.10：每回合 1 次，回合切换时重置）。</summary>
         public bool PowerUsedThisTurn { get; set; }
+
+        /// <summary>
+        /// 受到伤害：护甲先抵扣，剩余扣血。返回实际扣血量（护甲全额吸收时为 0）。
+        /// 生命可降至 ≤ 0（由 T7 死亡管线判负）；amount 非法属契约错误直接抛。
+        /// </summary>
+        public int TakeDamage(int amount)
+        {
+            Guard.NotNegative(amount, nameof(amount));
+
+            if (amount == 0)
+            {
+                return 0;
+            }
+
+            int absorbedByArmor = Math.Min(Armor, amount);
+            Armor -= absorbedByArmor;
+            int healthLoss = amount - absorbedByArmor;
+            Health -= healthLoss;
+            return healthLoss;
+        }
+
+        /// <summary>
+        /// 治疗：回复生命但不超过 <see cref="MaxHealth"/>，返回实际治疗量。
+        /// </summary>
+        public int Heal(int amount)
+        {
+            Guard.NotNegative(amount, nameof(amount));
+
+            if (amount == 0 || Health >= MaxHealth)
+            {
+                return 0;
+            }
+
+            int before = Health;
+            Health = Math.Min(Health + amount, MaxHealth);
+            return Health - before;
+        }
     }
 }

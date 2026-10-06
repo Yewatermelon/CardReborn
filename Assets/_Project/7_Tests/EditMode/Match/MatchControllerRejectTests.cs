@@ -83,7 +83,7 @@ namespace Card.Tests.EditMode.Match
         }
 
         [Test]
-        public void Submit_ValidPlayCardWithoutSettler_ThrowsAndStateStaysIntact()
+        public void Submit_ValidPlayCard_SucceedsAndMutatesState()
         {
             MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
             CardInstance card = RuleEngineTestHelpers.AddToHand(
@@ -92,15 +92,16 @@ namespace Card.Tests.EditMode.Match
             int manaBefore = state.GetPlayer(0).Mana.Current;
             MatchController controller = new MatchController(state, Db);
 
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => controller.Submit(new PlayCardCommand(0, card.InstanceId, TargetRef.None)));
-            Assert.That(error.Message, Does.Contain(nameof(PlayCardCommand)));
+            CommandResult result = controller.Submit(
+                new PlayCardCommand(0, card.InstanceId, TargetRef.None));
 
+            Assert.That(result.IsValid, Is.True);
             Assert.That(controller.Phase, Is.EqualTo(TurnPhase.Main));
-            Assert.That(state.GetPlayer(0).Hand.Count, Is.EqualTo(handBefore));
-            Assert.That(state.GetPlayer(0).Mana.Current, Is.EqualTo(manaBefore));
-            Assert.That(state.GetPlayer(0).Board.Count, Is.EqualTo(0));
-            Assert.That(controller.History.Count, Is.EqualTo(0));
+            Assert.That(state.GetPlayer(0).Hand.Count, Is.EqualTo(handBefore - 1));
+            Assert.That(state.GetPlayer(0).Mana.Current, Is.EqualTo(manaBefore - Db.RequireCard("M1").Cost));
+            Assert.That(state.GetPlayer(0).Board.Count, Is.EqualTo(1));
+            Assert.That(controller.History.Count, Is.EqualTo(1));
+            Assert.That(controller.History[0].Accepted, Is.True);
         }
 
         [Test]
