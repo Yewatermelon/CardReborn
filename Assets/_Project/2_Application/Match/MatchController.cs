@@ -34,6 +34,7 @@ namespace Card.Application.Match
             RegisterSettler(new EndTurnSettler());
             RegisterSettler(new PlayCardSettler());
             RegisterSettler(new AttackSettler());
+            RegisterSettler(new HeroPowerSettler());
         }
 
         /// <summary>当前权威对局状态。</summary>
