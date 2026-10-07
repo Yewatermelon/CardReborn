@@ -94,7 +94,7 @@ EditMode，≥ 5 例；先红。
 
 - [x] 全部 AC 满足且附证据（AC-1~6 见 §6；6 个测试全绿）
 - [x] 先红后绿（CS0246 → 5 过 1 败 → 重写 TargetRule.None 测试 → 714/0 全绿）
-- [x] 0 error / 0 warning（无 Unity 工具链 714 passed / 0 failed；Unity 编辑器补验待用户回报）
+- [x] 0 error / 0 warning（无 Unity 工具链 714 passed / 0 failed；Unity 编辑器补验 **734 passed / 0 failed**）
 - [x] Docs/03 铁律自查 + Docs/04 评审无 P0/P1
 - [x] PROGRESS 更新
 
@@ -115,6 +115,7 @@ EditMode，≥ 5 例；先红。
 
 无 P0/P1。AC-1~6 全部满足，门禁通过。
 
-### 已知限制
+### 双环境验证
 
-- Unity 编辑器 Test Runner 补验待用户回报（预期 734 passed / 0 failed = 728 + 6）
+- 无 Unity 工具链：**714 passed / 0 failed**
+- Unity 编辑器 Test Runner（EditMode）用户实跑补验：**734 passed / 0 failed**（= 728 + 6 新例，与预期一致）
