@@ -15,7 +15,7 @@
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
-| M5 表现层与交互 | 🟡 进行中 | 1/8 | — | 依赖 TMP Essentials；M5-T1 完成（Unity 补验 770 通过） |
+| M5 表现层与交互 | 🟡 进行中 | 3/8 | — | 依赖 TMP Essentials；M5-T1~T3 完成（Unity 补验 802 通过） |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
@@ -145,13 +145,13 @@
 
 ---
 
-## M5 任务级状态（进行中 1/8）
+## M5 任务级状态（进行中 3/8）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M5-T1 `CardView` + 数据绑定 | ✅ | 任务卡 [tasks/M5-T1-CardView.md](./tasks/M5-T1-CardView.md)；代码 `4_Presentation/Battle/`：`ICardViewData`（只读契约）、`CardViewData`（不可变值实现 + `FromDefinition`）、`CardView`（MonoBehaviour 渲染 7 个字段）；测试 `7_Tests/EditMode/Presentation/`（9 例：数据 5 + 视图 4）；先红后绿，无 Unity 工具链 **741 passed / 0 failed**（Presentation 测试按惯例排除在 coverage 外），`check.ps1` PASS（214 文件）；Unity EditMode 补验 **770 passed / 0 failed**（0 error / 0 warning，2026-10-07） |
 | M5-T2 `HandView`/`BoardView`/`HeroView`/`ManaView` | ✅ | 任务卡 [tasks/M5-T2-ZoneViews.md](./tasks/M5-T2-ZoneViews.md)；代码 `4_Presentation/Battle/`：四视图 + `CardListLayout`/`CardListSync` + `MatchEventPump`（事件泵）；`CardViewData.FromInstance` 运行时攻/血；测试 23 例（数据 3 + 法力 3 + 英雄 4 + 手牌 6 + 战场 3 + 泵 4，含真实对局 EndTurn→抽牌→HandView 自动刷新的端到端用例）；无 Unity 工具链 **741 passed / 0 failed**，`check.ps1` PASS（226 文件）；Unity EditMode 补验 **793 passed / 0 failed**（0 error / 0 warning，2026-10-07） |
-| M5-T3 对象池接入 | ⬜ | — |
+| M5-T3 对象池接入 | ✅ | 任务卡 [tasks/M5-T3-ViewPool.md](./tasks/M5-T3-ViewPool.md)；代码 `4_Presentation/Battle/`：新增 `CardViewPool`（M1-T6 `ObjectPool<CardView>` 的 Unity 侧封装：租出激活挂载/归还禁用停回池容器/预热/CreatedCount 观察计数）；`HandView`/`BoardView` 增删从 `Instantiate/Destroy` 改走池租还（`_prewarmCount` 手牌 4/战场 7，首次 `SetCards` 惰性建池）；`CardListSync` 删除（Instantiate/Destroy 路径退役）；测试 `CardViewPoolTests` 新增 6 例 + `HandViewTests`/`BoardViewTests` 按池化语义重写 9 例并新增 3 例（峰值后 3→0→3 `CreatedCount` 恒为 3 零新建、预热一次建成、归还禁用入池）；无 Unity 工具链 **741 passed / 0 failed**，`check.ps1` PASS（228 文件）；Unity EditMode 用户实跑 **802 passed / 0 failed**（0 error / 0 warning，2026-10-07）。P3 观察：两视图池化代码重复，沿用 T2 决定待分化时再抽象 |
 | M5-T4 `PlayerInputController` | ⬜ | — |
 | M5-T5 `TargetingController` | ⬜ | — |
 | M5-T6 反馈表现 | ⬜ | — |
