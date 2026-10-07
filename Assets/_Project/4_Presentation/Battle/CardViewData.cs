@@ -17,7 +17,8 @@ namespace Card.Presentation.Battle
             int attack,
             int health,
             string artKey,
-            CardType type)
+            CardType type,
+            int? instanceId = null)
         {
             Name = name ?? string.Empty;
             Description = description ?? string.Empty;
@@ -26,6 +27,7 @@ namespace Card.Presentation.Battle
             Health = health;
             ArtKey = artKey ?? string.Empty;
             Type = type;
+            InstanceId = instanceId;
         }
 
         public string Name { get; }
@@ -41,6 +43,8 @@ namespace Card.Presentation.Battle
         public string ArtKey { get; }
 
         public CardType Type { get; }
+
+        public int? InstanceId { get; }
 
         /// <summary>从配置定义构造显示数据；名称/描述暂以 Key 占位（本地化在 M8 决定）。</summary>
         public static CardViewData FromDefinition(CardDefinition definition)
@@ -73,7 +77,8 @@ namespace Card.Presentation.Battle
                 instance.Attack,
                 instance.Health,
                 definition.ArtKey,
-                definition.Type);
+                definition.Type,
+                instance.InstanceId);
         }
     }
 }

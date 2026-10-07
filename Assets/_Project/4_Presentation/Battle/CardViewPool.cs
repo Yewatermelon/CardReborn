@@ -1,4 +1,5 @@
 using Card.Core;
+using Card.Presentation.Battle.Feedback;
 using UnityEngine;
 
 namespace Card.Presentation.Battle
@@ -38,6 +39,7 @@ namespace Card.Presentation.Battle
         public void Return(CardView view)
         {
             Guard.NotNull(view, nameof(view));
+            ResetView(view);
             view.gameObject.SetActive(false);
             view.transform.SetParent(_poolRoot, false);
             _pool.Return(view);
@@ -46,8 +48,27 @@ namespace Card.Presentation.Battle
         private static CardView Create(CardView prefab, Transform poolRoot)
         {
             CardView view = Object.Instantiate(prefab, poolRoot);
+            ResetView(view);
             view.gameObject.SetActive(false);
             return view;
+        }
+
+        /// <summary>归还/出厂复位（03 §5.8 第 2 条）：高亮清零、停止淡出、alpha 归 1。</summary>
+        private static void ResetView(CardView view)
+        {
+            view.SetHighlight(CardHighlight.None);
+
+            CardFadeOutView fade = view.GetComponent<CardFadeOutView>();
+            if (fade != null)
+            {
+                fade.Stop();
+            }
+
+            CanvasGroup group = view.GetComponent<CanvasGroup>();
+            if (group != null)
+            {
+                group.alpha = 1f;
+            }
         }
     }
 }

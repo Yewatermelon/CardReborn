@@ -22,5 +22,8 @@ namespace Card.Presentation.Battle
         string ArtKey { get; }
 
         CardType Type { get; }
+
+        /// <summary>局内实例 Id（M5-T6）：配置态为 null；反馈定位与高亮按它匹配视图。</summary>
+        int? InstanceId { get; }
     }
 }

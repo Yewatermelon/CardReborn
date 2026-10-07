@@ -18,6 +18,11 @@ namespace Card.Tests.EditMode.Presentation
             view._healthText = AddText(go.transform, "Health");
             view._attackPanel = AddPanel(go.transform, "AttackPanel");
             view._healthPanel = AddPanel(go.transform, "HealthPanel");
+            // M5-T6：高亮三面板 + 死亡淡出所需的 CanvasGroup
+            view._playableHighlight = AddPanel(go.transform, "PlayableHighlight");
+            view._attackableHighlight = AddPanel(go.transform, "AttackableHighlight");
+            view._tauntHighlight = AddPanel(go.transform, "TauntHighlight");
+            go.AddComponent<CanvasGroup>();
             return view;
         }
 
