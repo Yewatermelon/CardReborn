@@ -1,5 +1,6 @@
 using Card.Core;
 using Card.Domain.Config;
+using Card.Domain.Match;
 
 namespace Card.Presentation.Battle
 {
@@ -52,6 +53,25 @@ namespace Card.Presentation.Battle
                 definition.Cost,
                 definition.Attack,
                 definition.Health,
+                definition.ArtKey,
+                definition.Type);
+        }
+
+        /// <summary>
+        /// 从局内实例构造显示数据（M5-T2）：攻/血取实例运行时值（受伤/buff 后正确），
+        /// 名称/描述/费用/美术/类型仍取自配置。
+        /// </summary>
+        public static CardViewData FromInstance(CardDefinition definition, CardInstance instance)
+        {
+            Guard.NotNull(definition, nameof(definition));
+            Guard.NotNull(instance, nameof(instance));
+
+            return new CardViewData(
+                definition.NameKey,
+                definition.DescKey,
+                definition.Cost,
+                instance.Attack,
+                instance.Health,
                 definition.ArtKey,
                 definition.Type);
         }
