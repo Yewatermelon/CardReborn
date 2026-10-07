@@ -12,6 +12,7 @@ namespace Card.Tests.EditMode.Presentation
         private HeroView _view = null!;
         private TMP_Text _healthText = null!;
         private TMP_Text _armorText = null!;
+        private TMP_Text _nameText = null!;
         private GameObject _armorPanel = null!;
 
         [SetUp]
@@ -20,6 +21,7 @@ namespace Card.Tests.EditMode.Presentation
             _root = new GameObject("HeroView_Test");
             _healthText = CreateText("Health");
             _armorText = CreateText("Armor");
+            _nameText = CreateText("Name");
             _armorPanel = new GameObject("ArmorPanel");
             _armorPanel.transform.SetParent(_root.transform);
 
@@ -27,6 +29,7 @@ namespace Card.Tests.EditMode.Presentation
             _view._healthText = _healthText;
             _view._armorText = _armorText;
             _view._armorPanel = _armorPanel;
+            _view._nameText = _nameText;
         }
 
         [TearDown]
@@ -77,6 +80,14 @@ namespace Card.Tests.EditMode.Presentation
             Assert.That(_healthText.text, Is.EqualTo("12"));
             Assert.That(_armorText.text, Is.EqualTo("1"));
             Assert.That(_armorPanel.activeSelf, Is.True);
+        }
+
+        [Test]
+        public void SetName_RendersNameKey()
+        {
+            _view.SetName("HERO_001_NAME");
+
+            Assert.That(_nameText.text, Is.EqualTo("HERO_001_NAME"));
         }
     }
 }
