@@ -14,7 +14,7 @@ namespace Card.Application.Match
     /// 终局判定只在本入口发生一次（结算器不写终局）；终局后队列停止处理，
     /// 后续命令由 RuleEngine 拒绝。单线程使用（权威宿主模型，Docs/05）。
     /// </summary>
-    public sealed class MatchController
+    public sealed class MatchController : ICommandAuthority
     {
         private readonly MatchState _state;
         private readonly CardDatabase _database;
@@ -39,6 +39,12 @@ namespace Card.Application.Match
 
         /// <summary>当前权威对局状态。</summary>
         public MatchState State => _state;
+
+        /// <summary>
+        /// 只读对局视图（M5-T8 ★）：表现层/PVP 客户端读取对局的唯一入口，
+        /// 零拷贝活视图，实时映射权威状态，类型层面不可写。
+        /// </summary>
+        public IReadOnlyMatchState View => _state;
 
         /// <summary>当前回合阶段（与 <see cref="State"/> 的 Phase 同步）。</summary>
         public TurnPhase Phase => _phases.CurrentPhase;

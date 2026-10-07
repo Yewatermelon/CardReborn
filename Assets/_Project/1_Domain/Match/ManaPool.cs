@@ -8,7 +8,7 @@ namespace Card.Domain.Match
     /// 规则：每回合上限 +1（受配置 manaLimit 封顶），回合开始回满，未用完不累积。
     /// 业务失败用 <see cref="Result"/> 表达；构造非法属契约错误，直接抛异常。
     /// </summary>
-    public sealed class ManaPool
+    public sealed class ManaPool : IReadOnlyManaPool
     {
         public const string ErrorInsufficient = "ERROR_MANA_INSUFFICIENT";
         public const string ErrorAmountInvalid = "ERROR_AMOUNT_INVALID";

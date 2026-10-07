@@ -8,7 +8,7 @@ namespace Card.Domain.Match
     /// 对局权威状态根：只存数据（Docs/03 §5.9），无 Unity/UI 引用。
     /// 玩家按 Id 字典索引；所有规则结算（M3-T5 起）围绕本对象进行。
     /// </summary>
-    public sealed class MatchState
+    public sealed class MatchState : IReadOnlyMatchState
     {
         private readonly Dictionary<int, PlayerState> _players;
 
@@ -65,6 +65,12 @@ namespace Card.Domain.Match
 
             throw new ArgumentException("未知的玩家座位 Id：" + playerId, nameof(playerId));
         }
+
+        IReadOnlyPlayerState IReadOnlyMatchState.ActivePlayer => ActivePlayer;
+
+        IReadOnlyCollection<IReadOnlyPlayerState> IReadOnlyMatchState.Players => Players;
+
+        IReadOnlyPlayerState IReadOnlyMatchState.GetPlayer(int playerId) => GetPlayer(playerId);
 
         private int RequireKnownSeat(int playerId)
         {

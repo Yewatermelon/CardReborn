@@ -7,7 +7,7 @@ namespace Card.Domain.Match
     /// 玩家座位状态：固定 <see cref="Id"/>（0/1），聚合英雄、法力与四个卡牌分区。
     /// 分区容量由 <see cref="RulesConfig"/> 提供（手牌/场上限；牌库/坟场不限）。
     /// </summary>
-    public sealed class PlayerState
+    public sealed class PlayerState : IReadOnlyPlayerState
     {
         public PlayerState(int id, HeroState hero, ManaPool mana, RulesConfig? rules = null)
         {
@@ -39,5 +39,17 @@ namespace Card.Domain.Match
 
         /// <summary>疲劳计数：牌库空时每次抽牌递增，M4 结算用（M3-T7 先提供字段）。</summary>
         public int FatigueCounter { get; set; }
+
+        IReadOnlyHeroState IReadOnlyPlayerState.Hero => Hero;
+
+        IReadOnlyManaPool IReadOnlyPlayerState.Mana => Mana;
+
+        IReadOnlyZone IReadOnlyPlayerState.Deck => Deck;
+
+        IReadOnlyZone IReadOnlyPlayerState.Hand => Hand;
+
+        IReadOnlyZone IReadOnlyPlayerState.Board => Board;
+
+        IReadOnlyZone IReadOnlyPlayerState.Graveyard => Graveyard;
     }
 }

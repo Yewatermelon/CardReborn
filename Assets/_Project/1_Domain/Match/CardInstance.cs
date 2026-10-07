@@ -7,7 +7,7 @@ namespace Card.Domain.Match
     /// 卡牌运行时实例（可变；配置 <see cref="CardDefinition"/> 不可变，两者分离，Docs/00 §4.2）。
     /// 随从持有攻击/生命；法术这些值为 0。关键词/状态集合随实例创建而初始化。
     /// </summary>
-    public sealed class CardInstance
+    public sealed class CardInstance : IReadOnlyCardInstance
     {
         private CardInstance(
             int instanceId,
@@ -55,6 +55,12 @@ namespace Card.Domain.Match
 
         /// <summary>本回合已攻击次数（回合切换时重置；RuleEngine 校验用）。</summary>
         public int AttacksUsedThisTurn { get; set; }
+
+        /// <summary>只读视图：关键词位副本。</summary>
+        Keyword IReadOnlyCardInstance.KeywordFlags => Keywords.Flags;
+
+        /// <summary>只读视图：状态位副本。</summary>
+        StatusFlags IReadOnlyCardInstance.StatusFlags => Statuses.Flags;
 
         /// <summary>
         /// 承受伤害（M4-T6）：圣盾抵消一次伤害后消失；剧毒对随从必杀。

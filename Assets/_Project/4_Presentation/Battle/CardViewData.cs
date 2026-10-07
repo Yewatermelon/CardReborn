@@ -62,10 +62,10 @@ namespace Card.Presentation.Battle
         }
 
         /// <summary>
-        /// 从局内实例构造显示数据（M5-T2）：攻/血取实例运行时值（受伤/buff 后正确），
-        /// 名称/描述/费用/美术/类型仍取自配置。
+        /// 从局内实例构造显示数据（M5-T2；M5-T8 起只接受只读视图 <see cref="IReadOnlyCardInstance"/>）：
+        /// 攻/血取实例运行时值（受伤/buff 后正确），名称/描述/费用/美术/类型仍取自配置。
         /// </summary>
-        public static CardViewData FromInstance(CardDefinition definition, CardInstance instance)
+        public static CardViewData FromInstance(CardDefinition definition, IReadOnlyCardInstance instance)
         {
             Guard.NotNull(definition, nameof(definition));
             Guard.NotNull(instance, nameof(instance));

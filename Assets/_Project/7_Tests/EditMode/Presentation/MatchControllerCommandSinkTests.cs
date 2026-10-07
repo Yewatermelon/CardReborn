@@ -45,11 +45,11 @@ namespace Card.Tests.EditMode.Presentation
         }
 
         [Test]
-        public void Ctor_NullController_ThrowsArgumentNullException()
+        public void Ctor_NullAuthority_ThrowsArgumentNullException()
         {
             Assert.That(
                 () => new MatchControllerCommandSink(null!),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("controller"));
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("authority"));
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Card.Domain.Match
     /// 英雄运行时状态：以 Key 引用 <c>HeroDefinition</c>（配置与状态分离，Docs/03 §5.9）。
     /// 伤害/治疗/护甲的结算行为在 M4/T7 实现，本类型此刻只承载数据。
     /// </summary>
-    public sealed class HeroState
+    public sealed class HeroState : IReadOnlyHeroState
     {
         public HeroState(string heroKey, string heroPowerKey, int maxHealth)
             : this(heroKey, heroPowerKey, maxHealth, maxHealth)

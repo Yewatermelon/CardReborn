@@ -7,7 +7,7 @@ namespace Card.Domain.Match
     /// 有序卡牌分区：牌库/坟场容量不限（<c>capacity=null</c>），手牌/战场有上限（来自 RulesConfig）。
     /// 所有失败用 <see cref="Result"/> 表达；<see cref="MoveIn"/> 为原子操作（先全部校验再变更）。
     /// </summary>
-    public sealed class Zone
+    public sealed class Zone : IReadOnlyZone
     {
         public const string ErrorFull = "ERROR_ZONE_FULL";
         public const string ErrorAlreadyPresent = "ERROR_CARD_ALREADY_PRESENT";
@@ -32,6 +32,9 @@ namespace Card.Domain.Match
         public int Count => _cards.Count;
 
         public IReadOnlyList<CardInstance> Cards => _cards;
+
+        /// <summary>只读视图：卡牌列表协变为只读卡牌。</summary>
+        IReadOnlyList<IReadOnlyCardInstance> IReadOnlyZone.Cards => _cards;
 
         public bool Contains(CardInstance card) => _cards.Contains(card);
 
