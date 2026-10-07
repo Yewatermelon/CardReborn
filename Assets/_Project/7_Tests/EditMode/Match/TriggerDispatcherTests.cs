@@ -63,8 +63,8 @@ namespace Card.Tests.EditMode.Match
         public void RaiseOnDeath_ChainSummon_NoInfiniteLoop()
         {
             CardDatabase db = BuildDb(
-                MinionWith("A", 2, "OnDeath:SummonEffect:B,1"),
-                MinionWith("B", 2, "OnDeath:SummonEffect:C,1"),
+                MinionWith("A", 2, "OnDeath:SummonEffect:B/1"),
+                MinionWith("B", 2, "OnDeath:SummonEffect:C/1"),
                 MinionWith("C", 2));
 
             MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
@@ -87,7 +87,7 @@ namespace Card.Tests.EditMode.Match
         public void RaiseOnSummon_DeepChain_ExceedsDepth_Throws()
         {
             // X 的 OnSummon 召唤 X 自己（无限递归）；战场容量放大以先触发深度限制。
-            CardDatabase db = BuildDb(MinionWith("X", 2, "OnSummon:SummonEffect:X,1"));
+            CardDatabase db = BuildDb(MinionWith("X", 2, "OnSummon:SummonEffect:X/1"));
             MatchState state = RuleEngineTestHelpers.BuildState(
                 activePlayerId: 0, rules: new RulesConfig { BoardLimit = 1000 });
             PlayerState self = state.GetPlayer(0);

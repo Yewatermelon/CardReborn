@@ -117,7 +117,7 @@ namespace Card.Tests.EditMode.Match
         public void DeathrattleSummonsMinion_NewMinionStaysOnBoard()
         {
             CardDatabase db = BuildDb(
-                Minion("A", 1, 1, "OnDeath:SummonEffect:C,1"),
+                Minion("A", 1, 1, "OnDeath:SummonEffect:C/1"),
                 Minion("C", 2, 3));
             MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
             PlayerState self = state.GetPlayer(0);

@@ -179,20 +179,21 @@ namespace Card.Domain.Match.Effects
                     return new DrawCardEffectData(ParseInt(param, nameof(DrawCardEffectData)));
                 case "SummonEffect":
                 {
-                    string[] parts = param.Split(',');
+                    // 多参数分隔符统一为斜杠：CSV 单元格内逗号需引号转义，斜杠无此负担（Docs/01 §428）。
+                    string[] parts = param.Split('/');
                     if (parts.Length != 2)
                     {
-                        throw new ArgumentException("SummonEffect 需要 CardKey,Count 两个参数。");
+                        throw new ArgumentException("SummonEffect 需要 CardKey/Count 两个参数。");
                     }
 
                     return new SummonEffectData(parts[0].Trim(), ParseInt(parts[1], nameof(SummonEffectData)));
                 }
                 case "BuffEffect":
                 {
-                    string[] parts = param.Split(',');
+                    string[] parts = param.Split('/');
                     if (parts.Length != 2)
                     {
-                        throw new ArgumentException("BuffEffect 需要 Attack,Health 两个参数。");
+                        throw new ArgumentException("BuffEffect 需要 Attack/Health 两个参数。");
                     }
 
                     return new BuffEffectData(

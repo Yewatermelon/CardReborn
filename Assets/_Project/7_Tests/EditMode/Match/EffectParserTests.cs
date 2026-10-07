@@ -37,7 +37,7 @@ namespace Card.Tests.EditMode.Match
         [Test]
         public void Parse_SummonEffect()
         {
-            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "SummonEffect:M1,1" });
+            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "SummonEffect:M1/1" });
             SummonEffectData s = (SummonEffectData)effects[0].Effect;
             Assert.That(s.CardKey, Is.EqualTo("M1"));
             Assert.That(s.Count, Is.EqualTo(1));
@@ -46,10 +46,26 @@ namespace Card.Tests.EditMode.Match
         [Test]
         public void Parse_BuffEffect()
         {
-            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "BuffEffect:2,3" });
+            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "BuffEffect:2/3" });
             BuffEffectData b = (BuffEffectData)effects[0].Effect;
             Assert.That(b.Attack, Is.EqualTo(2));
             Assert.That(b.Health, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Parse_BuffEffect_WrongParamCount_Throws()
+        {
+            Assert.That(() => EffectParser.Parse(new[] { "BuffEffect:2/2/2" }),
+                Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => EffectParser.Parse(new[] { "BuffEffect:2" }),
+                Throws.InstanceOf<ArgumentException>());
+        }
+
+        [Test]
+        public void Parse_SummonEffect_WrongParamCount_Throws()
+        {
+            Assert.That(() => EffectParser.Parse(new[] { "SummonEffect:M1" }),
+                Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
