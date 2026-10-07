@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M4（回合状态机与效果系统）🟡 进行中（8/10）｜M0–M3 已完成（M3 评审通过，2026-10-06）**
+**当前阶段：M4（回合状态机与效果系统）🟡 进行中（9/10）｜M0–M3 已完成（M3 评审通过，2026-10-06）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -138,6 +138,7 @@
 | M4-T6 CombatResolver | ✅ | 任务卡 [tasks/M4-T6-CombatResolver.md](./tasks/M4-T6-CombatResolver.md)；Domain `CardInstance.TakeDamage(int amount, bool poisonous)`（圣盾抵消一次、剧毒必杀、0 伤害无副作用）；Application `AttackSettler`（攻击英雄仅英雄受伤、随从交换同时互伤、消耗攻击次数、emit AttackDeclaredEvent+DamageEvent）；MatchController 注册。先红 CS1061/CS0246 后绿，新增 12 例（CardInstanceCombat 5 + AttackSettler 7：攻击英雄、随从交换、圣盾抵消、剧毒必杀、0 伤害消耗次数、死亡留 T7、事件 emit）；无 Unity **702 passed / 0 failed**，Domain+App 91.40%；`check.ps1` PASS（191 文件）；3 个新 .meta，277 GUID 无重复 |
 | M4-T7 死亡管线 | ✅ | 任务卡 [tasks/M4-T7-DeathPipeline.md](./tasks/M4-T7-DeathPipeline.md)；Application `DeathProcessor`（收集双方 Board 中 Health≤0 随从→移除战场→RaiseOnDeath 亡语→进坟场→emit CardDeathEvent，外层 do/while 循环至无新死亡）；`MatchController` 在结算后、终局判定前调用。先红 CS0246 后绿，新增 6 例（单随从死亡、亡语触发、多随从同时死亡、亡语召唤新随从、英雄不处理、双方玩家）；无 Unity **708 passed / 0 failed**，Domain+App 91.59%；`check.ps1` PASS（193 文件）；2 个新 .meta，279 GUID 无重复。顺带修复 M1 GameLog 静态隔离缺陷：`GameLog.ResetForTests()` 归零 `SinkFailureCount`/`LastSinkFailure`，`GameLogTestHelper.Reset()` 改用之；Unity EditMode **728 passed / 0 failed**（修复前 GameLog 参数化用例被静默跳过） |
 | M4-T8 英雄技能 | ✅ | 任务卡 [tasks/M4-T8-HeroPower.md](./tasks/M4-T8-HeroPower.md)；Application `HeroPowerSettler`（消耗法力→解析技能配置效果→直接调 EffectExecutor→标记 `PowerUsedThisTurn=true`）；`MatchController` 注册；先红 CS0246 后绿，新增 6 例（耗法力/对英雄伤害/每回合一次/对随从伤害/TargetRule.None 无目标自伤/emit 事件）；无 Unity **714 passed / 0 failed**，Domain+App 91.65%；`check.ps1` PASS（195 文件）；2 个新 .meta，281 GUID 无重复。关键决策：技能效果直接 EffectExecutor（非 TriggerDispatcher）；TargetRule.None 时效果对自己英雄生效（简化）；Unity EditMode 补验 **734 passed / 0 failed** |
+| M4-T9 命令序列化与对局录制 ★ | ✅ | 任务卡 [tasks/M4-T9-CommandReplay.md](./tasks/M4-T9-CommandReplay.md)；Domain `CommandSerializer`（4 命令紧凑 JSON 往返）；Application `MatchRecording`（初始 Setup+seed+命令流水 JSON）+ `MatchReplayer`（同 seed 重放验证状态/事件/History 一致）；先红后绿，新增 11 例；无 Unity **725 passed / 0 failed**，Domain+App 91.92%；`check.ps1` PASS（200 文件）；5 个新 .meta，286 GUID 无重复；Unity 编辑器补验待回报（预期 745） |
 
 > M4 门禁：可用脚本驱动一整局（无 UI）并输出事件日志；覆盖率 ≥ 85%；进程内"客户端 ↔ 服务器"模拟可完整跑完一局（M4-T10 ★）。
 
