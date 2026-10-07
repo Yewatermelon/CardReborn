@@ -1,3 +1,4 @@
+using System;
 using Card.Core;
 
 namespace Card.Domain.Match
@@ -55,6 +56,26 @@ namespace Card.Domain.Match
             int grown = Max + 1;
             Max = grown < manaLimit ? grown : manaLimit;
             Current = Max;
+        }
+
+        /// <summary>
+        /// 快照/增量恢复入口（M4-T10）：直接覆盖 Max/Current，不做 CanSpend 校验。
+        /// 负值抛 <see cref="ArgumentOutOfRangeException"/>。
+        /// </summary>
+        public void Restore(int max, int current)
+        {
+            if (max < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(max), "恢复后的法力上限不能为负数。");
+            }
+
+            if (current < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(current), "恢复后的法力值不能为负数。");
+            }
+
+            Max = max;
+            Current = current;
         }
     }
 }

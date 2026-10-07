@@ -181,7 +181,13 @@ namespace Card.Tests.EditMode.Match
             Assert.That(added.Kind, Is.EqualTo(ChangeKind.Added));
             Assert.That(added.Path, Is.EqualTo("players[0].hand"));
             Assert.That(added.OldValue.Kind, Is.EqualTo(JsonKind.Null));
-            Assert.That(added.NewValue.IntValue, Is.EqualTo(3));
+            // M4-T10 协议升级：Added 载荷为完整卡 JSON（与 MatchStateSerializer.WriteCard 同构），
+            // 客户端仅凭增量即可重建其从未见过的卡（召唤/对手抽牌）。
+            Assert.That(added.NewValue.Kind, Is.EqualTo(JsonKind.Object));
+            Assert.That(added.NewValue.TryGetMember("instanceId", out JsonValue idValue), Is.True);
+            Assert.That(idValue.IntValue, Is.EqualTo(3));
+            Assert.That(added.NewValue.TryGetMember("cardKey", out JsonValue keyValue), Is.True);
+            Assert.That(keyValue.StringValue, Is.EqualTo("CARD_H1"));
         }
 
         [Test]

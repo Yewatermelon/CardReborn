@@ -33,6 +33,26 @@ namespace Card.Tests.EditMode.Match
         }
 
         [Test]
+        public void Restore_OverwritesMaxAndCurrent()
+        {
+            ManaPool pool = new ManaPool(max: 3, current: 1);
+
+            pool.Restore(5, 2);
+
+            Assert.That(pool.Max, Is.EqualTo(5));
+            Assert.That(pool.Current, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Restore_WhenNegative_Throws()
+        {
+            ManaPool pool = new ManaPool(max: 3, current: 1);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => pool.Restore(-1, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => pool.Restore(0, -1));
+        }
+
+        [Test]
         public void CanSpend_ReflectsCurrent()
         {
             ManaPool pool = new ManaPool(max: 2, current: 2);

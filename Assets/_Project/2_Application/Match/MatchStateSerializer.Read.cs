@@ -98,7 +98,8 @@ namespace Card.Application.Match
             }
         }
 
-        private static CardInstance ReadCard(JsonValue json, string path)
+        /// <summary>JsonValue → 单卡（M4-T10 起 internal：StateChangeApplier 的 Added 载荷复用同构格式）。</summary>
+        internal static CardInstance ReadCard(JsonValue json, string path)
         {
             RequireKind(json, JsonKind.Object, path);
             return CardInstance.Restore(

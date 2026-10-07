@@ -66,7 +66,8 @@ namespace Card.Application.Match
             return JsonValue.Array(items.ToArray());
         }
 
-        private static JsonValue WriteCard(CardInstance card)
+        /// <summary>单卡 → JsonValue（M4-T10 起 internal：MatchStateDiffer 的 Added 载荷复用同构格式）。</summary>
+        internal static JsonValue WriteCard(CardInstance card)
         {
             return JsonValue.Object()
                 .Add("instanceId", JsonValue.From(card.InstanceId))

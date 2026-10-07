@@ -25,5 +25,19 @@ namespace Card.Application.Match
             Guard.NotNullOrWhiteSpace(json, nameof(json));
             return ReadState(JsonValue.Parse(json));
         }
+
+        /// <summary>序列化为 <see cref="JsonValue"/> 树（M4-T10：协议层避免字符串往返）。</summary>
+        internal static JsonValue WriteStateTree(MatchState state)
+        {
+            Guard.NotNull(state, nameof(state));
+            return WriteState(state);
+        }
+
+        /// <summary>从 <see cref="JsonValue"/> 还原全新 MatchState。</summary>
+        internal static MatchState ReadStateTree(JsonValue root)
+        {
+            Guard.NotNull(root, nameof(root));
+            return ReadState(root);
+        }
     }
 }

@@ -68,7 +68,7 @@ namespace Card.Application.Match
                 CardInstance card = after.Cards[i];
                 if (!beforeById.TryGetValue(card.InstanceId, out CardInstance? oldCard))
                 {
-                    changes.Add(new StateChange(ChangeKind.Added, path, JsonValue.Null(), JsonValue.From(card.InstanceId)));
+                    changes.Add(new StateChange(ChangeKind.Added, path, JsonValue.Null(), MatchStateSerializer.WriteCard(card)));
                     continue;
                 }
 
