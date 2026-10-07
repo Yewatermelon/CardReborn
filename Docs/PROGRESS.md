@@ -15,7 +15,7 @@
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
-| M5 表现层与交互 | 🟡 进行中 | 5/8 | — | 依赖 TMP Essentials；M5-T1~T5 完成（Unity 补验 836 通过） |
+| M5 表现层与交互 | 🟡 进行中 | 6/8 | — | 依赖 TMP Essentials；M5-T1~T6 完成（Unity 补验 886 通过） |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
@@ -145,7 +145,7 @@
 
 ---
 
-## M5 任务级状态（进行中 5/8）
+## M5 任务级状态（进行中 6/8）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
@@ -154,7 +154,7 @@
 | M5-T3 对象池接入 | ✅ | 任务卡 [tasks/M5-T3-ViewPool.md](./tasks/M5-T3-ViewPool.md)；代码 `4_Presentation/Battle/`：新增 `CardViewPool`（M1-T6 `ObjectPool<CardView>` 的 Unity 侧封装：租出激活挂载/归还禁用停回池容器/预热/CreatedCount 观察计数）；`HandView`/`BoardView` 增删从 `Instantiate/Destroy` 改走池租还（`_prewarmCount` 手牌 4/战场 7，首次 `SetCards` 惰性建池）；`CardListSync` 删除（Instantiate/Destroy 路径退役）；测试 `CardViewPoolTests` 新增 6 例 + `HandViewTests`/`BoardViewTests` 按池化语义重写 9 例并新增 3 例（峰值后 3→0→3 `CreatedCount` 恒为 3 零新建、预热一次建成、归还禁用入池）；无 Unity 工具链 **741 passed / 0 failed**，`check.ps1` PASS（228 文件）；Unity EditMode 用户实跑 **802 passed / 0 failed**（0 error / 0 warning，2026-10-07）。P3 观察：两视图池化代码重复，沿用 T2 决定待分化时再抽象 |
 | M5-T4 `PlayerInputController` | ✅ | 任务卡 [tasks/M5-T4-PlayerInput.md](./tasks/M5-T4-PlayerInput.md)；代码 `4_Presentation/Battle/Input/`：新增 `ICommandSink`（命令出口抽象，解耦具体控制器）、`PlayerInputController`（手牌/战场/技能/结束回合四种点击意图 → `PlayCardCommand`/`AttackCommand`/`UseHeroPowerCommand`/`EndTurnCommand`；`CommandAccepted`/`CommandRejected` 互斥事件透出权威侧结果；自身不读 `MatchState` 不判规则）、`MatchControllerCommandSink`（生产适配器）；测试 13 例（控制器 10：未初始化抛异常/四种命令字段/接受拒绝互斥/错误码携带/null 防护；适配器 3：真实 `MatchController` 行动方接受且 `TurnNumber+1`/非行动方 `NotYourTurn` 拒绝透回/null 防护）；无 Unity 工具链 **741 passed / 0 failed**，`check.ps1` PASS（233 文件）；Unity EditMode 用户实跑 **815 passed / 0 failed**（802 + 13 新例，2026-10-07）。P3 观察：`MatchControllerCommandSink` 仅一行透传，阶段二由 `NetworkMatchClient` 实现同接口，不过度设计异步语义 |
 | M5-T5 `TargetingController` | ✅ | 任务卡 [tasks/M5-T5-Targeting.md](./tasks/M5-T5-Targeting.md)；代码 `4_Presentation/Battle/Targeting/`：`IInputSource`（U-9 输入抽象：指针/确认/取消）、`ITargetPicker`（命中测试抽象，只识别不过滤）、`TargetingArrowView`（U-8：两端屏幕坐标每次 `SetEndpoints` 经 `RectTransformUtility` 现算本地坐标，分辨率变化后仍准确）、`TargetingController`（Idle↔Targeting 状态机；起点用 `Func<Vector2>` 现算非快照；确认命中产出带 `TargetRef` 的 Play/Attack/HeroPower 命令经 `ICommandSink` 提交；右键/Esc 取消；不读 MatchState 不判规则）、`UnityInputSource`（生产薄适配）；测试 21 例（箭头 6：含 800×600→1920×1080 分辨率映射核心用例；控制器 15：三种模式命令字段/取消/未命中保持/拒绝透回/指向中替换/origin 跟随）；无 Unity 工具链 **741 passed / 0 failed**，`check.ps1` PASS（242 文件）；Unity EditMode 用户实跑 **836 passed / 0 failed**（815 + 21 新例，2026-10-07）。修复记录：`UnityEngine.Input` 命名空间遮蔽（全限定）、R5 行数超限（抽 stub/fixture）、可访问性不一致（统一 internal）。P3 观察：指向态每帧一次 origin provider 调用与箭头几何更新，量极小记录备查 |
-| M5-T6 反馈表现 | ⬜ | — |
+| M5-T6 反馈表现 | ✅ | 任务卡 [tasks/M5-T6-Feedback.md](./tasks/M5-T6-Feedback.md)；代码 `4_Presentation/Battle/Feedback/`：`FeedbackSettings`（Speed 加速钳制 + 数字/淡出/横幅/音效四开关，FR-8.2）、`AudioCue`/`IAudioCuePlayer`（12 种 cue 音效钩子，FR-8.5 钩子）、`FloatingTextView`/`FloatingTextPool`（伤害/治疗/疲劳浮动数字，走池 §5.8）、`TurnBannerView`（回合/终局横幅）、`CardFadeOutView`（死亡淡出）、`IFeedbackTargetLocator`（事件载荷→视图定位抽象，生产实现属 M6）、`BattleFeedbackPlayer`（12 类 GameEvent→反馈映射，`Bind(MatchEventPump)` 订阅；`PhaseChanged`/`TurnEnded` 显式无反馈为设计决定）、`CardHighlightDriver`（FR-8.6：外部喂 HashSet id 集合 O(1) 查，不判规则）；加法式改造：`ICardViewData`/`CardViewData` 增 `int? InstanceId`、`CardView` 增三高亮面板 + `SetHighlight` + `InstanceId`、`CardViewPool` 归还复位（清高亮/停淡出/alpha 归 1）；测试 50 例（设置 3 + 浮字 5 + 池 4 + 横幅 4 + 淡出 3 + 高亮 5 + 驱动 4 + 播放器 15 + 开关加速 7）；无 Unity 工具链 **741 passed / 0 failed**（规则三层零改动），`check.ps1` PASS（264 文件）；Unity EditMode 用户实跑 **886 passed / 0 failed**（836 + 50 新例，2026-10-07）。修复记录：`IReadOnlyCollection.Contains` 缺 `using System.Linq`、out 参数未赋值（`= default`）、EditMode 下 SetActive 不触发 Awake 致 `_rect` null（改惰性缓存） |
 | M5-T7 `BattleLogView` | ⬜ | — |
 | M5-T8 只读视图模型 ★ | ⬜ | — |
 
