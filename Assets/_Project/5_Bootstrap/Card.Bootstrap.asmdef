@@ -7,7 +7,9 @@
         "Card.Application",
         "Card.Network",
         "Card.Infrastructure",
-        "Card.Presentation"
+        "Card.Presentation",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -24,7 +24,8 @@
     -->
     <Compile Include="..\..\..\Assets\_Project\7_Tests\EditMode\**\*.cs"
              Exclude="..\..\..\Assets\_Project\7_Tests\EditMode\Infrastructure\**\*.cs;
-                      ..\..\..\Assets\_Project\7_Tests\EditMode\Presentation\**\*.cs" />
+                      ..\..\..\Assets\_Project\7_Tests\EditMode\Presentation\**\*.cs;
+                      ..\..\..\Assets\_Project\7_Tests\EditMode\Bootstrap\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
