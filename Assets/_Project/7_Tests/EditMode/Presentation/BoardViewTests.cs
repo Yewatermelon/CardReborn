@@ -22,6 +22,7 @@ namespace Card.Tests.EditMode.Presentation
             _view = _root.AddComponent<BoardView>();
             _view._cardPrefab = _prefab;
             _view._spacing = 140f;
+            _view._prewarmCount = 0;
         }
 
         [TearDown]
@@ -37,13 +38,15 @@ namespace Card.Tests.EditMode.Presentation
         }
 
         [Test]
-        public void SetCards_AddThenShrink_KeepsCountAligned()
+        public void SetCards_AddThenShrink_KeepsCountAlignedAndParksReturned()
         {
             _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1), Minion("B", 2, 2) });
             Assert.That(_view.ChildCount, Is.EqualTo(2));
 
             _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1) });
+
             Assert.That(_view.ChildCount, Is.EqualTo(1));
+            Assert.That(_view.Pool.IdleCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -51,7 +54,7 @@ namespace Card.Tests.EditMode.Presentation
         {
             _view.SetCards(new List<ICardViewData> { Minion("M", 4, 2) });
 
-            CardView child = _view.transform.GetChild(0).GetComponent<CardView>();
+            CardView child = _view.Children[0];
             Assert.That(child._attackText.text, Is.EqualTo("4"));
             Assert.That(child._healthText.text, Is.EqualTo("2"));
             Assert.That(child._attackPanel.activeSelf, Is.True);
@@ -62,8 +65,20 @@ namespace Card.Tests.EditMode.Presentation
         {
             _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1), Minion("B", 2, 2) });
 
-            Assert.That(_view.transform.GetChild(0).localPosition.x, Is.EqualTo(-70f).Within(0.001f));
-            Assert.That(_view.transform.GetChild(1).localPosition.x, Is.EqualTo(70f).Within(0.001f));
+            Assert.That(_view.Children[0].transform.localPosition.x, Is.EqualTo(-70f).Within(0.001f));
+            Assert.That(_view.Children[1].transform.localPosition.x, Is.EqualTo(70f).Within(0.001f));
+        }
+
+        [Test]
+        public void SetCards_AfterPeakShrinkAndRegrow_NoNewInstantiate()
+        {
+            _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1), Minion("B", 2, 2), Minion("C", 3, 3) });
+
+            _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1) });
+            _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1), Minion("B", 2, 2), Minion("C", 3, 3) });
+
+            Assert.That(_view.Pool.CreatedCount, Is.EqualTo(3), "峰值后增删不得新建实例");
+            Assert.That(_view.ChildCount, Is.EqualTo(3));
         }
     }
 }

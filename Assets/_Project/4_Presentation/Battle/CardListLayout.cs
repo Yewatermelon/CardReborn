@@ -16,31 +16,4 @@ namespace Card.Presentation.Battle
             }
         }
     }
-
-    /// <summary>卡牌列表子件数量对齐（M5-T2）：少建多删，编辑模式下用 DestroyImmediate。</summary>
-    internal static class CardListSync
-    {
-        public static void Sync(Transform parent, CardView prefab, List<CardView> children, int count)
-        {
-            while (children.Count > count)
-            {
-                int last = children.Count - 1;
-                GameObject go = children[last].gameObject;
-                children.RemoveAt(last);
-                if (UnityEngine.Application.isPlaying)
-                {
-                    Object.Destroy(go);
-                }
-                else
-                {
-                    Object.DestroyImmediate(go);
-                }
-            }
-
-            while (children.Count < count)
-            {
-                children.Add(Object.Instantiate(prefab, parent));
-            }
-        }
-    }
 }
