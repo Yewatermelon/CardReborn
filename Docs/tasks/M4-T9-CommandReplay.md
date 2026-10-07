@@ -117,7 +117,7 @@ EditMode，≥ 8 例；先红。
 
 - [x] 全部 AC 满足且附证据（AC-1~7 见 §6；11 个测试全绿）
 - [x] 先红后绿（CS0103 × 20+ → 3 个 Replay 测试因缺 TheCoinCardKey 失败 → 改用真实配置夹具 → 725/0 全绿）
-- [x] 0 error / 0 warning（无 Unity 工具链 725 passed / 0 failed；Unity 编辑器补验待用户回报）
+- [x] 0 error / 0 warning（无 Unity 工具链 725 passed / 0 failed；Unity 编辑器补验 **745 passed / 0 failed**）
 - [x] Docs/03 铁律自查 + Docs/04 评审无 P0/P1
 - [x] PROGRESS 更新
 
@@ -141,4 +141,4 @@ EditMode，≥ 8 例；先红。
 ### 双环境验证
 
 - 无 Unity 工具链：**725 passed / 0 failed**
-- Unity 编辑器 Test Runner（EditMode）用户实跑补验：待回报（预期 **745 = 734 + 11 新例**）
+- Unity 编辑器 Test Runner（EditMode）用户实跑补验：**745 passed / 0 failed**（= 734 + 11 新例，与预期一致）
