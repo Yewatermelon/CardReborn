@@ -54,7 +54,7 @@
 | 项 | 值 |
 | --- | --- |
 | 分支 / 提交 | `main` 领先 `origin/main`（按用户要求未推送，推送需用户明确要求），工作区干净（HEAD 以 `git log -1` 为准） |
-| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（2026-10-07 评审通过；`checkpoint/m4-complete` 标签待用户确认后打）；**M5 ⬜ 未开始** |
+| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（2026-10-07 评审通过、`checkpoint/m4-complete` 已推送远端）；**M5 ⬜ 未开始** |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（761 用例实跑验证）；无 Unity kernel 工程 0 warning |
 | 测试 | **Unity EditMode 761 passed / 0 failed**；无 Unity 工具链 **741 passed / 0 failed**（排除 Infrastructure 20 例） |
 | 覆盖率 | `0_Core 96.52%`、`Domain + Application 91.39%`（门禁 90% / 80%） |
@@ -200,13 +200,11 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 
 | 项 | 值 |
 | --- | --- |
-| 标签 | `checkpoint/m3-complete`（annotated） |
-| 指向提交 | 本文档所在提交（2026-10-06，M0–M3 完成 + 本交接/恢复文档更新；提交后立即打标签，代码状态与验证时一致） |
-| 标签说明 | 无 Unity 工具链 588 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain+App 90.65%`、规则内核与状态契约（洗牌/序列化/增量）可用；同日 Unity 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除，.meta 导入与程序集编译实跑无误 |
+| 标签 | `checkpoint/m4-complete`（annotated） |
+| 指向提交 | 2026-10-07 M4 收官文档提交（M0–M4 完成 + 本交接/复盘更新；提交后立即打标签，代码状态与验证时一致） |
+| 标签说明 | 无 Unity 工具链 741 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.52%` / `Domain+App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；M4 门禁四条全过（脚本整局/事件日志/覆盖率/进程内回环）；标签已推送远端 |
 
-> 历史检查点：`checkpoint/m2-complete`（annotated，**已推送远端**，指向 `9eb3c13`，443 用例、覆盖率 92.36%）保持不动；`checkpoint/*` 标签一律不移动、不删除。
->
-> **M4 收官（2026-10-07）**：741/761 用例全过、覆盖率 96.52%/91.39%，评审通过；`checkpoint/m4-complete` 标签**待项目所有者确认后**按本节脚本打（打完更新本表与 PROGRESS）。
+> 历史检查点：`checkpoint/m3-complete`（annotated，本地 `422f4f4`，588/608 用例）、`checkpoint/m2-complete`（annotated，**已推送远端**，`9eb3c13`，443 用例、覆盖率 92.36%）保持不动；`checkpoint/*` 标签一律不移动、不删除。
 
 查看方式：`git tag -n99 -l 'checkpoint/*'`；切过去：`git checkout checkpoint/m2-complete`。
 
