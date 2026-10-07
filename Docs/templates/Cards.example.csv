@@ -4,6 +4,6 @@ Id,Key,NameKey,DescKey,Cost,Type,Rarity,Class,Attack,Health,Keywords,TargetRule,
 3,NEUTRAL_IKUN,CARD_003_NAME,CARD_003_DESC,1,Minion,Common,Neutral,3,1,Charge,None,,Core,art_card_003,sfx_play_003,TRUE
 4,NEUTRAL_GIANT,CARD_004_NAME,CARD_004_DESC,6,Minion,Epic,Neutral,5,9,Taunt,None,,Core,art_card_004,sfx_play_004,TRUE
 5,MAGE_FIREBALL,CARD_005_NAME,CARD_005_DESC,4,Spell,Common,Mage,,,,EnemyMinion,DamageEffect:6,Core,art_spell_001,sfx_cast_001,TRUE
-6,MAGE_BLOCK,CARD_006_NAME,CARD_006_DESC,3,Spell,Rare,Mage,,,,None,GainArmorEffect:8|self,Core,art_spell_002,sfx_cast_002,TRUE
-7,NEUTRAL_DEVOUR,CARD_007_NAME,CARD_007_DESC,5,Minion,Rare,Neutral,4,4,,None,CompositeEffect:(OnPlay:BuffEffect:2|0|self),Core,art_card_007,sfx_play_007,TRUE
-8,NEUTRAL_TREANT,CARD_008_NAME,CARD_008_DESC,8,Minion,Legendary,Neutral,8,8,Deathrattle,None,SummonEffect:NEUTRAL_PANGO|2,Core,art_card_008,sfx_play_008,TRUE
+6,MAGE_BLOCK,CARD_006_NAME,CARD_006_DESC,3,Spell,Rare,Mage,,,,None,HealEffect:8,Core,art_spell_002,sfx_cast_002,TRUE
+7,NEUTRAL_DEVOUR,CARD_007_NAME,CARD_007_DESC,5,Minion,Rare,Neutral,4,4,Battlecry,FriendlyMinion,BuffEffect:2/2,Core,art_card_007,sfx_play_007,TRUE
+8,NEUTRAL_TREANT,CARD_008_NAME,CARD_008_DESC,8,Minion,Legendary,Neutral,8,8,Deathrattle,None,OnDeath:SummonEffect:NEUTRAL_PANGO/2,Core,art_card_008,sfx_play_008,TRUE

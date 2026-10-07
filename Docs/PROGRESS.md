@@ -16,7 +16,7 @@
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
-| M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
+| M6 垂直切片打通 | 🟡 进行中 | 1/5 | — | M6-T1 完成（2026-10-07：用户编辑器功能验收通过 + EditMode 全绿；kernel 750 passed）；Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
@@ -160,6 +160,14 @@
 
 ---
 
+## M6 任务级状态（进行中 1/5）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M6-T1 对战场景组装 | ✅ | 任务卡 [tasks/M6-T1-BattleScene.md](./tasks/M6-T1-BattleScene.md)；代码：Presentation 点击加法（`CardView.BindClick/UnbindClick`、`HandView`/`BoardView` 增 `CardClicked` 事件与 `TryGetCardView`、`HeroView` 增 `SetName`）+ `5_Bootstrap/Battle|Menu/` 组合根（`BattleComposition` 纯 C# 开局装配、`BattleUiFactory`/`BattleUiPrimitive` 全代码 UI、`BattleViewSynchronizer` 只读快照刷新/对手牌背/嘲讽标记、`UiTargetPicker`/`TableFeedbackLocator`/`SceneCamera`、`BattleSceneBootstrap`/`MainMenuBootstrap`、`UiEventSystem` 静态令牌避 R8）+ `6_Editor/M6/M6SceneSetup.cs`（一键部署配置到 StreamingAssets/生成两场景并写 Build Settings/生成中文 TMP 动态字体资产）+ Noto Sans CJK SC 入库（OFL 1.1）；测试 11 例（点击 6 + 装配 4 + HeroView 1），kernel 工程排除 Bootstrap 测试目录；无 Unity 工具链 **750 passed / 0 failed**（748 + 2 效果解析新例），覆盖率 `0_Core 96.52%` / `Domain + App 91.52%`，`check.ps1` PASS（288 文件）；用户编辑器实跑（2026-10-07）：两菜单执行、MainMenu→Battle 开局、AC-1~7 功能验收通过、EditMode 全绿（基线 920 + 11 新例）。修复记录：效果 DSL 分隔符统一为 `/`（M4 遗留数据/解析不一致，Docs/01 §428 补规范）；无相机致箭头拖影（新增 SceneCamera）；编辑器 OS 动态字体不可用致中文 □（工程内字体 + 菜单生成动态字体资产）。P3 观察：卡名占位键待 M8 本地化；灰板美术待 M9；对手行动 M6-T3/M10 |
+
+---
+
 ## 未关闭问题（P0 / P1）
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
@@ -227,3 +235,4 @@
 | 2026-10-06 | M4-T5 完成 | 触发链落地：Domain `Trigger` 枚举 + `TriggeredEffect` 包装；EffectParser 返回 TriggeredEffect 列表并解析 Trigger 前缀（向后兼容无前缀默认 OnPlay）；Application `TriggerDispatcher`（类型字典分发 + 深度 64 防死循环）；SettlementContext 加 Dispatcher；PlayCardSettler/EndTurnSettler/SummonExecutor 接线触发；新增 11 例（亡语链式不死循环、OnSummon 自召唤深度超限、战吼只触发 OnPlay、回合开始/结束触发）；先红后绿；无 Unity **690 passed / 0 failed**、Domain+App 91.44%；`check.ps1` PASS（188 文件） | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M4-T6 完成 | CombatResolver 落地：Domain `CardInstance.TakeDamage`（圣盾抵消+剧毒必杀+0伤害无副作用）；Application `AttackSettler`（攻击英雄/随从交换同时互伤/消耗次数/emit 事件）；MatchController 注册；新增 12 例；先红后绿；无 Unity **702 passed / 0 failed**、Domain+App 91.40%；`check.ps1` PASS（191 文件） | PROGRESS / tasks(新增) / Assets/_Project/1_Domain / Assets/_Project/2_Application / Assets/_Project/7_Tests |
 | 2026-10-06 | M4-T7 完成 | 死亡管线落地：Application `DeathProcessor`（收集 Health≤0 随从→移除战场→RaiseOnDeath 亡语→进坟场→emit CardDeathEvent，循环至无新死亡）；MatchController 结算后终局前调用；新增 6 例；先红后绿；无 Unity **708 passed / 0 failed**、Domain+App 91.59%；`check.ps1` PASS（193 文件） | PROGRESS / tasks(新增) / Assets/_Project/2_Application / Assets/_Project/7_Tests |
+| 2026-10-07 | M6-T1 完成 + 规范补充 | M6-T1 对战场景组装收官：主菜单→对战场景一键开局（全代码 UI + Editor 菜单生成场景/部署配置/生成中文字体资产），用户编辑器功能验收 AC-1~7 通过；修复 M4 遗留缺陷——效果 DSL 明确多参数分隔符为斜杠 `/`（数据与解析器不一致，首次打出 Buff 牌暴露），`Cards.example.csv` 同步清理陈旧语法（`CompositeEffect`/参数内竖线） | 01 / templates / PROGRESS / tasks(新增) / Assets(Bootstrap/Editor/字体) |
