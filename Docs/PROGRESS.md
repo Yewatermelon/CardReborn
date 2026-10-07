@@ -150,7 +150,7 @@
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M5-T1 `CardView` + 数据绑定 | ✅ | 任务卡 [tasks/M5-T1-CardView.md](./tasks/M5-T1-CardView.md)；代码 `4_Presentation/Battle/`：`ICardViewData`（只读契约）、`CardViewData`（不可变值实现 + `FromDefinition`）、`CardView`（MonoBehaviour 渲染 7 个字段）；测试 `7_Tests/EditMode/Presentation/`（9 例：数据 5 + 视图 4）；先红后绿，无 Unity 工具链 **741 passed / 0 failed**（Presentation 测试按惯例排除在 coverage 外），`check.ps1` PASS（214 文件）；Unity EditMode 补验 **770 passed / 0 failed**（0 error / 0 warning，2026-10-07） |
-| M5-T2 `HandView`/`BoardView`/`HeroView`/`ManaView` | ⬜ | — |
+| M5-T2 `HandView`/`BoardView`/`HeroView`/`ManaView` | ✅ | 任务卡 [tasks/M5-T2-ZoneViews.md](./tasks/M5-T2-ZoneViews.md)；代码 `4_Presentation/Battle/`：四视图 + `CardListLayout`/`CardListSync` + `MatchEventPump`（事件泵）；`CardViewData.FromInstance` 运行时攻/血；测试 23 例（数据 3 + 法力 3 + 英雄 4 + 手牌 6 + 战场 3 + 泵 4，含真实对局 EndTurn→抽牌→HandView 自动刷新的端到端用例）；无 Unity 工具链 **741 passed / 0 failed**，`check.ps1` PASS（226 文件）；Unity EditMode 补验 **793 passed / 0 failed**（0 error / 0 warning，2026-10-07） |
 | M5-T3 对象池接入 | ⬜ | — |
 | M5-T4 `PlayerInputController` | ⬜ | — |
 | M5-T5 `TargetingController` | ⬜ | — |
