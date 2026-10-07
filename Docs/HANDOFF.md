@@ -16,11 +16,11 @@
 - [ ] **6. 确认新 AI 的访问与授权**（第 8 节）：仓库访问权限（私有仓库需给凭据）；是否允许联网（首次 `dotnet restore`、`git push`、`git lfs fetch`）；是否允许必要时聚焦 Unity 窗口（多数验证已做成无界面方式）。
 - [ ] **7. 把"开场指令"粘给新 AI**（可直接复制下面这段）：
 
-  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M3，下一步是 M4 回合状态机与效果系统。
-  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M4 任务表。
+  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M4，下一步是 M5 表现层与交互。
+  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M5 任务表。
   > 然后跑三条命令确认环境：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
-  > 期望结果：静态门禁 PASS、自检 PASS、588 用例全过、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`（Unity 侧 EditMode 为 608 例）。
-  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M4-T1**（以 `Docs/02` 任务表为准），按仓库既有流程：先写任务卡、先写测试再实现。
+  > 期望结果：静态门禁 PASS、自检 PASS、741 用例全过、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`（Unity 侧 EditMode 为 761 例）。
+  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M5-T1**（以 `Docs/02` 任务表为准），按仓库既有流程：先写任务卡、先写测试再实现。
   > 约束：不要移动或删除 `checkpoint/*` 标签；每个任务结束更新 `Docs/PROGRESS.md` 并在任务卡里写结论；里程碑结束写 `Docs/reviews/` 复盘。
 
 - [ ] **8. 让新 AI 做一次"交接验收"**：跑第 7 步的三条命令并把**实际输出**贴回来；数字对得上才算交接成功（对不上先查环境，不要急着改代码）。
@@ -32,10 +32,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 项目 | `Card`：炉石式回合制卡牌游戏（Unity 2022.3 LTS），仓库 `E:\Unity\Project\CardReborn`（GitHub: `https://github.com/Yewatermelon/CardReborn.git`） |
-| 当前阶段 | **阶段一（PVE）已完成 M0–M3；下一步是 M4 回合状态机与效果系统** |
+| 当前阶段 | **阶段一（PVE）已完成 M0–M4（M4 评审通过 2026-10-07）；下一步是 M5 表现层与交互** |
 | 交付方式 | 每个任务一张任务卡（`Docs/tasks/`）+ 先写测试 + 双环境验证 + 提交里带证据 |
-| 已具备的能力 | 规则内核（Core）、配置管线（CSV → 校验 → JSON → 卡池 → 热加载）、**对局规则内核（MatchState/MatchFactory/RuleEngine/CardDrawService/MatchEvaluator/序列化/增量）**、测试 588 例（Unity 侧 608）、静态门禁、无 Unity 覆盖率工具链 |
-| 下一步第一件事 | 读 `Docs/02` 的 M4 任务表 → 按任务卡流程从 **M4-T1** 开始（详见本文第 5 节） |
+| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环（开局→回合流转→出牌/攻击/技能效果→死亡管线→终局→事件流）**、命令录制重放、状态快照/增量、**进程内"客户端↔服务器"回环模拟**；测试 741 例（Unity 侧 761）、静态门禁、无 Unity 覆盖率工具链 |
+| 下一步第一件事 | 读 `Docs/02` 的 M5 任务表 → 按任务卡流程从 **M5-T1** 开始（详见本文第 5 节）；M5 铁律提醒：View 只读不判规则、不写状态，交互全部转译为 GameCommand |
 
 ## 2. 你的第一步（建议按顺序做）
 
@@ -45,22 +45,22 @@
    - `Tools/check.ps1`（静态门禁）
    - `Tools/check.ps1 -SelfTest`（门禁自身是否有效）
    - `Tools/coverage.ps1`（无 Unity 跑内核测试 + 覆盖率）
-4. 读 `Docs/02` 的 **M4 任务表**，写第一张任务卡，再动手。
+4. 读 `Docs/02` 的 **M5 任务表**，写第一张任务卡，再动手。
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-06。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-07（M4 收官）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 领先 `origin/main`（M2 收官后按用户要求未推送），工作区干净（验证时的 HEAD 是 `3931264`；以 `git log -1` 为准） |
-| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（评审通过、`checkpoint/m3-complete`）；**M4 ⬜ 未开始** |
-| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（608 用例实跑验证）；无 Unity kernel 工程 0 warning |
-| 测试 | **Unity EditMode 608 passed / 0 failed**；无 Unity 工具链 **588 passed / 0 failed**（排除 Infrastructure 20 例） |
-| 覆盖率 | `0_Core 96.51%`、`Domain + Application 90.65%`（门禁 90% / 80%） |
-| 静态门禁 | `Tools/check.ps1` PASS（R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
+| 分支 / 提交 | `main` 领先 `origin/main`（按用户要求未推送，推送需用户明确要求），工作区干净（HEAD 以 `git log -1` 为准） |
+| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（2026-10-07 评审通过；`checkpoint/m4-complete` 标签待用户确认后打）；**M5 ⬜ 未开始** |
+| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（761 用例实跑验证）；无 Unity kernel 工程 0 warning |
+| 测试 | **Unity EditMode 761 passed / 0 failed**；无 Unity 工具链 **741 passed / 0 failed**（排除 Infrastructure 20 例） |
+| 覆盖率 | `0_Core 96.52%`、`Domain + Application 91.39%`（门禁 90% / 80%） |
+| 静态门禁 | `Tools/check.ps1` PASS（209 文件；R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用 |
-| 未关闭项 | 均为 P3（见第 7 节） |
+| 未关闭项 | 无 P0/P1/P2；P3 观察项 2 个（M4-OBS-1 枚举双编码、M4-OBS-2 快照缺 NextInstanceId，均阶段二前处理，见第 7.2 节） |
 
 ## 4. 验证环境与命令（关键：两种跑法）
 
@@ -130,18 +130,21 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 
 ## 7. 还没做的事（交接时请确认）
 
-### 7.1 立即要做（M4）
+### 7.1 立即要做（M5）
 
-`Docs/02` M4（回合状态机与效果系统）：回合流转（TurnStart→Draw→Main→TurnEnd，接入 `CardDrawService` 结算疲劳/爆牌）、效果组件（效果串 → 效果实例注册与结算，接入 `RuleEngine`）、事件模型（GameEvent，随效果系统设计）、护甲/伤害细化（疲劳护甲抵扣、爆牌亡语——M3-T8 遗留衔接）、潜行等目标规则接入（M3-T6 遗留衔接）。
+`Docs/02` M5（表现层与交互）：场景/Prefab 搭建、MatchState 只读渲染（英雄/手牌/战场/法力/阶段）、玩家交互→GameCommand 上行（出牌/攻击/技能/结束回合）、基于 EventLog 事件的表现反馈（动画/飘字先做最简）、对局启动装配（Bootstrap 接 MatchFactory + MatchController）。
 
-> M3 已交付的直接前置：`MatchFactory`（开局含幸运币）、`RuleEngine.Validate`（四类命令校验）、`CardDrawService` + `DrawOutcome`（抽牌/疲劳/爆牌）、`MatchEvaluator`（终局）、`MatchStateSerializer`/`MatchStateDiffer`（快照/增量，路径键一致）。
+> M4 已交付的直接前置：`MatchController`（唯一权威驱动入口 + History/Events 查询）、12 类 GameEvent（View 订阅反应）、四类 GameCommand + CommandResult/CommandError（上行契约）、`MatchStateSerializer`/`MatchStateDiffer`/`StateChangeApplier`（状态→视图数据通道；M5 用全量本地视图，视野裁剪属阶段二）、进程内回环（本地对局的编排参照）。TMP Essentials 已导入。
 
-> 注意：M3 起状态必须**可序列化、可裁剪、可增量**（阶段二状态同步的前置，见 `Docs/03` §5.9.4 与 `Docs/05`）。`MatchState` 里禁止出现 Unity 类型或 UI 引用。
+> 铁律提醒：表现层只读——View 不判断规则、不修改状态；禁止 `GameObject.Find`/`FindAnyObjectByType`/`static Instance`；`Card.Presentation` 不得引用 `Card.Network`（阶段二铁律 12，M5 同样遵守）。
 
 ### 7.2 已登记但未做的 P3（可顺手做，不阻塞）
 
 | 编号 | 描述 | 位置 |
 | --- | --- | --- |
+| M4-OBS-1 | 枚举线上编码不统一（快照=名字符串、增量=整数；Applier 已兼容），阶段二 M11/M13 前统一 + 契约测试 | M4 复盘 §8、PROGRESS 未关闭问题表 |
+| M4-OBS-2 | `MatchStateSerializer` 快照缺 `NextInstanceId`，阶段二重连快照前补字段 + 往返测试 | M4-T10 任务卡 Q3、M4 复盘 §8 |
+| — | 潜行等目标规则接入（RuleEngine.Target 49% 未用分支，M3-T6 遗留） | M3/M4 复盘 |
 | M1-R4 | 补齐未覆盖行（`PublishReport.ToString` 70%、`StateMachine` 82%、`ObjectPool` 96%、`Result` 95%） | 见 M1 复盘 |
 | M2-R1 | `CsvTable` 支持 `#` 注释行（表内说明） | 见 M2 复盘 |
 | M2-R3 | 生成物 schema 自动迁移（当前版本不匹配直接失败） | `ConfigJsonReader` + M2 复盘 |
@@ -202,6 +205,8 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | 标签说明 | 无 Unity 工具链 588 用例全过、编译 0 error/0 warning、覆盖率 `0_Core 96.51%` / `Domain+App 90.65%`、规则内核与状态契约（洗牌/序列化/增量）可用；同日 Unity 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除，.meta 导入与程序集编译实跑无误 |
 
 > 历史检查点：`checkpoint/m2-complete`（annotated，**已推送远端**，指向 `9eb3c13`，443 用例、覆盖率 92.36%）保持不动；`checkpoint/*` 标签一律不移动、不删除。
+>
+> **M4 收官（2026-10-07）**：741/761 用例全过、覆盖率 96.52%/91.39%，评审通过；`checkpoint/m4-complete` 标签**待项目所有者确认后**按本节脚本打（打完更新本表与 PROGRESS）。
 
 查看方式：`git tag -n99 -l 'checkpoint/*'`；切过去：`git checkout checkpoint/m2-complete`。
 
@@ -259,7 +264,7 @@ git reset --hard checkpoint/m2-complete           # 重建索引与工作区
 1. 用 **Unity 2022.3.54f1c1** 打开工程（首次会重建 `Library/`）；
 2. 跑第 4 节的三条命令：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`；
 3. 确认 `git status` 干净、`git log -1` 与预期提交一致；
-4. 读 `Docs/PROGRESS.md`（进度与证据）→ 从 **M3-T1** 继续；
+4. 读 `Docs/PROGRESS.md`（进度与证据）→ 从 **M5-T1** 继续；
 5. **更新本文件第 3 节的快照**（因为进度又往前走了，别让下一任接手人读到旧数字）。
 
 ### 10.5 恢复时不需要的东西

@@ -182,8 +182,8 @@ public sealed class LoopbackClient
 | 覆盖率 | `0_Core 96.52%` / `Domain + App 91.39%`（门禁 90%/80%） |
 | 静态门禁（`Tools/check.ps1`） | **PASS**（209 文件，0 违规） |
 | 编译 | 0 error / 0 warning |
-| .meta | 9 个新文件手写 .meta，全仓 249 GUID 无重复 |
-| Unity EditMode 补验 | 待用户手动跑（预期 745 + 16 = **761 passed**） |
+| .meta | 9 个新文件手写 .meta，全 Assets 295 GUID 无重复（_Project 内 249） |
+| Unity EditMode 补验 | 用户实跑 **761 passed / 0 failed**（745 + 16 新增，2026-10-07） |
 
 ### 关键决策与边界
 
