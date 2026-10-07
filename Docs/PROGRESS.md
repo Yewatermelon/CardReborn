@@ -14,7 +14,7 @@
 | M1 核心基础层（Core） | ✅ 完成 | 9/9 | 通过 | 2026-10-04 验证：Unity 干净重编译 0 error/0 warning、228 用例全过、`Card.Core` 行覆盖率 **97.71%**（门禁 ≥ 90%）、`check.ps1 -SelfTest` 通过、内核在无 Unity 的 .NET 进程编译并跑通全部测试；详见 [评审与复盘](./reviews/M1-核心基础层-评审与复盘.md) |
 | M2 配置与数据管线 | ✅ 完成 | 7/7 | 通过 | 2026-10-04 验证：37 行卡表（35 启用 + 2 废弃）→ 校验 → 生成物 → 加载 → 建库查询全链路打通；443 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 92.36%`；详见 [M2 评审与复盘](./reviews/M2-配置与数据管线-评审与复盘.md) |
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
-| M4 回合状态机与效果系统 | 🟡 进行中 | 7/10 | 通过（T1–T7） | 2026-10-06 T7 完成：DeathProcessor 死亡管线；顺带修复 M1 GameLog 测试隔离缺陷（`ResetForTests` 归零 `SinkFailureCount`）；无 Unity 708 例、Unity EditMode 728 例全过；质量门禁最严 |
+| M4 回合状态机与效果系统 | 🟡 进行中 | 10/10 | 通过（T1–T10） | 2026-10-07 T10 完成：进程内回环模拟，客户端视图与权威状态经增量同步后三方一致，整局可跑完；无 Unity 741 例全过；质量门禁最严 |
 | M5 表现层与交互 | ⬜ 未开始 | 0/8 | — | 依赖 TMP Essentials |
 | M6 垂直切片打通 | ⬜ 未开始 | 0/5 | — | Demo Gate |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
@@ -139,8 +139,9 @@
 | M4-T7 死亡管线 | ✅ | 任务卡 [tasks/M4-T7-DeathPipeline.md](./tasks/M4-T7-DeathPipeline.md)；Application `DeathProcessor`（收集双方 Board 中 Health≤0 随从→移除战场→RaiseOnDeath 亡语→进坟场→emit CardDeathEvent，外层 do/while 循环至无新死亡）；`MatchController` 在结算后、终局判定前调用。先红 CS0246 后绿，新增 6 例（单随从死亡、亡语触发、多随从同时死亡、亡语召唤新随从、英雄不处理、双方玩家）；无 Unity **708 passed / 0 failed**，Domain+App 91.59%；`check.ps1` PASS（193 文件）；2 个新 .meta，279 GUID 无重复。顺带修复 M1 GameLog 静态隔离缺陷：`GameLog.ResetForTests()` 归零 `SinkFailureCount`/`LastSinkFailure`，`GameLogTestHelper.Reset()` 改用之；Unity EditMode **728 passed / 0 failed**（修复前 GameLog 参数化用例被静默跳过） |
 | M4-T8 英雄技能 | ✅ | 任务卡 [tasks/M4-T8-HeroPower.md](./tasks/M4-T8-HeroPower.md)；Application `HeroPowerSettler`（消耗法力→解析技能配置效果→直接调 EffectExecutor→标记 `PowerUsedThisTurn=true`）；`MatchController` 注册；先红 CS0246 后绿，新增 6 例（耗法力/对英雄伤害/每回合一次/对随从伤害/TargetRule.None 无目标自伤/emit 事件）；无 Unity **714 passed / 0 failed**，Domain+App 91.65%；`check.ps1` PASS（195 文件）；2 个新 .meta，281 GUID 无重复。关键决策：技能效果直接 EffectExecutor（非 TriggerDispatcher）；TargetRule.None 时效果对自己英雄生效（简化）；Unity EditMode 补验 **734 passed / 0 failed** |
 | M4-T9 命令序列化与对局录制 ★ | ✅ | 任务卡 [tasks/M4-T9-CommandReplay.md](./tasks/M4-T9-CommandReplay.md)；Domain `CommandSerializer`（4 命令紧凑 JSON 往返）；Application `MatchRecording`（初始 Setup+seed+命令流水 JSON）+ `MatchReplayer`（同 seed 重放验证状态/事件/History 一致）；先红后绿，新增 11 例；无 Unity **725 passed / 0 failed**，Domain+App 91.92%；`check.ps1` PASS（200 文件）；5 个新 .meta，286 GUID 无重复；Unity EditMode 补验 **745 passed / 0 failed** |
+| M4-T10 进程内回环模拟 ★ | ✅ | 任务卡 [tasks/M4-T10-LoopbackSimulation.md](./tasks/M4-T10-LoopbackSimulation.md)；Domain `ManaPool.Restore`（快照恢复入口）+ `MatchStateDiffer` Added 协议升级（完整卡 JSON）；Application 新增 `LoopbackLink`/`LoopbackEndpoint`（内存 FIFO 通道）、`StateChangeSerializer`/`StateChangeApplier`（增量编解码与应用）、`LoopbackProtocol`（上行 hello/command + 下行 snapshot/step）、`LoopbackServer`（权威侧，版本每接受命令 +1，step 广播全端点，快照只回请求者）、`LoopbackClient`（只读视图，未连接上行抛异常）；先红（CS0246）后绿，新增 16 例（Applier 7 + Loopback 7 + ManaPool 2）；无 Unity **741 passed / 0 failed**，覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；`check.ps1` PASS（209 文件）；9 个新 .meta，249 GUID 无重复。关键边界：before 深拷贝 = Serialize+Deserialize 往返；增量顺序 Removed→Modified→Added；不做视野裁剪/事件流下发/真实网络；Unity EditMode 补验 **待用户跑**（预期 761 passed） |
 
-> M4 门禁：可用脚本驱动一整局（无 UI）并输出事件日志；覆盖率 ≥ 85%；进程内"客户端 ↔ 服务器"模拟可完整跑完一局（M4-T10 ★）。
+> M4 门禁：可用脚本驱动一整局（无 UI）并输出事件日志；覆盖率 ≥ 85%；进程内"客户端 ↔ 服务器"模拟可完整跑完一局（M4-T10 ★）。M4 全部 10 项任务完成。
 
 ---
 
