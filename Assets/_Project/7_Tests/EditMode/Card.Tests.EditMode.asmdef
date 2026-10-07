@@ -6,6 +6,8 @@
         "Card.Domain",
         "Card.Application",
         "Card.Infrastructure",
+        "Card.Presentation",
+        "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

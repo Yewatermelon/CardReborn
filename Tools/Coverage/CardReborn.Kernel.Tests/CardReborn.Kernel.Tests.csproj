@@ -23,7 +23,8 @@
       so it is not part of the "must compile without Unity" set.
     -->
     <Compile Include="..\..\..\Assets\_Project\7_Tests\EditMode\**\*.cs"
-             Exclude="..\..\..\Assets\_Project\7_Tests\EditMode\Infrastructure\**\*.cs" />
+             Exclude="..\..\..\Assets\_Project\7_Tests\EditMode\Infrastructure\**\*.cs;
+                      ..\..\..\Assets\_Project\7_Tests\EditMode\Presentation\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
