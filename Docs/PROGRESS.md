@@ -17,7 +17,7 @@
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
 | M6 垂直切片打通 | ✅ 完成 | 5/5 | 通过（Demo Gate） | 2026-10-08 复盘：用户实机完整打完多局（含 18–19 回合长局，不借助调试手段）全链路可玩；EditMode 958 / PlayMode 3 全绿；kernel 761（覆盖率 96.52% / 91.47%）；check.ps1 298 文件；M6-B1/B2/B5/B6/B7 已修复，B3/B4/B8 排期 M9；详见 [M6 评审与复盘](./reviews/M6-垂直切片打通-评审与复盘.md) |
-| M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
+| M7 玩家代理与 AI | 🟡 进行中 | 1/5 | — | 2026-10-08：M7-T1 完成（详见 [任务卡](./tasks/M7-T1-PlayerAgent.md)） |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
 | M10 发布与验收 | ⬜ 未开始 | 0/6 | — | — |
@@ -186,6 +186,7 @@
 | M6-B7 | P1（已修复 2026-10-08） | M6-T4 实机验收 | CardView.SetData 复用池化 view 时未复位 CardFadeOutView 与 CanvasGroup.alpha，死亡淡出中的 view 被复用为新卡时 alpha 仍渐减到 0 → 新卡不可见但仍接收点击触发攻击。SetData 末尾补 fade.Stop() + group.alpha=1。CardViewTests 防回归 | AI | ✅ 已修复 |
 | M6-B8 | P3 | M6-T4 收尾 | 死亡淡出在卡数不变复用时被 SetData 中止，无死亡视觉动画。修复 B7 的副作用 | AI | 🔵 待 M9 打磨 |
 | BK-CFG-1 | P2 | M6-T5 复盘改进项 2 | 配置与代码缺加载期契约：效果表达式只在出牌时解析，未知类型/坏参数/缺 Trigger 前缀全部运行时才炸（M6 实录 3 类）。需 CardDatabase 构建期全量校验 | AI | 🔵 待 M9-T1 前置（[任务卡](./tasks/BACKLOG-ConfigEffectValidation.md)） |
+| M7-OBS-1 | P3（观察项） | M7-T1 | PVE 人机实盘场景不在 M7-T1 范围（M7 门禁 500 局走无界面模拟器）；主菜单 AI 入口、AI 回合输入禁用、跨帧/异步驱动 AI 等人机实盘接入，待 M7-T2 后按需单开任务 | AI | 🔵 待 M7-T2 后评估 |
 
 ## 里程碑复盘记录索引
 
