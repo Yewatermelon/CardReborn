@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M0–M5 已完成，M6 垂直切片打通进行中 4/5（2026-10-08：M6-T4 缺陷清理完成，B1/B2 范围内 + B5/B6/B7 范围外 P1 关键 bug 顺手修掉；EditMode 958 / PlayMode 3 全绿；kernel 761）｜下一步 M6-T5 阶段复盘与 Demo Gate 走查**
+**当前阶段：M0–M6 已完成（2026-10-08：M6-T5 阶段复盘完成，Demo Gate 以用户实机多局完整体验为证据）｜下一步 M7-T1 IPlayerAgent（复盘与 HANDOFF 快照已刷新，M7 就绪）**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -16,7 +16,7 @@
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
-| M6 垂直切片打通 | 🟡 进行中 | 4/5 | — | M6-T1~T4 完成（2026-10-08：B1 费用布局 + B2 中文文本表 + B5 召唤失调 + B6 亡语配置 + B7 隐形卡；EditMode 958 / PlayMode 3 全绿；kernel 761）；Demo Gate；M6-B3/B4/B8 排至 M9 |
+| M6 垂直切片打通 | ✅ 完成 | 5/5 | 通过（Demo Gate） | 2026-10-08 复盘：用户实机完整打完多局（含 18–19 回合长局，不借助调试手段）全链路可玩；EditMode 958 / PlayMode 3 全绿；kernel 761（覆盖率 96.52% / 91.47%）；check.ps1 298 文件；M6-B1/B2/B5/B6/B7 已修复，B3/B4/B8 排期 M9；详见 [M6 评审与复盘](./reviews/M6-垂直切片打通-评审与复盘.md) |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
@@ -185,6 +185,7 @@
 | M6-B6 | P1（已修复 2026-10-08） | M6-T4 实机验收 | Cards.csv CARD_029 Effects 列原为 `SummonEffect:NEUTRAL_PANGO/2`（无 OnDeath 前缀），按解析器默认走 OnPlay，古树守卫变成战吼召唤。CSV/JSON 三处统一改为 `OnDeath:SummonEffect:NEUTRAL_PANGO/2` | AI | ✅ 已修复 |
 | M6-B7 | P1（已修复 2026-10-08） | M6-T4 实机验收 | CardView.SetData 复用池化 view 时未复位 CardFadeOutView 与 CanvasGroup.alpha，死亡淡出中的 view 被复用为新卡时 alpha 仍渐减到 0 → 新卡不可见但仍接收点击触发攻击。SetData 末尾补 fade.Stop() + group.alpha=1。CardViewTests 防回归 | AI | ✅ 已修复 |
 | M6-B8 | P3 | M6-T4 收尾 | 死亡淡出在卡数不变复用时被 SetData 中止，无死亡视觉动画。修复 B7 的副作用 | AI | 🔵 待 M9 打磨 |
+| BK-CFG-1 | P2 | M6-T5 复盘改进项 2 | 配置与代码缺加载期契约：效果表达式只在出牌时解析，未知类型/坏参数/缺 Trigger 前缀全部运行时才炸（M6 实录 3 类）。需 CardDatabase 构建期全量校验 | AI | 🔵 待 M9-T1 前置（[任务卡](./tasks/BACKLOG-ConfigEffectValidation.md)） |
 
 ## 里程碑复盘记录索引
 
@@ -195,6 +196,7 @@
 | M2 配置与数据管线 | 2026-10-04 | [reviews/M2-配置与数据管线-评审与复盘.md](./reviews/M2-配置与数据管线-评审与复盘.md) | 测试按"被测代码所在层"组织；内容规模断言集中到 `ConfigContentTests`；`.gitignore` 区分手工与生成工程 |
 | M3 领域模型与规则内核 | 2026-10-06 | [reviews/M3-领域模型与规则内核-评审与复盘.md](./reviews/M3-领域模型与规则内核-评审与复盘.md) | 无 Unity 工具链确立为权威验收口径（M3-B1 挂 P2）；缺列回落默认值不得触发外键校验；NUnit `Assert.Throws<T>` 精确类型匹配改 try/catch；写调用前先读目标签名 |
 | M4 回合状态机与效果系统 | 2026-10-07 | [reviews/M4-回合状态机与效果系统-评审与复盘.md](./reviews/M4-回合状态机与效果系统-评审与复盘.md) | 权威内核零改动完成回环预演；整局级三方一致性测试价值验证；修复与功能分离提交；登记 M4-OBS-1（枚举双编码）/M4-OBS-2（快照缺 NextInstanceId）待阶段二；"写调用先读签名"二次复发升级为强制动作 |
+| M6 垂直切片打通 | 2026-10-08 | [reviews/M6-垂直切片打通-评审与复盘.md](./reviews/M6-垂直切片打通-评审与复盘.md) | 验证门禁补"环境覆盖"维度（新测试套件首次提交须在目标环境实跑留证）；配置加载期全量效果校验转 BACKLOG-ConfigEffectValidation（M9-T1 前置）；表现层"复用即全量复位"契约（新增可视副作用组件必须纳入 SetData 复位路径） |
 
 ## 变更日志（文档/架构）
 

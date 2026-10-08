@@ -16,11 +16,11 @@
 - [ ] **6. 确认新 AI 的访问与授权**（第 8 节）：仓库访问权限（私有仓库需给凭据）；是否允许联网（首次 `dotnet restore`、`git push`、`git lfs fetch`）；是否允许必要时聚焦 Unity 窗口（多数验证已做成无界面方式）。
 - [ ] **7. 把"开场指令"粘给新 AI**（可直接复制下面这段）：
 
-  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M4，下一步是 M5 表现层与交互。
-  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M5 任务表。
+  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），已完成 M0–M6（垂直切片打通，可完整热座对局），下一步是 M7 玩家代理与 AI。
+  > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 的 M7 任务表。
   > 然后跑三条命令确认环境：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
-  > 期望结果：静态门禁 PASS、自检 PASS、741 用例全过、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`（Unity 侧 EditMode 为 761 例）。
-  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M5-T1**（以 `Docs/02` 任务表为准），按仓库既有流程：先写任务卡、先写测试再实现。
+  > 期望结果：静态门禁 PASS、自检 PASS、761 用例全过、覆盖率 `0_Core 96.52%` / `Domain + App 91.47%`（Unity 侧 EditMode 为 958 例、PlayMode 3 例）。
+  > 把这三条命令的实际输出贴回来；确认无误后再开工。第一个任务是 **M7-T1**（以 `Docs/02` 任务表为准），按仓库既有流程：先写任务卡、先写测试再实现。
   > 约束：不要移动或删除 `checkpoint/*` 标签；每个任务结束更新 `Docs/PROGRESS.md` 并在任务卡里写结论；里程碑结束写 `Docs/reviews/` 复盘。
 
 - [ ] **8. 让新 AI 做一次"交接验收"**：跑第 7 步的三条命令并把**实际输出**贴回来；数字对得上才算交接成功（对不上先查环境，不要急着改代码）。
@@ -32,10 +32,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 项目 | `Card`：炉石式回合制卡牌游戏（Unity 2022.3 LTS），仓库 `E:\Unity\Project\CardReborn`（GitHub: `https://github.com/Yewatermelon/CardReborn.git`） |
-| 当前阶段 | **阶段一（PVE）已完成 M0–M4（M4 评审通过 2026-10-07）；下一步是 M5 表现层与交互** |
+| 当前阶段 | **阶段一（PVE）已完成 M0–M6（M6 Demo Gate 通过 2026-10-08，可完整热座对局）；下一步是 M7 玩家代理与 AI** |
 | 交付方式 | 每个任务一张任务卡（`Docs/tasks/`）+ 先写测试 + 双环境验证 + 提交里带证据 |
-| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环（开局→回合流转→出牌/攻击/技能效果→死亡管线→终局→事件流）**、命令录制重放、状态快照/增量、**进程内"客户端↔服务器"回环模拟**；测试 741 例（Unity 侧 761）、静态门禁、无 Unity 覆盖率工具链 |
-| 下一步第一件事 | 读 `Docs/02` 的 M5 任务表 → 按任务卡流程从 **M5-T1** 开始（详见本文第 5 节）；M5 铁律提醒：View 只读不判规则、不写状态，交互全部转译为 GameCommand |
+| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环（开局→回合流转→出牌/攻击/技能效果→死亡管线→终局→事件流）**、**可游玩的 Battle 场景（主菜单开局 / 点击出牌与攻击指向 / 英雄技能 / 双人热座视角切换 / 胜负结算与再来一局 / 中文卡面文本）**、命令录制重放、状态快照/增量、**进程内"客户端↔服务器"回环模拟**、PlayMode 端到端冒烟；测试 761 例（Unity 侧 EditMode 958 + PlayMode 3）、静态门禁、无 Unity 覆盖率工具链 |
+| 下一步第一件事 | 读 `Docs/02` 的 M7 任务表 → 按任务卡流程从 **M7-T1（IPlayerAgent）** 开始；M7 铁律提醒：AI 决策只产 GameCommand、走 `MatchController.Submit`，随机性走 `IRandomProvider` 种子注入 |
 
 ## 2. 你的第一步（建议按顺序做）
 
@@ -45,22 +45,22 @@
    - `Tools/check.ps1`（静态门禁）
    - `Tools/check.ps1 -SelfTest`（门禁自身是否有效）
    - `Tools/coverage.ps1`（无 Unity 跑内核测试 + 覆盖率）
-4. 读 `Docs/02` 的 **M5 任务表**，写第一张任务卡，再动手。
+4. 读 `Docs/02` 的 **M7 任务表**，写第一张任务卡，再动手。
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-07（M4 收官）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-08（M6 收官）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
 | 分支 / 提交 | `main` 领先 `origin/main`（按用户要求未推送，推送需用户明确要求），工作区干净（HEAD 以 `git log -1` 为准） |
-| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（2026-10-07 评审通过、`checkpoint/m4-complete` 已推送远端）；**M5 ⬜ 未开始** |
-| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（761 用例实跑验证）；无 Unity kernel 工程 0 warning |
-| 测试 | **Unity EditMode 761 passed / 0 failed**；无 Unity 工具链 **741 passed / 0 failed**（排除 Infrastructure 20 例） |
-| 覆盖率 | `0_Core 96.52%`、`Domain + Application 91.39%`（门禁 90% / 80%） |
-| 静态门禁 | `Tools/check.ps1` PASS（209 文件；R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
-| 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用 |
-| 未关闭项 | 无 P0/P1/P2；P3 观察项 2 个（M4-OBS-1 枚举双编码、M4-OBS-2 快照缺 NextInstanceId，均阶段二前处理，见第 7.2 节） |
+| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（`checkpoint/m4-complete` 已推送远端）、M5 ✅ 8/8（2026-10-07）、M6 ✅ 5/5（2026-10-08 Demo Gate 通过）；**M7 ⬜ 未开始** |
+| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（958 用例实跑验证）；无 Unity kernel 工程 0 warning |
+| 测试 | **Unity EditMode 958 passed / 0 failed + PlayMode 3 passed / 0 failed**；无 Unity 工具链 **761 passed / 0 failed**（排除 Infrastructure 20 例） |
+| 覆盖率 | `0_Core 96.52%`、`Domain + Application 91.47%`（门禁 90% / 80%） |
+| 静态门禁 | `Tools/check.ps1` PASS（298 文件；R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
+| 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |
+| 未关闭项 | 无 P0/P1；P2：M6-B3（命令拒绝无提示→M9）、M6-B4（潜行/法强未结算→M9）、BK-CFG-1（配置加载期效果校验→M9-T1 前置）；P3：M6-B8 与历史观察项（见 `Docs/PROGRESS.md` 未关闭问题表） |
 
 ## 4. 验证环境与命令（关键：两种跑法）
 
