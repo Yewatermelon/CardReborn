@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M0–M5 已完成，M6 垂直切片打通进行中 3/5（2026-10-08：M6-T3 双人热座对局完成，PlayMode 端到端冒烟首次真正跑通）｜下一步 M6-T4 缺陷清理**
+**当前阶段：M0–M5 已完成，M6 垂直切片打通进行中 4/5（2026-10-08：M6-T4 缺陷清理完成，B1/B2 范围内 + B5/B6/B7 范围外 P1 关键 bug 顺手修掉；EditMode 958 / PlayMode 3 全绿；kernel 761）｜下一步 M6-T5 阶段复盘与 Demo Gate 走查**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -16,7 +16,7 @@
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
-| M6 垂直切片打通 | 🟡 进行中 | 3/5 | — | M6-T1~T3 完成（2026-10-08：热座双人对局实机验收通过；EditMode 942 / PlayMode 3 全绿；kernel 759）；Demo Gate；M6-B1/B2/B3 三缺陷登记待 T4 |
+| M6 垂直切片打通 | 🟡 进行中 | 4/5 | — | M6-T1~T4 完成（2026-10-08：B1 费用布局 + B2 中文文本表 + B5 召唤失调 + B6 亡语配置 + B7 隐形卡；EditMode 958 / PlayMode 3 全绿；kernel 761）；Demo Gate；M6-B3/B4/B8 排至 M9 |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
@@ -177,9 +177,14 @@
 | M3-B1 | P2（已解除 2026-10-06） | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。T3 起各任务以无 Unity 工具链（588/588）为验收口径；**2026-10-06 用户在编辑器 Test Runner（EditMode）手动补验 608 passed / 0 failed，.meta 导入与程序集编译实跑无误，阻塞解除** | AI | ✅ 已解除 |
 | M4-OBS-1 | P3（观察项） | M4-T10 | phase 等枚举存在两套线上编码：快照写枚举名、增量写整数；StateChangeApplier 已兼容两种。阶段二正式传输协议（M11/M13）必须统一编码并补跨组件契约测试 | AI | 🔵 待阶段二处理 |
 | M4-OBS-2 | P3（观察项） | M3-T9/M4-T10 | `MatchStateSerializer` 快照不含 `NextInstanceId`；纯视图客户端不分配 Id 故当前无影响。阶段二断线重连快照前必须补字段并加往返测试 | AI | 🔵 待阶段二处理 |
-| M6-B1 | P2 | M6-T3 实机验收 | 卡牌费用数字与卡名文本位置重叠，小尺寸手牌上看不清。属 BattleUiFactory 卡牌布局缺陷（_costText 与 _nameText 锚点冲突） | AI | 🔴 待 M6-T4 |
-| M6-B2 | P2 | M6-T3 实机验收 | 卡牌名称/描述只显示本地化 Key（如 `CARD_001_NAME`/`CARD_001_DESC`），无中文文本；项目尚无本地化系统。CardViewData 透传 DescKey/NameKey，需补本地化表 + 解析（简易方案可先在配置侧直填中文） | AI | 🔴 待 M6-T4（或 M8 本地化） |
-| M6-B3 | P2 | M6-T3 实机验收 | 命令被规则拒绝时无任何 UI 提示：如场上存在嘲讽随从时攻击其他目标无效，玩家不知道原因。ICommandSink 已返回 CommandResult（注释预留"供提示 UI 判读"），但提示/气泡 UI 未建 | AI | 🔴 待 M6-T4 |
+| M6-B1 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌费用数字与卡名文本位置重叠，小尺寸手牌上看不清。属 BattleUiFactory 卡牌布局缺陷（_costText 与 _nameText 锚点冲突） | AI | ✅ 已修复（M6-T4：BattleUiPrefabs 费用独立底板 + 名字右移） |
+| M6-B2 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌名称/描述只显示本地化 Key（如 `CARD_001_NAME`/`CARD_001_DESC`），无中文文本；项目尚无本地化系统。CardViewData 透传 DescKey/NameKey，需补本地化表 + 解析（简易方案可先在配置侧直填中文） | AI | ✅ 已修复（M6-T4：最小本地化表 Localization.csv + ITextResolver + CsvTextResolver；M8 由正式本地化系统替换） |
+| M6-B3 | P2 | M6-T3 实机验收 | 命令被规则拒绝时无任何 UI 提示：如场上存在嘲讽随从时攻击其他目标无效，玩家不知道原因。ICommandSink 已返回 CommandResult（注释预留"供提示 UI 判读"），但提示/气泡 UI 未建 | AI | 🔵 待 M9（M6-T4 任务卡已明确不做） |
+| M6-B4 | P2 | M6-T4 实机验收 | 潜行（CARD_025）/法术强度（CARD_030）规则层未结算，DESC 留空以避免虚假文案 | AI | 🔵 待 M9 或后续里程碑 |
+| M6-B5 | P1（已修复 2026-10-08） | M6-T4 实机验收 | PlayCardSettler 把无 Charge/Rush 的随从加入战场时未设置 SummoningSickness，导致所有随从登场回合即可攻击。RuleEngine.Attack 校验有检查、EndTurnSettler 有清除，但出牌入口漏写。集成测试 PlayCardSummoningSicknessTests 防回归 | AI | ✅ 已修复 |
+| M6-B6 | P1（已修复 2026-10-08） | M6-T4 实机验收 | Cards.csv CARD_029 Effects 列原为 `SummonEffect:NEUTRAL_PANGO/2`（无 OnDeath 前缀），按解析器默认走 OnPlay，古树守卫变成战吼召唤。CSV/JSON 三处统一改为 `OnDeath:SummonEffect:NEUTRAL_PANGO/2` | AI | ✅ 已修复 |
+| M6-B7 | P1（已修复 2026-10-08） | M6-T4 实机验收 | CardView.SetData 复用池化 view 时未复位 CardFadeOutView 与 CanvasGroup.alpha，死亡淡出中的 view 被复用为新卡时 alpha 仍渐减到 0 → 新卡不可见但仍接收点击触发攻击。SetData 末尾补 fade.Stop() + group.alpha=1。CardViewTests 防回归 | AI | ✅ 已修复 |
+| M6-B8 | P3 | M6-T4 收尾 | 死亡淡出在卡数不变复用时被 SetData 中止，无死亡视觉动画。修复 B7 的副作用 | AI | 🔵 待 M9 打磨 |
 
 ## 里程碑复盘记录索引
 
