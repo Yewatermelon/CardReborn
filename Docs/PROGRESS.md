@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M0–M4 已完成（M4 评审通过，2026-10-07）｜下一步 M5 表现层与交互（前置已就绪）**
+**当前阶段：M0–M5 已完成，M6 垂直切片打通进行中 3/5（2026-10-08：M6-T3 双人热座对局完成，PlayMode 端到端冒烟首次真正跑通）｜下一步 M6-T4 缺陷清理**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -16,7 +16,7 @@
 | M3 领域模型与规则内核 | ✅ 完成 | 10/10 | 通过 | 2026-10-06 评审：十项任务全部完成；无 Unity 工具链 588 用例全过、编译 0 error/0 warning、`check.ps1` PASS、覆盖率 `0_Core 96.51%` / `Domain + App 90.65%`；同日 Unity 2022.3.54f1c1 编辑器 Test Runner（EditMode）补验 **608 passed / 0 failed**，M3-B1 解除；三项 ★（种子洗牌/序列化/增量）为联网前置能力；详见 [M3 评审与复盘](./reviews/M3-领域模型与规则内核-评审与复盘.md) |
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
-| M6 垂直切片打通 | 🟡 进行中 | 2/5 | — | M6-T1~T2 完成（2026-10-08：PlayMode 端到端冒烟测试通过 933 passed；kernel 750）；Demo Gate |
+| M6 垂直切片打通 | 🟡 进行中 | 3/5 | — | M6-T1~T3 完成（2026-10-08：热座双人对局实机验收通过；EditMode 942 / PlayMode 3 全绿；kernel 759）；Demo Gate；M6-B1/B2/B3 三缺陷登记待 T4 |
 | M7 玩家代理与 AI | ⬜ 未开始 | 0/5 | — | — |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
@@ -160,12 +160,13 @@
 
 ---
 
-## M6 任务级状态（进行中 2/5）
+## M6 任务级状态（进行中 3/5）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M6-T1 对战场景组装 | ✅ | 任务卡 [tasks/M6-T1-BattleScene.md](./tasks/M6-T1-BattleScene.md)；代码：Presentation 点击加法（`CardView.BindClick/UnbindClick`、`HandView`/`BoardView` 增 `CardClicked` 事件与 `TryGetCardView`、`HeroView` 增 `SetName`）+ `5_Bootstrap/Battle|Menu/` 组合根（`BattleComposition` 纯 C# 开局装配、`BattleUiFactory`/`BattleUiPrimitive` 全代码 UI、`BattleViewSynchronizer` 只读快照刷新/对手牌背/嘲讽标记、`UiTargetPicker`/`TableFeedbackLocator`/`SceneCamera`、`BattleSceneBootstrap`/`MainMenuBootstrap`、`UiEventSystem` 静态令牌避 R8）+ `6_Editor/M6/M6SceneSetup.cs`（一键部署配置到 StreamingAssets/生成两场景并写 Build Settings/生成中文 TMP 动态字体资产）+ Noto Sans CJK SC 入库（OFL 1.1）；测试 11 例（点击 6 + 装配 4 + HeroView 1），kernel 工程排除 Bootstrap 测试目录；无 Unity 工具链 **750 passed / 0 failed**（748 + 2 效果解析新例），覆盖率 `0_Core 96.52%` / `Domain + App 91.52%`，`check.ps1` PASS（288 文件）；用户编辑器实跑（2026-10-07）：两菜单执行、MainMenu→Battle 开局、AC-1~7 功能验收通过、EditMode 全绿（基线 920 + 11 新例）。修复记录：效果 DSL 分隔符统一为 `/`（M4 遗留数据/解析不一致，Docs/01 §428 补规范）；无相机致箭头拖影（新增 SceneCamera）；编辑器 OS 动态字体不可用致中文 □（工程内字体 + 菜单生成动态字体资产）。P3 观察：卡名占位键待 M8 本地化；灰板美术待 M9；对手行动 M6-T3/M10 |
 | M6-T2 端到端 PlayMode 冒烟测试 | ✅ | 任务卡 [tasks/M6-T2-EndToEndSmoke.md](./tasks/M6-T2-EndToEndSmoke.md)；代码：`7_Tests/PlayMode/BattleSmokeDriver.cs`（166 行，冒烟级驱动器：读只读视图 → 试出牌 None/敌英雄/敌随从/己随从 → 试攻击敌英雄/敌随从 → 无行动则 EndTurn → 终局或步限停；物化快照避免边遍历边改）+ `BattleSmokeTests.cs`（79 行，2 例：完整对局开局→驱动→断言终局/出牌/攻击/事件/可重复 + 配置缺失返回错误）；纯测试加法，不改规则三层；kernel 不变（PlayMode 不在 kernel 编译范围）；无 Unity 工具链 **750 passed / 0 failed**，`check.ps1` PASS（290 文件）；Unity 用户实跑 **933 passed / 0 failed**（2026-10-08，含 PlayMode 2 例）。设计要点：驱动器靠"试错→接受/拒绝"推进，不复制 RuleEngine 逻辑；固定种子两遍运行步数/事件数一致（AC-6 可重复）。P3 观察：不做最优选牌（M7 范围） |
+| M6-T3 双人本地对局 | ✅ | 任务卡 [tasks/M6-T3-HotSeat.md](./tasks/M6-T3-HotSeat.md)；代码：新增 `5_Bootstrap/Battle/HotSeatHandler.cs`（133 行，交棒屏/视角切换/胜负面板/再来一局；从 Bootstrap 抽出满足 R5，Bootstrap 327→193 行）+ 视角切换六处接线（Synchronizer.SwitchSeats/Input/Targeting/UiTargetPicker/TableFeedbackLocator/BattleFeedbackPlayer）+ BuildPassScreen/BuildVictoryPanel 两 UI；无 Unity 工具链 **759 passed / 0 failed**（+9 效果测试），覆盖率 `0_Core 96.52%` / `Domain + App 91.47%`，`check.ps1` PASS（292 文件）；Unity 实跑 EditMode **942** / PlayMode **3**（端到端冒烟首次真正跑通整局）；AC-1~6 人工验收通过（2026-10-08）。验收暴露并修复：① 补齐 M4-T4 遗留效果类型 GainMana/GainArmor/Destroy/Composite（数据+执行器+解析，执行器拆 EffectExecutors.cs）+ DrawEffect 历史别名；② CARD_032 配置两效果分隔符 `/`→`|`（CSV+双 JSON+README）；③ Button 图元重复 AddComponent\<Image\> 改先 GetComponent 复用。缺陷登记 M6-B1/B2/B3 待 T4 |
 
 ---
 
@@ -176,6 +177,9 @@
 | M3-B1 | P2（已解除 2026-10-06） | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。T3 起各任务以无 Unity 工具链（588/588）为验收口径；**2026-10-06 用户在编辑器 Test Runner（EditMode）手动补验 608 passed / 0 failed，.meta 导入与程序集编译实跑无误，阻塞解除** | AI | ✅ 已解除 |
 | M4-OBS-1 | P3（观察项） | M4-T10 | phase 等枚举存在两套线上编码：快照写枚举名、增量写整数；StateChangeApplier 已兼容两种。阶段二正式传输协议（M11/M13）必须统一编码并补跨组件契约测试 | AI | 🔵 待阶段二处理 |
 | M4-OBS-2 | P3（观察项） | M3-T9/M4-T10 | `MatchStateSerializer` 快照不含 `NextInstanceId`；纯视图客户端不分配 Id 故当前无影响。阶段二断线重连快照前必须补字段并加往返测试 | AI | 🔵 待阶段二处理 |
+| M6-B1 | P2 | M6-T3 实机验收 | 卡牌费用数字与卡名文本位置重叠，小尺寸手牌上看不清。属 BattleUiFactory 卡牌布局缺陷（_costText 与 _nameText 锚点冲突） | AI | 🔴 待 M6-T4 |
+| M6-B2 | P2 | M6-T3 实机验收 | 卡牌名称/描述只显示本地化 Key（如 `CARD_001_NAME`/`CARD_001_DESC`），无中文文本；项目尚无本地化系统。CardViewData 透传 DescKey/NameKey，需补本地化表 + 解析（简易方案可先在配置侧直填中文） | AI | 🔴 待 M6-T4（或 M8 本地化） |
+| M6-B3 | P2 | M6-T3 实机验收 | 命令被规则拒绝时无任何 UI 提示：如场上存在嘲讽随从时攻击其他目标无效，玩家不知道原因。ICommandSink 已返回 CommandResult（注释预留"供提示 UI 判读"），但提示/气泡 UI 未建 | AI | 🔴 待 M6-T4 |
 
 ## 里程碑复盘记录索引
 
