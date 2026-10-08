@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Card.Application.Match;
+using Card.Application.Match.Agents;
 using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
@@ -100,16 +101,27 @@ namespace Card.Bootstrap.Battle
 
         private void BindInput(BattleUi ui, MatchController controller)
         {
-            _sink = new MatchControllerCommandSink(controller);
-
             _input = gameObject.AddComponent<PlayerInputController>();
             _input._localPlayerId = LocalSeat;
-            _input.Initialize(_sink);
-            _input.CommandRejected += OnInputRejected;
 
             _targeting = gameObject.AddComponent<TargetingController>();
             _targeting._localPlayerId = LocalSeat;
             _targeting._arrow = ui.Arrow;
+
+            // M7-T1：权威包一层 AgentMatchRunner，两个座位各注册一个人类 agent；
+            // 输入组件共用，本地座位由激活回调路由，交棒屏仍为输入门控。
+            var runner = new AgentMatchRunner(
+                controller, controller.View,
+                new IPlayerAgent[]
+                {
+                    new HumanPlayerAgent(LocalSeat, _input, _targeting),
+                    new HumanPlayerAgent(EnemySeat, _input, _targeting),
+                });
+
+            _sink = new MatchControllerCommandSink(runner);
+            _input.Initialize(_sink);
+            _input.CommandRejected += OnInputRejected;
+
             var picker = new UiTargetPicker(
                 ui.LocalBoard, ui.EnemyBoard,
                 new (int, RectTransform)[]
@@ -126,6 +138,8 @@ namespace Card.Bootstrap.Battle
             ui.LocalBoard.CardClicked += OnBoardMinionClicked;
             ui.EndTurnButton.onClick.AddListener(OnEndTurnClicked);
             ui.HeroPowerButton.onClick.AddListener(OnHeroPowerClicked);
+
+            runner.Start();
         }
 
         private void OnHandCardClicked(int instanceId)
