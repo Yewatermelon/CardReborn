@@ -79,6 +79,47 @@ namespace Card.Tests.EditMode.Match
         }
 
         [Test]
+        public void Parse_GainManaEffect()
+        {
+            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "GainManaEffect:2" });
+            GainManaEffectData g = (GainManaEffectData)effects[0].Effect;
+            Assert.That(g.Amount, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Parse_GainArmorEffect()
+        {
+            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "GainArmorEffect:4" });
+            GainArmorEffectData g = (GainArmorEffectData)effects[0].Effect;
+            Assert.That(g.Amount, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void Parse_DestroyEffect_NoParam()
+        {
+            IReadOnlyList<TriggeredEffect> effects = EffectParser.Parse(new[] { "DestroyEffect" });
+            Assert.That(effects[0].Effect, Is.TypeOf<DestroyEffectData>());
+        }
+
+        [Test]
+        public void Parse_CompositeEffect_TwoSubEffects()
+        {
+            IReadOnlyList<TriggeredEffect> effects =
+                EffectParser.Parse(new[] { "CompositeEffect:DestroyEffect+SummonEffect:M1/1" });
+            CompositeEffectData c = (CompositeEffectData)effects[0].Effect;
+            Assert.That(c.Effects.Count, Is.EqualTo(2));
+            Assert.That(c.Effects[0], Is.TypeOf<DestroyEffectData>());
+            Assert.That(c.Effects[1], Is.TypeOf<SummonEffectData>());
+        }
+
+        [Test]
+        public void Parse_CompositeEffect_EmptyBody_Throws()
+        {
+            Assert.That(() => EffectParser.Parse(new[] { "CompositeEffect:" }),
+                Throws.InstanceOf<ArgumentException>());
+        }
+
+        [Test]
         public void Parse_UnknownType_Throws()
         {
             Assert.That(() => EffectParser.Parse(new[] { "FooEffect:1" }),

@@ -75,5 +75,12 @@ namespace Card.Domain.Match
             Health = Math.Min(Health + amount, MaxHealth);
             return Health - before;
         }
+
+        /// <summary>获得护甲（GainArmorEffect 驱动）：直接累加 Armor。</summary>
+        public void GainArmor(int amount)
+        {
+            Guard.Positive(amount, nameof(amount));
+            Armor += amount;
+        }
     }
 }

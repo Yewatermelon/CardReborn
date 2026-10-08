@@ -58,6 +58,13 @@ namespace Card.Domain.Match
             Current = Max;
         }
 
+        /// <summary>获得临时法力（效果驱动）：直接增加 Current，不改变 Max。</summary>
+        public void Gain(int amount)
+        {
+            Guard.Positive(amount, nameof(amount));
+            Current += amount;
+        }
+
         /// <summary>
         /// 快照/增量恢复入口（M4-T10）：直接覆盖 Max/Current，不做 CanSpend 校验。
         /// 负值抛 <see cref="ArgumentOutOfRangeException"/>。

@@ -41,7 +41,7 @@
 > **效果串约定**（M4 解析；导入器只按 `|` 切分，不做语义校验）：
 > 单个效果写作 `效果名[:参数1/参数2]`；**多个效果用 `|` 分隔**；**效果内部参数用 `/` 分隔**；
 > 复合效果写作 `CompositeEffect:子效果1+子效果2`。
-> 例如 `DamageEffect:5/GainArmorEffect:5` 是「一个效果带两个参数」，而 `DestroyEffect|DrawEffect:1` 是「两个效果」；
+> 例如 `BuffEffect:2/3` 是「一个效果带两个参数」，`DamageEffect:5|GainArmorEffect:5` 是「两个效果」，`CompositeEffect:DestroyEffect+SummonEffect:M1/1` 是「复合效果」；
 > **不要**在效果名或参数里再用 `|`（那是多效果分隔符）。
 | `SetKey` | string | 所属系列（卡池筛选用） |
 | `ArtKey` / `AudioKey` | string | 资源键 |

@@ -30,7 +30,7 @@ Id,Key,NameKey,DescKey,Cost,Type,Rarity,Class,Attack,Health,Keywords,TargetRule,
 29,NEUTRAL_TREANT,CARD_029_NAME,CARD_029_DESC,8,Minion,Epic,Neutral,8,8,Deathrattle,None,SummonEffect:NEUTRAL_PANGO/2,Expansion,art_card_029,sfx_play_029,TRUE
 30,MAGE_ARCHMAGE,CARD_030_NAME,CARD_030_DESC,6,Minion,Epic,Mage,5,5,SpellPower,None,,Expansion,art_card_030,sfx_play_030,TRUE
 31,MAGE_FLAMESTRIKE,CARD_031_NAME,CARD_031_DESC,7,Spell,Epic,Mage,0,0,,EnemyMinion,DamageEffect:8,Expansion,art_spell_031,sfx_cast_031,TRUE
-32,WARRIOR_SHIELD_SLAM,CARD_032_NAME,CARD_032_DESC,3,Spell,Epic,Warrior,0,0,,EnemyMinion,DamageEffect:5/GainArmorEffect:5,Expansion,art_spell_032,sfx_cast_032,TRUE
+32,WARRIOR_SHIELD_SLAM,CARD_032_NAME,CARD_032_DESC,3,Spell,Epic,Warrior,0,0,,EnemyMinion,DamageEffect:5|GainArmorEffect:5,Expansion,art_spell_032,sfx_cast_032,TRUE
 33,NEUTRAL_GIANT,CARD_033_NAME,CARD_033_DESC,10,Minion,Legendary,Neutral,8,8,Taunt,None,,Expansion,art_card_033,sfx_play_033,TRUE
 34,MAGE_DRAGON,CARD_034_NAME,CARD_034_DESC,9,Minion,Legendary,Mage,8,8,Battlecry|DivineShield,EnemyMinion,DamageEffect:3,Expansion,art_card_034,sfx_play_034,TRUE
 35,MAGE_TIME_WARP,CARD_035_NAME,CARD_035_DESC,10,Spell,Legendary,Mage,0,0,,None,DrawEffect:3,Expansion,art_spell_035,sfx_cast_035,TRUE

@@ -101,8 +101,51 @@ namespace Card.Domain.Match.Effects
         }
 
         public int Attack { get; }
-
         public int Health { get; }
+    }
+
+    /// <summary>获得法力：为效果拥有者增加 <see cref="Amount"/> 点临时法力。</summary>
+    public sealed class GainManaEffectData : IEffectData
+    {
+        public GainManaEffectData(int amount)
+        {
+            Amount = Guard.Positive(amount, nameof(amount));
+        }
+
+        public int Amount { get; }
+    }
+
+    /// <summary>获得护甲：为效果拥有者英雄增加 <see cref="Amount"/> 点护甲。</summary>
+    public sealed class GainArmorEffectData : IEffectData
+    {
+        public GainArmorEffectData(int amount)
+        {
+            Amount = Guard.Positive(amount, nameof(amount));
+        }
+
+        public int Amount { get; }
+    }
+
+    /// <summary>摧毁随从：目标来自出牌命令的 Target（EnemyMinion）。无参数。</summary>
+    public sealed class DestroyEffectData : IEffectData
+    {
+    }
+
+    /// <summary>复合效果容器：顺序组合多个子效果（如 Destroy+Summon）。</summary>
+    public sealed class CompositeEffectData : IEffectData
+    {
+        public CompositeEffectData(IReadOnlyList<IEffectData> effects)
+        {
+            Guard.NotNull(effects, nameof(effects));
+            if (effects.Count == 0)
+            {
+                throw new ArgumentException("CompositeEffect 至少需要一个子效果。", nameof(effects));
+            }
+
+            Effects = effects;
+        }
+
+        public IReadOnlyList<IEffectData> Effects { get; }
     }
 
     /// <summary>
@@ -176,6 +219,7 @@ namespace Card.Domain.Match.Effects
                 case "HealEffect":
                     return new HealEffectData(ParseInt(param, nameof(HealEffectData)));
                 case "DrawCardEffect":
+                case "DrawEffect": // 配置历史别名（M2-T7 起用此名，解析器规范化为 DrawCardEffect）
                     return new DrawCardEffectData(ParseInt(param, nameof(DrawCardEffectData)));
                 case "SummonEffect":
                 {
@@ -199,6 +243,37 @@ namespace Card.Domain.Match.Effects
                     return new BuffEffectData(
                         ParseInt(parts[0], nameof(BuffEffectData)),
                         ParseInt(parts[1], nameof(BuffEffectData)));
+                }
+                case "GainManaEffect":
+                    return new GainManaEffectData(ParseInt(param, nameof(GainManaEffectData)));
+                case "GainArmorEffect":
+                    return new GainArmorEffectData(ParseInt(param, nameof(GainArmorEffectData)));
+                case "DestroyEffect":
+                    return new DestroyEffectData();
+                case "CompositeEffect":
+                {
+                    if (string.IsNullOrWhiteSpace(param))
+                    {
+                        throw new ArgumentException("CompositeEffect 需要至少一个子效果。");
+                    }
+
+                    string[] subExpressions = param.Split('+');
+                    List<IEffectData> subEffects = new List<IEffectData>(subExpressions.Length);
+                    for (int i = 0; i < subExpressions.Length; i++)
+                    {
+                        string sub = subExpressions[i].Trim();
+                        if (sub.Length == 0)
+                        {
+                            throw new ArgumentException("CompositeEffect 子效果不能为空。");
+                        }
+
+                        int colon = sub.IndexOf(':');
+                        string subType = colon < 0 ? sub : sub.Substring(0, colon);
+                        string subParam = colon < 0 ? string.Empty : sub.Substring(colon + 1);
+                        subEffects.Add(ParseEffect(subType, subParam));
+                    }
+
+                    return new CompositeEffectData(subEffects);
                 }
                 default:
                     throw new ArgumentException("未知效果类型：" + typeName + "。");

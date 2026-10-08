@@ -165,5 +165,69 @@ namespace Card.Tests.EditMode.Match
 
             Assert.That(self.Hero.Health, Is.EqualTo(27));
         }
+
+        [Test]
+        public void GainMana_AddsCurrentMana()
+        {
+            MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
+            PlayerState self = state.GetPlayer(0);
+            self.Mana.Restore(0, 0);
+            CardInstance src = RuleEngineTestHelpers.AddToHand(self, MatchTestCards.Spell("GM"), 100);
+
+            EffectContext ctx = NewContext(state, src, 0, TargetRef.None);
+            new EffectExecutor().Execute(new GainManaEffectData(2), ctx);
+
+            Assert.That(self.Mana.Current, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void GainArmor_AddsArmorToSelfHero()
+        {
+            MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
+            PlayerState self = state.GetPlayer(0);
+            CardInstance src = RuleEngineTestHelpers.AddToHand(self, MatchTestCards.Spell("GA"), 100);
+
+            EffectContext ctx = NewContext(state, src, 0, TargetRef.None);
+            new EffectExecutor().Execute(new GainArmorEffectData(4), ctx);
+
+            Assert.That(self.Hero.Armor, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void Destroy_RemovesTargetMinion_EmitsDeathEvent()
+        {
+            MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
+            PlayerState enemy = state.GetPlayer(1);
+            CardInstance target = RuleEngineTestHelpers.AddToBoard(enemy, MatchTestCards.Minion("T", 2, 3), 50);
+            CardInstance src = RuleEngineTestHelpers.AddToHand(
+                state.GetPlayer(0), MatchTestCards.Spell("DEST"), 100);
+
+            EffectContext ctx = NewContext(state, src, 0, TargetRef.ForMinion(50));
+            new EffectExecutor().Execute(new DestroyEffectData(), ctx);
+
+            Assert.That(enemy.Board.Contains(target), Is.False);
+            Assert.That(enemy.Graveyard.Contains(target), Is.True);
+            Assert.That(ctx.Events.Events.OfType<CardDeathEvent>().Single().CardInstanceId, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void Composite_ExecutesAllSubEffects()
+        {
+            MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
+            PlayerState self = state.GetPlayer(0);
+            self.Mana.Restore(0, 0);
+            CardInstance src = RuleEngineTestHelpers.AddToHand(self, MatchTestCards.Spell("CMP"), 100);
+
+            EffectContext ctx = NewContext(state, src, 0, TargetRef.None);
+            var composite = new CompositeEffectData(new IEffectData[]
+            {
+                new GainArmorEffectData(3),
+                new GainManaEffectData(1)
+            });
+            new EffectExecutor().Execute(composite, ctx);
+
+            Assert.That(self.Hero.Armor, Is.EqualTo(3));
+            Assert.That(self.Mana.Current, Is.EqualTo(1));
+        }
     }
 }
