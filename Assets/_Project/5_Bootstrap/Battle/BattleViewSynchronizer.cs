@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
 using Card.Presentation.Battle;
@@ -21,15 +22,18 @@ namespace Card.Bootstrap.Battle
         private int _enemySeat;
         private readonly CardDatabase _database;
         private readonly BattleUi _ui;
+        private readonly ITextResolver _texts;
 
         public BattleViewSynchronizer(
             BattleUi ui,
             CardDatabase database,
+            ITextResolver texts,
             int localSeat,
             int enemySeat)
         {
             _ui = ui;
             _database = database;
+            _texts = Guard.NotNull(texts, nameof(texts));
             _localSeat = localSeat;
             _enemySeat = enemySeat;
         }
@@ -54,19 +58,19 @@ namespace Card.Bootstrap.Battle
                 ? (_ui.LocalHero, _ui.LocalMana, _ui.LocalHand, _ui.LocalBoard)
                 : (_ui.EnemyHero, _ui.EnemyMana, _ui.EnemyHand, _ui.EnemyBoard);
 
-            hero.SetName(_database.RequireHero(player.Hero.HeroKey).NameKey);
+            hero.SetName(_texts.Resolve(_database.RequireHero(player.Hero.HeroKey).NameKey));
             hero.SetData(player.Hero.Health, player.Hero.MaxHealth, player.Hero.Armor);
             mana.SetData(player.Mana.Current, player.Mana.Max);
 
             board.SetCards(player.Board.Cards
-                .Select(c => CardViewData.FromInstance(_database.RequireCard(c.CardKey), c))
+                .Select(c => CardViewData.FromInstance(_database.RequireCard(c.CardKey), c, _texts))
                 .ToList());
             ApplyTauntMarks(board, player.Board.Cards);
 
             if (isLocal)
             {
                 hand.SetCards(player.Hand.Cards
-                    .Select(c => CardViewData.FromInstance(_database.RequireCard(c.CardKey), c))
+                    .Select(c => CardViewData.FromInstance(_database.RequireCard(c.CardKey), c, _texts))
                     .ToList());
             }
             else

@@ -46,14 +46,18 @@ namespace Card.Presentation.Battle
 
         public int? InstanceId { get; }
 
-        /// <summary>从配置定义构造显示数据；名称/描述暂以 Key 占位（本地化在 M8 决定）。</summary>
-        public static CardViewData FromDefinition(CardDefinition definition)
+        /// <summary>
+        /// 从配置定义构造显示数据（M6-T4 起名称/描述经 <paramref name="texts"/> 翻译；
+        /// 正式本地化系统在 M8 替换该接缝）。
+        /// </summary>
+        public static CardViewData FromDefinition(CardDefinition definition, ITextResolver texts)
         {
             Guard.NotNull(definition, nameof(definition));
+            Guard.NotNull(texts, nameof(texts));
 
             return new CardViewData(
-                definition.NameKey,
-                definition.DescKey,
+                texts.Resolve(definition.NameKey),
+                texts.Resolve(definition.DescKey),
                 definition.Cost,
                 definition.Attack,
                 definition.Health,
@@ -63,16 +67,19 @@ namespace Card.Presentation.Battle
 
         /// <summary>
         /// 从局内实例构造显示数据（M5-T2；M5-T8 起只接受只读视图 <see cref="IReadOnlyCardInstance"/>）：
-        /// 攻/血取实例运行时值（受伤/buff 后正确），名称/描述/费用/美术/类型仍取自配置。
+        /// 攻/血取实例运行时值（受伤/buff 后正确），名称/描述经 <paramref name="texts"/> 翻译，
+        /// 费用/美术/类型仍取自配置。
         /// </summary>
-        public static CardViewData FromInstance(CardDefinition definition, IReadOnlyCardInstance instance)
+        public static CardViewData FromInstance(
+            CardDefinition definition, IReadOnlyCardInstance instance, ITextResolver texts)
         {
             Guard.NotNull(definition, nameof(definition));
             Guard.NotNull(instance, nameof(instance));
+            Guard.NotNull(texts, nameof(texts));
 
             return new CardViewData(
-                definition.NameKey,
-                definition.DescKey,
+                texts.Resolve(definition.NameKey),
+                texts.Resolve(definition.DescKey),
                 definition.Cost,
                 instance.Attack,
                 instance.Health,

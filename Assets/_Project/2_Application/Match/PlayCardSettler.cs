@@ -46,6 +46,13 @@ namespace Card.Application.Match
                 {
                     throw new InvalidOperationException("随从进场失败：" + boardAdd.ErrorCode);
                 }
+
+                // 召唤失调（§3.2）：无 Charge 的随从登场回合不能攻击，
+                // 下次回合开始由 EndTurnSettler 清除该状态。Charge/Rush 忽略。
+                if (!card.Keywords.Has(Keyword.Charge) && !card.Keywords.Has(Keyword.Rush))
+                {
+                    card.Statuses.Add(StatusFlags.SummoningSickness);
+                }
             }
             else
             {

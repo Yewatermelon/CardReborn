@@ -116,7 +116,8 @@ namespace Card.Tests.EditMode.Presentation
         {
             PlayerState active = match.GetPlayer(match.ActivePlayerId);
             List<ICardViewData> data = active.Hand.Cards
-                .Select(c => (ICardViewData)CardViewData.FromInstance(db.RequireCard(c.CardKey), c))
+                .Select(c => (ICardViewData)CardViewData.FromInstance(
+                    db.RequireCard(c.CardKey), c, KeyPassthroughTextResolver.Instance))
                 .ToList();
             view.SetCards(data);
         }

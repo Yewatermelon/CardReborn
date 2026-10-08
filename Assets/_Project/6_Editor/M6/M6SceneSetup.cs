@@ -23,6 +23,8 @@ namespace Card.Editor.M6
         private const string BattlePath = "Assets/Scenes/Battle.unity";
         private const string SourceConfigDir = "Assets/_Project/Config";
         private const string TargetConfigDir = "Assets/StreamingAssets/CardConfig";
+        private const string LocalizationSource = "Config/Excel/Localization.csv";
+        private const string LocalizationTarget = "Assets/StreamingAssets/CardConfig/localization.csv";
 
         private static readonly string[] ConfigFiles =
         {
@@ -40,6 +42,13 @@ namespace Card.Editor.M6
                 string target = Path.Combine(TargetConfigDir, file);
                 File.Copy(source, target, overwrite: true);
             }
+
+            // M6-T4：最小中文文本表（源表在 Assets 外的 Config/Excel，随配置一并部署）。
+            string projectRoot = Directory.GetParent(UnityEngine.Application.dataPath)!.FullName;
+            File.Copy(
+                Path.Combine(projectRoot, LocalizationSource),
+                Path.Combine(projectRoot, LocalizationTarget),
+                overwrite: true);
 
             AssetDatabase.Refresh();
             GameLog.Info(LogChannel.Boot, "M6-T1：运行时配置已部署到 " + TargetConfigDir);

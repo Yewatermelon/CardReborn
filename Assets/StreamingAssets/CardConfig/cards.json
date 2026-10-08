@@ -576,7 +576,7 @@
       "keywords": "Deathrattle",
       "targetRule": "None",
       "effects": [
-        "SummonEffect:NEUTRAL_PANGO/2"
+        "OnDeath:SummonEffect:NEUTRAL_PANGO/2"
       ],
       "setKey": "Expansion",
       "artKey": "art_card_029",

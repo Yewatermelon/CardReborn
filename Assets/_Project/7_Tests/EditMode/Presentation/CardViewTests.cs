@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using Card.Domain.Config;
 using Card.Presentation.Battle;
+using Card.Presentation.Battle.Feedback;
 
 namespace Card.Tests.EditMode.Presentation
 {
@@ -108,6 +109,24 @@ namespace Card.Tests.EditMode.Presentation
             Assert.That(_nameText.text, Is.EqualTo("Fireball"));
             Assert.That(_attackPanel.activeSelf, Is.False);
             Assert.That(_healthPanel.activeSelf, Is.False);
+        }
+
+        /// <summary>M6-T4（B7）：B view 死亡淡出 + 复用为 C view 时，SetData 必须复位淡出状态，否则 C 不可见。</summary>
+        [Test]
+        public void SetData_AfterDeathFade_StopsFadeAndRestoresAlpha()
+        {
+            // 预置：CardView 已带 CanvasGroup（预制体默认加），并附加 CardFadeOutView。
+            CanvasGroup group = _root.AddComponent<CanvasGroup>();
+            CardFadeOutView fade = _root.AddComponent<CardFadeOutView>();
+            fade.Play(0.5f); // 启动死亡淡出：alpha=1, IsPlaying=true
+            fade.Tick(0.25f); // 走到一半：alpha≈0.5, IsPlaying=true
+
+            // 当被复用为另一张卡（同帧 Push 期间，卡数不变）。
+            _view.SetData(CreateMinionData());
+
+            // 期望：淡出已中止、alpha 复位为 1（卡牌可见，不会被旧淡出拖到不可见）。
+            Assert.That(fade.IsPlaying, Is.False, "SetData 应中止死亡淡出，避免复用卡不可见。");
+            Assert.That(group.alpha, Is.EqualTo(1f), "SetData 应复位 alpha 为 1。");
         }
     }
 }

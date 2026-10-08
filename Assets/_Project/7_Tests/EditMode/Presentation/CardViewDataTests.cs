@@ -8,6 +8,11 @@ namespace Card.Tests.EditMode.Presentation
     [TestFixture]
     public sealed class CardViewDataTests
     {
+        private sealed class FakeTextResolver : ITextResolver
+        {
+            public string Resolve(string key) => key == "CARD_001_NAME" ? "胖滚" : "译文:" + key;
+        }
+
         [Test]
         public void Constructor_AssignsAllFields()
         {
@@ -59,7 +64,7 @@ namespace Card.Tests.EditMode.Presentation
                 Type = CardType.Minion
             };
 
-            CardViewData data = CardViewData.FromDefinition(def);
+            CardViewData data = CardViewData.FromDefinition(def, KeyPassthroughTextResolver.Instance);
 
             Assert.That(data.Name, Is.EqualTo(def.NameKey));
             Assert.That(data.Description, Is.EqualTo(def.DescKey));
@@ -71,11 +76,37 @@ namespace Card.Tests.EditMode.Presentation
         }
 
         [Test]
+        public void FromDefinition_TranslatesNameAndDescription()
+        {
+            var def = new CardDefinition
+            {
+                NameKey = "CARD_001_NAME",
+                DescKey = "CARD_001_DESC",
+                Type = CardType.Minion
+            };
+
+            CardViewData data = CardViewData.FromDefinition(def, new FakeTextResolver());
+
+            Assert.That(data.Name, Is.EqualTo("胖滚"));
+            Assert.That(data.Description, Is.EqualTo("译文:CARD_001_DESC"));
+        }
+
+        [Test]
         public void FromDefinition_WithNullDefinition_ThrowsArgumentNullException()
         {
             Assert.That(
-                () => CardViewData.FromDefinition(null!),
+                () => CardViewData.FromDefinition(null!, KeyPassthroughTextResolver.Instance),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("definition"));
+        }
+
+        [Test]
+        public void FromDefinition_WithNullResolver_ThrowsArgumentNullException()
+        {
+            var def = new CardDefinition { NameKey = "X", Type = CardType.Minion };
+
+            Assert.That(
+                () => CardViewData.FromDefinition(def, null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("texts"));
         }
 
         [Test]
@@ -88,7 +119,7 @@ namespace Card.Tests.EditMode.Presentation
                 Type = CardType.Spell
             };
 
-            CardViewData data = CardViewData.FromDefinition(def);
+            CardViewData data = CardViewData.FromDefinition(def, KeyPassthroughTextResolver.Instance);
 
             Assert.That(data.Type, Is.EqualTo(CardType.Spell));
             Assert.That(data.Attack, Is.EqualTo(0));
@@ -111,7 +142,7 @@ namespace Card.Tests.EditMode.Presentation
             CardInstance instance = CardInstance.FromDefinition(def, 10, 0);
             instance.Health = 1; // 受过伤害
 
-            CardViewData data = CardViewData.FromInstance(def, instance);
+            CardViewData data = CardViewData.FromInstance(def, instance, KeyPassthroughTextResolver.Instance);
 
             Assert.That(data.Name, Is.EqualTo(def.NameKey));
             Assert.That(data.Cost, Is.EqualTo(def.Cost));
@@ -126,7 +157,7 @@ namespace Card.Tests.EditMode.Presentation
             var def = new CardDefinition { NameKey = "X", Type = CardType.Minion };
 
             Assert.That(
-                () => CardViewData.FromInstance(def, null!),
+                () => CardViewData.FromInstance(def, null!, KeyPassthroughTextResolver.Instance),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("instance"));
         }
 
@@ -137,8 +168,19 @@ namespace Card.Tests.EditMode.Presentation
             CardInstance instance = CardInstance.FromDefinition(def, 10, 0);
 
             Assert.That(
-                () => CardViewData.FromInstance(null!, instance),
+                () => CardViewData.FromInstance(null!, instance, KeyPassthroughTextResolver.Instance),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("definition"));
+        }
+
+        [Test]
+        public void FromInstance_WithNullResolver_ThrowsArgumentNullException()
+        {
+            var def = new CardDefinition { NameKey = "X", Type = CardType.Minion };
+            CardInstance instance = CardInstance.FromDefinition(def, 10, 0);
+
+            Assert.That(
+                () => CardViewData.FromInstance(def, instance, null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("texts"));
         }
     }
 }

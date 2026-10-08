@@ -81,8 +81,10 @@ namespace Card.Tests.EditMode.Presentation
             IReadOnlyCardInstance cardA = original.GetPlayer(original.ActivePlayerId).Hand.Cards[0];
             IReadOnlyCardInstance cardB = clone.GetPlayer(clone.ActivePlayerId).Hand.Cards[0];
 
-            CardViewData dataA = CardViewData.FromInstance(db.RequireCard(cardA.CardKey), cardA);
-            CardViewData dataB = CardViewData.FromInstance(db.RequireCard(cardB.CardKey), cardB);
+            CardViewData dataA = CardViewData.FromInstance(
+                db.RequireCard(cardA.CardKey), cardA, KeyPassthroughTextResolver.Instance);
+            CardViewData dataB = CardViewData.FromInstance(
+                db.RequireCard(cardB.CardKey), cardB, KeyPassthroughTextResolver.Instance);
 
             Assert.That(dataB.InstanceId, Is.EqualTo(dataA.InstanceId));
             Assert.That(dataB.Name, Is.EqualTo(dataA.Name));
@@ -100,7 +102,8 @@ namespace Card.Tests.EditMode.Presentation
             MatchState state = MatchControllerFixtures.NewMatch(db, deck, seed: 7);
             IReadOnlyCardInstance card = state.GetPlayer(state.ActivePlayerId).Hand.Cards[0];
 
-            CardViewData data = CardViewData.FromInstance(db.RequireCard(card.CardKey), card);
+            CardViewData data = CardViewData.FromInstance(
+                db.RequireCard(card.CardKey), card, KeyPassthroughTextResolver.Instance);
 
             Assert.That(data.InstanceId, Is.EqualTo(card.InstanceId));
             Assert.That(data.Attack, Is.EqualTo(card.Attack));

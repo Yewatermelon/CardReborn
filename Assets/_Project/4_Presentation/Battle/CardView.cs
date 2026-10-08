@@ -1,6 +1,7 @@
 using System;
 using Card.Core;
 using Card.Domain.Config;
+using Card.Presentation.Battle.Feedback;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,6 +18,7 @@ namespace Card.Presentation.Battle
         [SerializeField] internal TMP_Text _nameText = null!;
         [SerializeField] internal TMP_Text _descriptionText = null!;
         [SerializeField] internal TMP_Text _costText = null!;
+        [SerializeField] internal GameObject _costPanel = null!;
         [SerializeField] internal TMP_Text _attackText = null!;
         [SerializeField] internal TMP_Text _healthText = null!;
         [SerializeField] internal GameObject _attackPanel = null!;
@@ -90,6 +92,19 @@ namespace Card.Presentation.Battle
             {
                 _attackText.text = data.Attack.ToString();
                 _healthText.text = data.Health.ToString();
+            }
+
+            // 复用场景（池化 + 卡数不变时 SetCards 直接覆盖 SetData）：
+            // 之前可能正在播死亡淡出（alpha 渐减 + IsPlaying=true），
+            // 若不中止会把新卡也拖到不可见——表现层"隐形卡"bug（M6-B7）。
+            if (TryGetComponent(out CardFadeOutView fade))
+            {
+                fade.Stop();
+            }
+
+            if (TryGetComponent(out CanvasGroup group))
+            {
+                group.alpha = 1f;
             }
         }
 

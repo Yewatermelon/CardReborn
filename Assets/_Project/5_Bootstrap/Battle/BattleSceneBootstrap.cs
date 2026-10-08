@@ -24,6 +24,7 @@ namespace Card.Bootstrap.Battle
         public const int LocalSeat = 0;
         public const int EnemySeat = 1;
         private const string ConfigFolder = "CardConfig";
+        private const string LocalizationFile = "localization.csv";
 
         private MatchController? _controller;
         private MatchEventPump? _pump;
@@ -67,7 +68,8 @@ namespace Card.Bootstrap.Battle
                 database, BattleComposition.BuildDeckKeys(database));
             _controller = controller;
 
-            _synchronizer = new BattleViewSynchronizer(ui, database, LocalSeat, EnemySeat);
+            ITextResolver texts = LoadTextResolver(configDir);
+            _synchronizer = new BattleViewSynchronizer(ui, database, texts, LocalSeat, EnemySeat);
             _pump = new MatchEventPump(controller.Events);
             BindFeedback(ui, _pump);
             BindInput(ui, controller);
@@ -209,6 +211,31 @@ namespace Card.Bootstrap.Battle
                 _synchronizer.Push(_controller.View);
 
             _textPool?.ReclaimFinished();
+        }
+
+        /// <summary>
+        /// 加载最小中文文本表（M6-T4）：文件缺失/损坏不阻断开局，
+        /// 回退直通解析器（卡面显示 Key）并 Warn；M8 由正式本地化系统替换。
+        /// </summary>
+        private static ITextResolver LoadTextResolver(string configDir)
+        {
+            string path = Path.Combine(configDir, LocalizationFile);
+            try
+            {
+                if (!File.Exists(path))
+                {
+                    GameLog.Warn(LogChannel.Boot, "本地化表不存在，卡面将显示 Key：" + path);
+                    return KeyPassthroughTextResolver.Instance;
+                }
+
+                string csv = File.ReadAllText(path);
+                return new CsvTextResolver(csv);
+            }
+            catch (Exception e)
+            {
+                GameLog.Warn(LogChannel.Boot, "本地化表加载失败，卡面将显示 Key：" + e.Message);
+                return KeyPassthroughTextResolver.Instance;
+            }
         }
 
         private static void ShowError(BattleUi ui, string message)

@@ -25,8 +25,10 @@ namespace Card.Bootstrap.Battle
             go.GetComponent<Image>().color = CardBackColor;
 
             var view = go.AddComponent<CardView>();
-            view._nameText = CreateText(go.transform, "Name", new Vector2(0f, 58f), new Vector2(112f, 24f), 15);
-            view._costText = CreateText(go.transform, "Cost", new Vector2(-44f, 62f), new Vector2(28f, 28f), 16);
+            // M6-T4（B1）：费用独立底板占据左上角；名字右移避让，不再与费用重叠。
+            view._costPanel = CreatePanel(go.transform, "CostPanel", new Vector2(-44f, 62f), new Vector2(30f, 28f));
+            view._costText = CreateText(view._costPanel.transform, Vector2.zero, 16);
+            view._nameText = CreateText(go.transform, "Name", new Vector2(13f, 62f), new Vector2(74f, 24f), 14);
             view._descriptionText = CreateText(go.transform, "Desc", new Vector2(0f, 12f), new Vector2(112f, 56f), 11);
             view._attackPanel = CreatePanel(go.transform, "AttackPanel", new Vector2(-38f, -62f), new Vector2(30f, 26f));
             view._healthPanel = CreatePanel(go.transform, "HealthPanel", new Vector2(38f, -62f), new Vector2(30f, 26f));

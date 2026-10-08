@@ -27,7 +27,7 @@ Id,Key,NameKey,DescKey,Cost,Type,Rarity,Class,Attack,Health,Keywords,TargetRule,
 26,MAGE_POLYMORPH,CARD_026_NAME,CARD_026_DESC,4,Spell,Rare,Mage,0,0,,EnemyMinion,CompositeEffect:DestroyEffect+SummonEffect:NEUTRAL_SQUIRE/1,Core,art_spell_026,sfx_cast_026,TRUE
 27,WARRIOR_EXECUTE,CARD_027_NAME,CARD_027_DESC,2,Spell,Rare,Warrior,0,0,,EnemyMinion,DestroyEffect,Core,art_spell_027,sfx_cast_027,TRUE
 28,NEUTRAL_BLESSING,CARD_028_NAME,CARD_028_DESC,2,Spell,Rare,Neutral,0,0,,FriendlyMinion,BuffEffect:3/3,Core,art_spell_028,sfx_cast_028,TRUE
-29,NEUTRAL_TREANT,CARD_029_NAME,CARD_029_DESC,8,Minion,Epic,Neutral,8,8,Deathrattle,None,SummonEffect:NEUTRAL_PANGO/2,Expansion,art_card_029,sfx_play_029,TRUE
+29,NEUTRAL_TREANT,CARD_029_NAME,CARD_029_DESC,8,Minion,Epic,Neutral,8,8,Deathrattle,None,OnDeath:SummonEffect:NEUTRAL_PANGO/2,Expansion,art_card_029,sfx_play_029,TRUE
 30,MAGE_ARCHMAGE,CARD_030_NAME,CARD_030_DESC,6,Minion,Epic,Mage,5,5,SpellPower,None,,Expansion,art_card_030,sfx_play_030,TRUE
 31,MAGE_FLAMESTRIKE,CARD_031_NAME,CARD_031_DESC,7,Spell,Epic,Mage,0,0,,EnemyMinion,DamageEffect:8,Expansion,art_spell_031,sfx_cast_031,TRUE
 32,WARRIOR_SHIELD_SLAM,CARD_032_NAME,CARD_032_DESC,3,Spell,Epic,Warrior,0,0,,EnemyMinion,DamageEffect:5|GainArmorEffect:5,Expansion,art_spell_032,sfx_cast_032,TRUE
