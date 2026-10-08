@@ -14,7 +14,7 @@ namespace Card.Bootstrap.Battle
     public sealed class UiTargetPicker : ITargetPicker
     {
         private readonly IReadOnlyList<BoardView> _boards;
-        private readonly IReadOnlyList<HeroAnchor> _heroes;
+        private List<HeroAnchor> _heroes;
 
         public UiTargetPicker(
             BoardView localBoard,
@@ -29,6 +29,17 @@ namespace Card.Bootstrap.Battle
             }
 
             _heroes = list;
+        }
+
+        /// <summary>热座切换（M6-T3）：交换英雄锚点映射，确保点击命中正确座位。</summary>
+        public void SwitchHeroAnchors()
+        {
+            if (_heroes.Count == 2)
+            {
+                var tmp = _heroes[0].Anchor;
+                _heroes[0] = new HeroAnchor(_heroes[0].Seat, _heroes[1].Anchor);
+                _heroes[1] = new HeroAnchor(_heroes[1].Seat, tmp);
+            }
         }
 
         public bool TryPickTarget(Vector2 screenPosition, out TargetRef target)

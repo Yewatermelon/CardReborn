@@ -25,7 +25,7 @@ namespace Card.Presentation.Battle.Feedback
         private readonly TurnBannerView _banner;
         private readonly IAudioCuePlayer _audio;
         private readonly FeedbackSettings _settings;
-        private readonly int _localSeat;
+        private int _localSeat;
         private MatchEventPump? _pump;
 
         public BattleFeedbackPlayer(
@@ -44,6 +44,12 @@ namespace Card.Presentation.Battle.Feedback
             _audio = Guard.NotNull(audio, nameof(audio));
             _settings = Guard.NotNull(settings, nameof(settings));
             _localSeat = localSeat;
+        }
+
+        /// <summary>热座切换（M6-T3）：更新本地座位，影响横幅文字方向。</summary>
+        internal void UpdateLocalSeat(int newSeat)
+        {
+            _localSeat = newSeat;
         }
 
         /// <summary>订阅事件泵；重复调用先退订旧泵。</summary>

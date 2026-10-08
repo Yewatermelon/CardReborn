@@ -14,10 +14,10 @@ using UnityEngine.UI;
 namespace Card.Bootstrap.Battle
 {
     /// <summary>
-    /// 对战场景引导器（M6-T1）：唯一挂在 Battle 场景里的脚本。
+    /// 对战场景引导器（M6-T1/T3）：唯一挂在 Battle 场景里的脚本。
     /// Start：读 StreamingAssets 配置 → MatchFactory 开局 → 代码构建 UI → 装配
-    /// 事件泵/反馈/日志/输入/指向 → 首帧同步。Update：泵事件后同步视图、回收浮动数字。
-    /// 本地视角固定座位 0（热座切换在 M6-T3）。
+    /// 事件泵/反馈/日志/输入/指向/热座处理器 → 首帧同步。Update：泵事件后同步视图、回收浮动数字。
+    /// 热座切换与胜负结算委托 <see cref="HotSeatHandler"/>。
     /// </summary>
     public sealed class BattleSceneBootstrap : MonoBehaviour
     {
@@ -33,6 +33,10 @@ namespace Card.Bootstrap.Battle
         private PlayerInputController? _input;
         private TargetingController? _targeting;
         private FloatingTextPool? _textPool;
+        private BattleFeedbackPlayer? _feedback;
+        private UiTargetPicker? _picker;
+        private TableFeedbackLocator? _locator;
+        private HotSeatHandler? _hotSeat;
         private PendingIntent _pendingIntent;
         private int _pendingCardId;
 
@@ -70,6 +74,11 @@ namespace Card.Bootstrap.Battle
 
             _pump.EventAppended += ui.Log.Append;
             _synchronizer.Push(controller.View);
+
+            _hotSeat = new HotSeatHandler(
+                ui, controller, _pump, _synchronizer!,
+                _input!, _targeting!, _picker!, _locator!, _feedback!, LocalSeat);
+            _hotSeat.BindOverlays();
         }
 
         private void BindFeedback(BattleUi ui, MatchEventPump pump)
@@ -77,11 +86,13 @@ namespace Card.Bootstrap.Battle
             var locator = new TableFeedbackLocator(
                 ui.LocalBoard, ui.EnemyBoard,
                 LocalSeat, ui.LocalHeroAnchor, EnemySeat, ui.EnemyHeroAnchor);
+            _locator = locator;
             var settings = new FeedbackSettings();
             _textPool = ui.FloatingTextPool;
             var feedback = new BattleFeedbackPlayer(
                 locator, ui.FloatingTextPool, ui.FloatingTextLayer,
                 ui.Banner, new NullAudioCuePlayer(), settings, LocalSeat);
+            _feedback = feedback;
             feedback.Bind(pump);
         }
 
@@ -104,14 +115,15 @@ namespace Card.Bootstrap.Battle
                     (LocalSeat, ui.LocalHeroAnchor),
                     (EnemySeat, ui.EnemyHeroAnchor),
                 });
+            _picker = picker;
             _targeting.Initialize(new UnityInputSource(), picker, _sink);
             _targeting.CommandRejected += error =>
                 GameLog.Warn(LogChannel.Ui, "指向命令被权威侧拒绝：" + error);
 
             ui.LocalHand.CardClicked += OnHandCardClicked;
             ui.LocalBoard.CardClicked += OnBoardMinionClicked;
-            ui.HeroPowerButton.onClick.AddListener(OnHeroPowerClicked);
             ui.EndTurnButton.onClick.AddListener(OnEndTurnClicked);
+            ui.HeroPowerButton.onClick.AddListener(OnHeroPowerClicked);
         }
 
         private void OnHandCardClicked(int instanceId)
@@ -134,7 +146,6 @@ namespace Card.Bootstrap.Battle
 
         private void OnEndTurnClicked()
         {
-            // 热座雏形：按钮结束"当前行动方"的回合（正式双人输入切换在 M6-T3）。
             _sink!.Submit(new EndTurnCommand(_controller!.View.ActivePlayerId));
         }
 
@@ -184,15 +195,18 @@ namespace Card.Bootstrap.Battle
 
         private void Update()
         {
-            if (_pump == null || _controller == null || _synchronizer == null)
-            {
+            if (_controller == null || _pump == null || _synchronizer == null)
                 return;
-            }
+
+            _hotSeat?.CheckGameEnd();
+            if (_hotSeat is { IsBlocked: true })
+                return;
+
+            if (_hotSeat != null && _hotSeat.CheckTurnChange())
+                return;
 
             if (_pump.Pump() > 0)
-            {
                 _synchronizer.Push(_controller.View);
-            }
 
             _textPool?.ReclaimFinished();
         }

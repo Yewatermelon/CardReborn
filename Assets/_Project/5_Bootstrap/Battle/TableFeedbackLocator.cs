@@ -13,7 +13,7 @@ namespace Card.Bootstrap.Battle
     public sealed class TableFeedbackLocator : IFeedbackTargetLocator
     {
         private readonly IReadOnlyList<BoardView> _boards;
-        private readonly Dictionary<int, RectTransform> _heroAnchors;
+        private Dictionary<int, RectTransform> _heroAnchors;
 
         public TableFeedbackLocator(
             BoardView localBoard,
@@ -29,6 +29,17 @@ namespace Card.Bootstrap.Battle
                 [localSeat] = localHeroAnchor,
                 [enemySeat] = enemyHeroAnchor,
             };
+        }
+
+        /// <summary>热座切换（M6-T3）：交换英雄锚点映射。</summary>
+        public void SwitchHeroAnchors()
+        {
+            if (_heroAnchors.TryGetValue(0, out RectTransform? a0)
+                && _heroAnchors.TryGetValue(1, out RectTransform? a1))
+            {
+                _heroAnchors[0] = a1;
+                _heroAnchors[1] = a0;
+            }
         }
 
         public bool TryGetMinionAnchor(int instanceId, out Vector3 worldPosition)

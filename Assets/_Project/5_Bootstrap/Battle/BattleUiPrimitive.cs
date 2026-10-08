@@ -72,8 +72,13 @@ namespace Card.Bootstrap.Battle
 
         internal static Button Button(RectTransform host, out ColorBlock colors)
         {
-            var image = host.gameObject.AddComponent<Image>();
-            image.color = new Color(0.22f, 0.3f, 0.45f, 1f);
+            var image = host.gameObject.GetComponent<Image>();
+            if (image == null)
+            {
+                image = host.gameObject.AddComponent<Image>();
+                image.color = new Color(0.22f, 0.3f, 0.45f, 1f);
+            }
+
             var button = host.gameObject.AddComponent<Button>();
             colors = button.colors;
             return button;

@@ -43,6 +43,8 @@ namespace Card.Bootstrap.Battle
             BuildFloatingTexts(ui, root);
             BuildArrow(ui, root);
             BuildErrorLayer(ui, root);
+            BuildPassScreen(ui, root);
+            BuildVictoryPanel(ui, root);
 
             return ui;
         }
@@ -231,6 +233,32 @@ namespace Card.Bootstrap.Battle
             ui.ErrorPanel = panel.gameObject.GetComponent<CanvasGroup>()
                 ?? panel.gameObject.AddComponent<CanvasGroup>();
             ui.ErrorText = text;
+            panel.gameObject.SetActive(false);
+        }
+
+        private static void BuildPassScreen(BattleUi ui, RectTransform root)
+        {
+            RectTransform panel = CreateBox("PassScreen", root, Vector2.zero, Vector2.zero);
+            Stretch(panel);
+            panel.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.85f);
+            TMP_Text text = Text(panel, string.Empty, 36);
+            ui.PassScreen = panel.gameObject.AddComponent<CanvasGroup>();
+            ui.PassScreenLabel = text;
+            ui.PassScreenButton = Button(panel, out _);
+            panel.gameObject.SetActive(false);
+        }
+
+        private static void BuildVictoryPanel(BattleUi ui, RectTransform root)
+        {
+            RectTransform panel = CreateBox("VictoryPanel", root, Vector2.zero, new Vector2(600f, 300f));
+            panel.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.05f, 0.15f, 0.95f);
+            TMP_Text label = Text(panel, string.Empty, 40);
+            ui.VictoryPanel = panel.gameObject.AddComponent<CanvasGroup>();
+            ui.VictoryLabel = label;
+
+            RectTransform btn = CreateBox("PlayAgainButton", panel, new Vector2(0f, -80f), new Vector2(220f, 60f));
+            ui.VictoryButton = Button(btn, out _);
+            Text(btn, "再来一局", 22);
             panel.gameObject.SetActive(false);
         }
 

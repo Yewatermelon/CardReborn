@@ -17,8 +17,8 @@ namespace Card.Bootstrap.Battle
         private static readonly CardViewData CardBack =
             new CardViewData(string.Empty, string.Empty, 0, 0, 0, string.Empty, CardType.Spell);
 
-        private readonly int _localSeat;
-        private readonly int _enemySeat;
+        private int _localSeat;
+        private int _enemySeat;
         private readonly CardDatabase _database;
         private readonly BattleUi _ui;
 
@@ -40,6 +40,12 @@ namespace Card.Bootstrap.Battle
             _ui.TurnLabel.text = "回合 " + state.TurnNumber.ToString();
             PushPlayer(state.GetPlayer(_localSeat), isLocal: true);
             PushPlayer(state.GetPlayer(_enemySeat), isLocal: false);
+        }
+
+        /// <summary>热座切换（M6-T3）：交换本地/对手座位，下次 Push 时手牌卡面/牌背互换。</summary>
+        public void SwitchSeats()
+        {
+            (_localSeat, _enemySeat) = (_enemySeat, _localSeat);
         }
 
         private void PushPlayer(IReadOnlyPlayerState player, bool isLocal)

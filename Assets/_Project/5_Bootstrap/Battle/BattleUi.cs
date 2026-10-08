@@ -41,5 +41,15 @@ namespace Card.Bootstrap.Battle
         public TargetingArrowView Arrow = null!;
         public CanvasGroup? ErrorPanel;
         public TMP_Text? ErrorText;
+
+        // M6-T3 热座切换
+        public CanvasGroup? PassScreen;
+        public TMP_Text? PassScreenLabel;
+        public Button? PassScreenButton;
+
+        // M6-T3 胜负结算
+        public CanvasGroup? VictoryPanel;
+        public TMP_Text? VictoryLabel;
+        public Button? VictoryButton;
     }
 }
