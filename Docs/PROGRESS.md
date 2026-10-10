@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M7 进行中 4/5（2026-10-10：M7-OBS-1 人机实盘分帧泵完成并实机验收，kernel 831 / EditMode 1041 / PlayMode 4）｜任务顺序：M7-OBS-1（✅）→ M7-T4 → M7-T5；HANDOFF 快照随 M7 收官统一刷新**
+**当前阶段：M7 进行中（2026-10-10：M7-T4 AI vs AI 批量模拟器完成，kernel 837 / 500 局门禁通过 / 胜率调整记录 M7-B1）｜任务顺序：M7-OBS-1（✅）→ M7-T4（✅）→ M7-T5；HANDOFF 快照随 M7 收官统一刷新**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -178,6 +178,7 @@
 | M7-T2 基础 AI（GreedyAiAgent） | ✅ | 任务卡 [tasks/M7-T2-GreedyAiAgent.md](./tasks/M7-T2-GreedyAiAgent.md)；代码：`2_Application/Match/Agents/{GreedyAiAgent, GreedyAiTargeting}.cs`（纯 BCL，激活内同步跑完回合：技能→出牌高费优先→攻击先解场后打脸→EndTurn；被拒候选本回合不重试 + 500 硬上限轻量终止保障）；测试 22 例（整局 4 + 决策 9 + 攻击 9，夹具 `GreedyAiAgentFixtures`）；kernel **801 passed / 0 failed**（基线 779 + 22），覆盖率 GreedyAiAgent 91% / GreedyAiTargeting 96%，`0_Core 96.52%` / `Domain + App 92.98%`（↑），`check.ps1` PASS（312 文件）；Unity 编辑器 EditMode **1004**（2026-10-08 实跑）；PlayMode 不受影响 |
 | M7-T3 回合终止保障（TurnGuard） | ✅ | 任务卡 [tasks/M7-T3-TurnTerminationGuard.md](./tasks/M7-T3-TurnTerminationGuard.md)；代码：`2_Application/Match/Agents/TurnGuard.cs`（`TurnGuardOptions` MaxSteps=500/MaxTicks=0/NoProgressLimit=8 + `TurnGuard`：三层独立兜底，触发顺序步数→时间→无进展，`OnActivationStarted` 重置、exhausted 后幂等；`IClock` 抽象时间上限，铁律 11 零 `UnityEngine.Time`）+ `GreedyAiAgent.cs` 接入（构造可选 `(TurnGuardOptions?, IClock?)` 向后兼容，`BuildStateSignature` 局面签名，删除 T2 的 500 常量，**EndTurn 不受 guard 约束**保证必然结束）；测试 21 例（TurnGuard 单元 16 + agent 集成 5，含 `ManualClock`+时钟推进装饰器分帧泵预演）；kernel **822 passed / 0 failed**（基线 801 + 21），覆盖率 TurnGuard 97% / GreedyAiAgent 93%，`0_Core 96.52%` / `Domain + App 93.08%`（↑），`check.ps1` PASS（315 文件）；Unity 编辑器 EditMode **1025** / PlayMode **3**（2026-10-10 实跑） |
 | M7-OBS-1 PVE 人机实盘（分帧泵） | ✅ | 任务卡 [tasks/M7-OBS-1-HumanVsAi.md](./tasks/M7-OBS-1-HumanVsAi.md)；代码：kernel 层 `AgentMatchRunner.OnSubmitAccepted`（外部 Pump 回调）+ `GreedyAiAgent` stepMode 构造参数 + `StepOne()` 逐步决策方法（拆 partial：`GreedyAiAgent.cs` 主 ~160 行 + `GreedyAiAgent.Stepper.cs` ~180 行）；Bootstrap 层新文件 `AiTurnRunner.cs`（MonoBehaviour 分帧驱动器，Update→StepOne()→EndTurn→Pump）+ `BattleSceneBootstrap` 读 PlayerPrefs("GameMode") 分 PVP/PVE 装配（拆 partial：`BattleSceneBootstrap.cs` 主 ~200 行 + `BattleSceneBootstrap.Input.cs` ~110 行）+ `MainMenuBootstrap` 加人机按钮 + `BattleUi/BattleUiFactory` 加 ThinkingLabel；测试 kernel +9 例（GreedyAiStepperTests 9 + runner 回调 2）+ EditMode 7 例（AiTurnRunnerTests，含思考门控防回归例）+ PlayMode 1 例（PveAiTurnRunnerTests，`[Timeout(120000)]` 兜底）；kernel **831 passed / 0 failed**（基线 822 + 9），覆盖率 `0_Core 96.52%` / `Domain + App 93.19%`（↑），`check.ps1` PASS（321 文件）；**实机冒烟（2026-10-10）**：首测暴露两缺陷已修（commit 528b988）——① AI 回合瞬间完成 → `AiTurnRunner` 加模拟思考节奏（激活 0.8s + 动作间隔 0.45s），"AI 思考中"提示全程可见；② PVE"再来一局"无监听 → `HotSeatHandler.BindVictoryOverlay()` 只绑胜负面板；复测功能正常；**实跑留证：EditMode 1041 passed / 0 failed，PlayMode 4 passed / 0 failed**；关键修复：`OnTurnDeactivated` 恢复为空操作避免栈溢出 + R5 行数超限拆 partial |
+| M7-T4 AI vs AI 批量模拟器 | ✅ | 任务卡 [tasks/M7-T4-AiVsAiSimulator.md](./tasks/M7-T4-AiVsAiSimulator.md)；代码：`2_Application/Match/Agents/AiVsAiSimulator.cs`（静态 `Run`：固定种子 `BaseSeed+i` 逐局装配双 `GreedyAiAgent` 同步整局，`CountingAuthority` 提交计数/被拒统计 + `MaxSubmissionsPerMatch=2000` 批量级防死循环硬保险，单局异常/超限记 `Failure` 后继续批量不中断）+ `SimulationModels.cs`（Options/MatchRecord/Report：胜率、平均回合、异常清单、`Summary()` 人可读摘要、统计守恒）；测试 6 例（`AiVsAiSimulatorTests`：小批量正确性/确定性/超限容错/Summary 字段/守恒/500 局门禁）；kernel **837 passed / 0 failed**（基线 831 + 6），覆盖率 `0_Core 96.52%` / `Domain + App 92.96%`（≥ 门禁），`check.ps1` PASS（324 文件）；**500 局门禁结果：零失败、零被拒命令、全部终局，平均回合数 29.6**；P0(Mage) 胜率 67.8% 超门禁区间 [45%,55%] → 按 Docs/02 "或给出调整记录"口径登记 **M7-B1**（英雄技能强度不对齐，不阻塞交付）；顺带修复 M4-T4 遗留 TODO：`SummonExecutor` 满场召唤抛异常违反 NFR-7 → 软失败跳过（EffectExecutorTests 补满场防回归例） |
 
 ---
 
@@ -198,6 +199,7 @@
 | M6-B8 | P3 | M6-T4 收尾 | 死亡淡出在卡数不变复用时被 SetData 中止，无死亡视觉动画。修复 B7 的副作用 | AI | 🔵 待 M9 打磨 |
 | BK-CFG-1 | P2 | M6-T5 复盘改进项 2 | 配置与代码缺加载期契约：效果表达式只在出牌时解析，未知类型/坏参数/缺 Trigger 前缀全部运行时才炸（M6 实录 3 类）。需 CardDatabase 构建期全量校验 | AI | 🔵 待 M9-T1 前置（[任务卡](./tasks/BACKLOG-ConfigEffectValidation.md)） |
 | M7-OBS-1 | P3（观察项，已完成） | M7-T1 | PVE 人机实盘。**2026-10-08 用户决策**：① 时机——M7-T3 完成后立即单开（任务顺序 T3→OBS-1→T4→T5）；② 驱动——AI 回合逐命令分帧泵（MonoBehaviour 驱动、规则层仍纯 BCL），禁止同步整回合一帧跑完；③ 范围——最小可玩：主菜单加"人机对战"入口、玩家固定座位 0 先手、对手=GreedyAiAgent、AI 回合锁输入/不切视角/思考提示、复用胜负与再来一局；不做先后手选择与难度（T5）；④ 验收——实机冒烟 1-2 局 + 新增 1 个 PlayMode 人机对局自动化用例。**2026-10-10 完成**：kernel 831 全绿，EditMode +6，PlayMode +1，check.ps1 PASS | AI | ✅ 已完成 |
+| M7-B1 | P1（调整记录） | M7-T4 批量模拟 | 500 局 AI vs AI 门禁胜率超区间（Docs/02 允许"调整记录"口径）：P0(Mage) 67.8% vs P1(Warrior) 32.2%，超出 [45%,55%]。双方 AI（GreedyAiAgent）、牌库、先后手均对称（MatchFactory 掷先手 50/50），失衡根因为**英雄技能强度不对齐**——Mage 技能（任意目标打 1）是可点脸的进攻资源，Warrior 技能（叠甲 2）纯防御。候选调整：技能数值/费用再平衡或为 Warrior 技能增加进攻选项，属内容平衡范畴，需任务单开 | AI | 🔵 待 M7-T5 / 内容平衡任务 |
 
 ## 里程碑复盘记录索引
 
