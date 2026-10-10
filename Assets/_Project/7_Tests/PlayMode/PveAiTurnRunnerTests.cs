@@ -33,9 +33,9 @@ namespace Card.Tests.PlayMode
             Assert.That(database, Is.Not.Null, "配置加载失败: " + string.Join("\n", errors));
 
             IReadOnlyList<string> deckKeys = BattleComposition.BuildDeckKeys(database!);
-            MatchController controller = BattleComposition.StartMatch(database, deckKeys, BattleComposition.DemoSeed);
+            MatchController controller = BattleComposition.StartMatch(database!, deckKeys, BattleComposition.DemoSeed);
 
-            var ai = new GreedyAiAgent(1, database, stepMode: true);
+            var ai = new GreedyAiAgent(1, database!, stepMode: true);
             var agents = new IPlayerAgent[]
             {
                 new IdleHumanAgent(0),  // 人类回合不决策，由测试代发 EndTurn
