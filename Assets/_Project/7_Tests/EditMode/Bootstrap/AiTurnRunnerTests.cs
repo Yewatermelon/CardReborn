@@ -70,13 +70,16 @@ namespace Card.Tests.EditMode.Bootstrap
         {
             _aiRunner.Bind(_runner, _ai, _controller, _ui);
             _runner.Start();
-            // Start 后默认 seat 0（先手），不是 AI。手动切到 AI。
-            _runner.Submit(new EndTurnCommand(0));
-            _runner.Pump();  // 激活 seat 1（AI）
+
+            // 切到 AI 活跃：如果先手是 AI 直接跳过，否则先手发 EndTurn 切过去。
+            int firstSeat = _controller.View.ActivePlayerId;
+            if (firstSeat != AiSeat)
+            {
+                _runner.Submit(new EndTurnCommand(firstSeat));
+            }
 
             Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(AiSeat));
 
-            // 手动调用 Update 逻辑（不依赖 MonoBehaviour 的 Update 调度）
             SimulateUpdate();
 
             Assert.That(_aiRunner.IsAiTurn, Is.True, "AI 活跃时 IsAiTurn 应为 true。");
@@ -87,25 +90,25 @@ namespace Card.Tests.EditMode.Bootstrap
         {
             _aiRunner.Bind(_runner, _ai, _controller, _ui);
             _runner.Start();
-            // Start 后 seat 0（玩家先手）
+            int firstSeat = _controller.View.ActivePlayerId;
 
-            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(0));
+            Assert.That(firstSeat, Is.LessThan(2), "先手必须是 0 或 1");
 
             SimulateUpdate();
 
-            Assert.That(_aiRunner.IsAiTurn, Is.False, "玩家活跃时 IsAiTurn 应为 false。");
+            Assert.That(_aiRunner.IsAiTurn, Is.False, "先手非 AI 时 IsAiTurn 应为 false。");
         }
 
         [Test]
         public void OnSubmitAccepted_DefaultBehavior_AutoPumps()
         {
-            // 未绑 AiTurnRunner 时默认行为：Submit accepted 后自动 Pump。
             _runner.Start();
-            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(0));
+            int firstSeat = _controller.View.ActivePlayerId;
+            Assert.That(firstSeat, Is.LessThan(2), "先手必须是 0 或 1");
 
-            _runner.Submit(new EndTurnCommand(0));  // 默认自动 Pump
+            _runner.Submit(new EndTurnCommand(firstSeat));
 
-            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(1),
+            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(1 - firstSeat),
                 "默认 OnSubmitAccepted=null 时 Submit accepted 应自动 Pump 激活对手。");
         }
 
@@ -114,12 +117,12 @@ namespace Card.Tests.EditMode.Bootstrap
         {
             _aiRunner.Bind(_runner, _ai, _controller, _ui);
             _runner.Start();
-            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(0));
+            int firstSeat = _controller.View.ActivePlayerId;
+            Assert.That(firstSeat, Is.LessThan(2), "先手必须是 0 或 1");
 
-            // 玩家发 EndTurn → 权威侧变 seat 1 → OnSubmitAccepted → Pump 激活 AI
-            _runner.Submit(new EndTurnCommand(0));
+            _runner.Submit(new EndTurnCommand(firstSeat));
 
-            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(1),
+            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(1 - firstSeat),
                 "绑 OnSubmitAccepted 后 Submit accepted 仍应 Pump 激活对手。");
         }
 
@@ -128,16 +131,19 @@ namespace Card.Tests.EditMode.Bootstrap
         {
             _aiRunner.Bind(_runner, _ai, _controller, _ui);
             _runner.Start();
-            // 切到 AI 回合
-            _runner.Submit(new EndTurnCommand(0));
-            _runner.Pump();
+
+            // 切到 AI 活跃
+            int firstSeat = _controller.View.ActivePlayerId;
+            if (firstSeat != AiSeat)
+            {
+                _runner.Submit(new EndTurnCommand(firstSeat));
+            }
+
+            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(AiSeat));
 
             int eventsBefore = _controller.Events.Count;
-
-            // StepOne 应该至少提交一条命令（或在法力/手牌/技能都空时直接 Done）
             bool stepped = _ai.StepOne();
 
-            // 无论 StepOne 是否提交，都不应异常；如果返回 true 说明 Submit 了。
             if (stepped)
             {
                 Assert.That(_controller.Events.Count, Is.GreaterThan(eventsBefore),
