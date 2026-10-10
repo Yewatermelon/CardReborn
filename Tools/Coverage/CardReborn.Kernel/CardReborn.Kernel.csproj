@@ -23,6 +23,7 @@
     <Compile Include="..\..\..\Assets\_Project\0_Core\**\*.cs" />
     <Compile Include="..\..\..\Assets\_Project\1_Domain\**\*.cs" />
     <Compile Include="..\..\..\Assets\_Project\2_Application\**\*.cs" />
+    <Compile Include="..\..\..\Assets\_Project\2_Network\**\*.cs" />
   </ItemGroup>
 
 </Project>
