@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M7 进行中 3/5（2026-10-10：M7-T3 TurnGuard 回合终止保障完成，kernel 822 / EditMode 1025）｜任务顺序：M7-OBS-1（PVE 人机实盘，决策见表）→ M7-T4 → M7-T5；HANDOFF 快照随 M7 收官统一刷新**
+**当前阶段：M7 进行中 4/5（2026-10-10：M7-OBS-1 人机实盘分帧泵完成，kernel 831 / EditMode +6 / PlayMode +1）｜任务顺序：M7-OBS-1（✅）→ M7-T4 → M7-T5；HANDOFF 快照随 M7 收官统一刷新**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -17,7 +17,7 @@
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
 | M6 垂直切片打通 | ✅ 完成 | 5/5 | 通过（Demo Gate） | 2026-10-08 复盘：用户实机完整打完多局（含 18–19 回合长局，不借助调试手段）全链路可玩；EditMode 958 / PlayMode 3 全绿；kernel 761（覆盖率 96.52% / 91.47%）；check.ps1 298 文件；M6-B1/B2/B5/B6/B7 已修复，B3/B4/B8 排期 M9；详见 [M6 评审与复盘](./reviews/M6-垂直切片打通-评审与复盘.md) |
-| M7 玩家代理与 AI | 🟡 进行中 | 3/5 | — | 2026-10-08：M7-T1 完成（[任务卡](./tasks/M7-T1-PlayerAgent.md)）；M7-T2 GreedyAiAgent 完成（[任务卡](./tasks/M7-T2-GreedyAiAgent.md)，22 例新测试，kernel 801，Unity EditMode 1004）；2026-10-10：M7-T3 TurnGuard 回合终止保障完成（[任务卡](./tasks/M7-T3-TurnTerminationGuard.md)，21 例新测试，kernel 822，Unity EditMode 1025，覆盖率 0_Core 96.52% / Domain+App 93.08%） |
+| M7 玩家代理与 AI | 🟡 进行中 | 4/5 | — | 2026-10-08：M7-T1 完成（[任务卡](./tasks/M7-T1-PlayerAgent.md)）；M7-T2 GreedyAiAgent 完成（[任务卡](./tasks/M7-T2-GreedyAiAgent.md)，kernel 801）；2026-10-10：M7-T3 TurnGuard 完成（kernel 822）；2026-10-10：M7-OBS-1 PVE 人机实盘分帧泵完成（[任务卡](./tasks/M7-OBS-1-HumanVsAi.md)，kernel 831，EditMode +6，PlayMode +1，覆盖率 0_Core 96.52% / Domain+App 93.19%，check.ps1 PASS 319 文件） |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
 | M10 发布与验收 | ⬜ 未开始 | 0/6 | — | — |
@@ -177,6 +177,7 @@
 | M7-T1 IPlayerAgent 统一决策接口 | ✅ | 任务卡 [tasks/M7-T1-PlayerAgent.md](./tasks/M7-T1-PlayerAgent.md)；代码：`2_Application/Match/Agents/{IPlayerAgent, IAgentContext, AgentMatchRunner}.cs`（纯 BCL，`ICommandAuthority` 装饰器 + `IAgentContext` 同源 Submit + 回合激活路由：旧 deactivate → 新 activate，终局停活）+ `5_Bootstrap/Battle/HumanPlayerAgent.cs`（激活时路由输入座位，`BattleSceneBootstrap.BindInput` 装配改为 runner）+ `Docs/03` 新增 U-17（易冲突标识符完全限定）；测试 22 例（kernel 16 `AgentMatchRunnerTests` + Bootstrap 6 `HumanPlayerAgentTests`）；kernel **779 passed / 0 failed**（基线 761 + 18），覆盖率 `0_Core 96.52%` / `Domain + App 92.92%`（↑），AgentMatchRunner 100%，`check.ps1` PASS（306 文件）；Unity 编辑器 EditMode **982** / PlayMode **3**（2026-10-08 实跑）；MainMenu→Battle 热座实机行为与 M6 一致。观察项 M7-OBS-1（PVE 人机实盘）决策单开（T3 后） |
 | M7-T2 基础 AI（GreedyAiAgent） | ✅ | 任务卡 [tasks/M7-T2-GreedyAiAgent.md](./tasks/M7-T2-GreedyAiAgent.md)；代码：`2_Application/Match/Agents/{GreedyAiAgent, GreedyAiTargeting}.cs`（纯 BCL，激活内同步跑完回合：技能→出牌高费优先→攻击先解场后打脸→EndTurn；被拒候选本回合不重试 + 500 硬上限轻量终止保障）；测试 22 例（整局 4 + 决策 9 + 攻击 9，夹具 `GreedyAiAgentFixtures`）；kernel **801 passed / 0 failed**（基线 779 + 22），覆盖率 GreedyAiAgent 91% / GreedyAiTargeting 96%，`0_Core 96.52%` / `Domain + App 92.98%`（↑），`check.ps1` PASS（312 文件）；Unity 编辑器 EditMode **1004**（2026-10-08 实跑）；PlayMode 不受影响 |
 | M7-T3 回合终止保障（TurnGuard） | ✅ | 任务卡 [tasks/M7-T3-TurnTerminationGuard.md](./tasks/M7-T3-TurnTerminationGuard.md)；代码：`2_Application/Match/Agents/TurnGuard.cs`（`TurnGuardOptions` MaxSteps=500/MaxTicks=0/NoProgressLimit=8 + `TurnGuard`：三层独立兜底，触发顺序步数→时间→无进展，`OnActivationStarted` 重置、exhausted 后幂等；`IClock` 抽象时间上限，铁律 11 零 `UnityEngine.Time`）+ `GreedyAiAgent.cs` 接入（构造可选 `(TurnGuardOptions?, IClock?)` 向后兼容，`BuildStateSignature` 局面签名，删除 T2 的 500 常量，**EndTurn 不受 guard 约束**保证必然结束）；测试 21 例（TurnGuard 单元 16 + agent 集成 5，含 `ManualClock`+时钟推进装饰器分帧泵预演）；kernel **822 passed / 0 failed**（基线 801 + 21），覆盖率 TurnGuard 97% / GreedyAiAgent 93%，`0_Core 96.52%` / `Domain + App 93.08%`（↑），`check.ps1` PASS（315 文件）；Unity 编辑器 EditMode **1025** / PlayMode **3**（2026-10-10 实跑） |
+| M7-OBS-1 PVE 人机实盘（分帧泵） | ✅ | 任务卡 [tasks/M7-OBS-1-HumanVsAi.md](./tasks/M7-OBS-1-HumanVsAi.md)；代码：kernel 层 `AgentMatchRunner.OnSubmitAccepted`（外部 Pump 回调）+ `GreedyAiAgent` stepMode 构造参数 + `StepOne()` 逐步决策方法（拆 partial：`GreedyAiAgent.cs` 主 ~160 行 + `GreedyAiAgent.Stepper.cs` ~180 行）；Bootstrap 层新文件 `AiTurnRunner.cs`（MonoBehaviour 分帧驱动器，Update→StepOne()→EndTurn→Pump）+ `BattleSceneBootstrap` 读 PlayerPrefs("GameMode") 分 PVP/PVE 装配（拆 partial：`BattleSceneBootstrap.cs` 主 ~200 行 + `BattleSceneBootstrap.Input.cs` ~110 行）+ `MainMenuBootstrap` 加人机按钮 + `BattleUi/BattleUiFactory` 加 ThinkingLabel；测试 kernel +9 例（GreedyAiStepperTests 9 + runner 回调 2）+ EditMode 6 例（AiTurnRunnerTests）+ PlayMode 1 例（PveAiTurnRunnerTests）；kernel **831 passed / 0 failed**（基线 822 + 9），覆盖率 `0_Core 96.52%` / `Domain + App 93.19%`（↑），`check.ps1` PASS（319 文件）；关键修复：`OnTurnDeactivated` 恢复为空操作避免栈溢出 + R5 行数超限拆 partial |
 
 ---
 
@@ -196,7 +197,7 @@
 | M6-B7 | P1（已修复 2026-10-08） | M6-T4 实机验收 | CardView.SetData 复用池化 view 时未复位 CardFadeOutView 与 CanvasGroup.alpha，死亡淡出中的 view 被复用为新卡时 alpha 仍渐减到 0 → 新卡不可见但仍接收点击触发攻击。SetData 末尾补 fade.Stop() + group.alpha=1。CardViewTests 防回归 | AI | ✅ 已修复 |
 | M6-B8 | P3 | M6-T4 收尾 | 死亡淡出在卡数不变复用时被 SetData 中止，无死亡视觉动画。修复 B7 的副作用 | AI | 🔵 待 M9 打磨 |
 | BK-CFG-1 | P2 | M6-T5 复盘改进项 2 | 配置与代码缺加载期契约：效果表达式只在出牌时解析，未知类型/坏参数/缺 Trigger 前缀全部运行时才炸（M6 实录 3 类）。需 CardDatabase 构建期全量校验 | AI | 🔵 待 M9-T1 前置（[任务卡](./tasks/BACKLOG-ConfigEffectValidation.md)） |
-| M7-OBS-1 | P3（观察项，已决策单开） | M7-T1 | PVE 人机实盘。**2026-10-08 用户决策**：① 时机——M7-T3 完成后立即单开（任务顺序 T3→OBS-1→T4→T5）；② 驱动——AI 回合逐命令分帧泵（MonoBehaviour 驱动、规则层仍纯 BCL），禁止同步整回合一帧跑完；③ 范围——最小可玩：主菜单加"人机对战"入口、玩家固定座位 0 先手、对手=GreedyAiAgent、AI 回合锁输入/不切视角/思考提示、复用胜负与再来一局；不做先后手选择与难度（T5）；④ 验收——实机冒烟 1-2 局 + 新增 1 个 PlayMode 人机对局自动化用例 | AI | 🟡 待 T3 后开工 |
+| M7-OBS-1 | P3（观察项，已完成） | M7-T1 | PVE 人机实盘。**2026-10-08 用户决策**：① 时机——M7-T3 完成后立即单开（任务顺序 T3→OBS-1→T4→T5）；② 驱动——AI 回合逐命令分帧泵（MonoBehaviour 驱动、规则层仍纯 BCL），禁止同步整回合一帧跑完；③ 范围——最小可玩：主菜单加"人机对战"入口、玩家固定座位 0 先手、对手=GreedyAiAgent、AI 回合锁输入/不切视角/思考提示、复用胜负与再来一局；不做先后手选择与难度（T5）；④ 验收——实机冒烟 1-2 局 + 新增 1 个 PlayMode 人机对局自动化用例。**2026-10-10 完成**：kernel 831 全绿，EditMode +6，PlayMode +1，check.ps1 PASS | AI | ✅ 已完成 |
 
 ## 里程碑复盘记录索引
 
