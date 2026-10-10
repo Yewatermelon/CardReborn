@@ -38,6 +38,7 @@ namespace Card.Application.Match.Agents
         private readonly CardDatabase _database;
         private readonly TurnGuard _guard;
         private readonly bool _stepMode;
+        private readonly AiDifficultyProfile _difficulty;
 
         // 回合内状态（提升为实例字段以支持逐步模式）。
         private IAgentContext? _context;
@@ -49,12 +50,14 @@ namespace Card.Application.Match.Agents
         public GreedyAiAgent(
             int playerId, CardDatabase database,
             TurnGuardOptions? guardOptions = null, IClock? clock = null,
-            bool stepMode = false)
+            bool stepMode = false,
+            AiDifficultyProfile? difficulty = null)
         {
             PlayerId = playerId;
             _database = Guard.NotNull(database, nameof(database));
             _guard = new TurnGuard(guardOptions, clock);
             _stepMode = stepMode;
+            _difficulty = difficulty ?? AiDifficultyProfile.Normal;
         }
 
         public int PlayerId { get; }

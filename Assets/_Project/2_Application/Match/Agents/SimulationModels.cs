@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Text;
+using Card.Core;
 using Card.Domain.Match;
 
 namespace Card.Application.Match.Agents
 {
     /// <summary>
-    /// M7-T4 批量模拟选项：局数、种子基值、单局提交硬上限（防死循环）、回合守卫参数透传。
+    /// M7-T4 批量模拟选项：局数、种子基值、单局提交硬上限（防死循环）、回合守卫参数透传、
+    /// 两侧 AI 难度（M7-T5，可选，默认 Normal）。
     /// </summary>
     public sealed class AiVsAiSimulatorOptions
     {
@@ -20,6 +22,12 @@ namespace Card.Application.Match.Agents
 
         /// <summary>透传给两侧 GreedyAiAgent 的回合守卫参数；null = TurnGuard 内置默认。</summary>
         public TurnGuardOptions? GuardOptions { get; init; }
+
+        /// <summary>M7-T5：Player0 难度；null = Normal（向后兼容 T4 基线）。</summary>
+        public AiDifficultyProfile? Player0Difficulty { get; init; }
+
+        /// <summary>M7-T5：Player1 难度；null = Normal（向后兼容 T4 基线）。</summary>
+        public AiDifficultyProfile? Player1Difficulty { get; init; }
     }
 
     /// <summary>单局结果记录：<see cref="Failure"/> 非 null 表示异常/超限局（Result 保持 Ongoing）。</summary>

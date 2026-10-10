@@ -32,6 +32,7 @@ namespace Card.Bootstrap.Battle
         public const string GameModePrefKey = "GameMode";
         public const string PvpMode = "PVP";
         public const string PveMode = "PVE";
+        public const string AiDifficultyPrefKey = "AiDifficulty";
         private const string ConfigFolder = "CardConfig";
         private const string LocalizationFile = "localization.csv";
 
@@ -124,7 +125,9 @@ namespace Card.Bootstrap.Battle
 
             if (_isPve)
             {
-                aiAgent = new GreedyAiAgent(EnemySeat, database, stepMode: true);
+                string diffKey = PlayerPrefs.GetString(AiDifficultyPrefKey, "Normal");
+                aiAgent = new GreedyAiAgent(EnemySeat, database, stepMode: true,
+                    difficulty: AiDifficultyProfile.FromKey(diffKey));
                 agents = new IPlayerAgent[]
                 {
                     new HumanPlayerAgent(LocalSeat, _input, _targeting),

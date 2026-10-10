@@ -104,8 +104,10 @@ namespace Card.Application.Match.Agents
                 counter = new CountingAuthority(controller, options.MaxSubmissionsPerMatch);
                 IPlayerAgent[] agents =
                 {
-                    new GreedyAiAgent(0, database, options.GuardOptions),
-                    new GreedyAiAgent(1, database, options.GuardOptions),
+                    new GreedyAiAgent(0, database, options.GuardOptions,
+                        clock: null, stepMode: false, difficulty: options.Player0Difficulty),
+                    new GreedyAiAgent(1, database, options.GuardOptions,
+                        clock: null, stepMode: false, difficulty: options.Player1Difficulty),
                 };
                 AgentMatchRunner runner = new AgentMatchRunner(counter, controller.View, agents);
                 runner.Start();
