@@ -28,6 +28,9 @@ namespace Card.Core
         Ui = 6,
 
         /// <summary>性能度量。</summary>
-        Perf = 7
+        Perf = 7,
+
+        /// <summary>联网对战传输层。</summary>
+        Network = 8
     }
 }

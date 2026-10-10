@@ -81,17 +81,19 @@ namespace Card.Network
         private readonly ITransport _transport;
         private readonly IClock _clock;
         private readonly int _peerSeat;
+        private readonly NetworkDiagnostics? _diag;
         private bool _handshook;
         private bool _peerReady;
         private int _lastActivityTick;
         private bool _timedOut;
 
-        public PeerSession(MatchHost matchHost, ITransport transport, IClock clock, int peerSeat)
+        public PeerSession(MatchHost matchHost, ITransport transport, IClock clock, int peerSeat, NetworkDiagnostics? diag = null)
         {
             _matchHost = matchHost;
             _transport = transport;
             _clock = clock;
             _peerSeat = peerSeat;
+            _diag = diag;
             _lastActivityTick = clock.CurrentTick;
         }
 
@@ -120,6 +122,8 @@ namespace Card.Network
             if (idleTicks >= PeerHost.TimeoutTicks)
             {
                 _timedOut = true;
+                _diag?.Record(NetworkEventType.HeartbeatTimeout, $"idle={idleTicks} ticks");
+                NetworkLogger.Warn($"PeerSession 心跳超时：peerSeat={_peerSeat}, idle={idleTicks} ticks");
                 _transport.Dispose();
                 return false;
             }
@@ -140,6 +144,8 @@ namespace Card.Network
                         HandleReady();
                         break;
                     case NetworkMessageType.Leave:
+                        NetworkLogger.Info($"PeerSession 对手主动离开：peerSeat={_peerSeat}");
+                        _diag?.Record(NetworkEventType.Disconnected, "peer sent Leave");
                         _transport.Dispose();
                         break;
                     case NetworkMessageType.Ping:
@@ -147,6 +153,7 @@ namespace Card.Network
                         break;
                     case NetworkMessageType.Pong:
                         HandlePong();
+                        _diag?.Record(NetworkEventType.PongReceived);
                         break;
                     default:
                         // Command 等对局消息——暂不处理，M13 接入 MatchHost 上行
@@ -163,6 +170,7 @@ namespace Card.Network
                     NetworkMessageType.Ping,
                     MessageCodec.CurrentProtocolVersion,
                     ping.ToJson()));
+                _diag?.Record(NetworkEventType.PingSent, $"tick={now}");
             }
 
             return false;
@@ -171,10 +179,13 @@ namespace Card.Network
         private void HandleHello(RawMessage msg)
         {
             int peerVersion = msg.ProtocolVersion;
+            _diag?.Record(NetworkEventType.HelloReceived, $"peerVersion={peerVersion}");
 
             if (peerVersion != MessageCodec.CurrentProtocolVersion)
             {
                 // 版本不匹配——发 Error 后断开
+                _diag?.Record(NetworkEventType.ProtocolVersionMismatch, $"peer={peerVersion}, current={MessageCodec.CurrentProtocolVersion}");
+                NetworkLogger.Warn($"PeerSession 协议版本不匹配：peer={peerVersion}, current={MessageCodec.CurrentProtocolVersion}");
                 SendError("ProtocolVersionMismatch");
                 _transport.Dispose();
                 return;
@@ -187,28 +198,35 @@ namespace Card.Network
                 .Add("peerSeat", JsonValue.From(_peerSeat));
             _transport.Send(MessageCodec.Frame(NetworkMessageType.HelloAck, MessageCodec.CurrentProtocolVersion, ack.ToJson()));
             _handshook = true;
+            _diag?.Record(NetworkEventType.HelloAckSent);
+            NetworkLogger.Info($"PeerSession 握手完成：peerSeat={_peerSeat}");
         }
 
         private void HandleReady()
         {
             _peerReady = true;
+            _diag?.Record(NetworkEventType.ReadyReceived);
             // 双方 Ready——发 MatchStart（M13 接入对局正式开局）
             JsonValue start = JsonValue.Object()
                 .Add("protocolVersion", JsonValue.From(MessageCodec.CurrentProtocolVersion))
                 .Add("hostSeat", JsonValue.From(0))
                 .Add("peerSeat", JsonValue.From(_peerSeat));
             _transport.Send(MessageCodec.Frame(NetworkMessageType.MatchStart, MessageCodec.CurrentProtocolVersion, start.ToJson()));
+            _diag?.Record(NetworkEventType.MatchStartSent);
+            NetworkLogger.Info($"PeerSession 对局开始：peerSeat={_peerSeat}");
         }
 
         private void HandlePing(RawMessage msg)
         {
             // 对手发 Ping——立即回 Pong（带原始时间戳用于 RTT 计算）
+            _diag?.Record(NetworkEventType.PingReceived);
             JsonValue pong = JsonValue.Object()
                 .Add("timestamp", JsonValue.From(msg.PayloadJson)); // 原样回传
             _transport.Send(MessageCodec.Frame(
                 NetworkMessageType.Pong,
                 MessageCodec.CurrentProtocolVersion,
                 pong.ToJson()));
+            _diag?.Record(NetworkEventType.PongSent);
         }
 
         private void HandlePong()
