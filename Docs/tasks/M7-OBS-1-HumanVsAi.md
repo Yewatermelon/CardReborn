@@ -170,7 +170,7 @@ public sealed class AiTurnRunner : MonoBehaviour
 ## 11. 任务结论（完成后回填）
 
 **完成日期**：2026-10-10
-**结论**：✅ 核心交付完成，AC-9/AC-10 待 Unity 实跑留证
+**结论**：✅ 全部完成（含实机冒烟与两缺陷修复），AC-1~11 全部有证据
 
 ### 交付清单
 
@@ -200,8 +200,8 @@ public sealed class AiTurnRunner : MonoBehaviour
 1. **编译与门禁** ✅：kernel 全绿 + check 静态扫描 PASS
 2. **铁律扫描** ✅：规则三层纯 BCL，Bootstrap 层 MonoBehaviour 合法
 3. **文件行数** ✅：无超限
-4. **测试覆盖** ✅：kernel +9 例（822→831），EditMode +6 例，PlayMode +1 例
-5. **AC 对齐** ✅：AC-1~8/11 有证据，AC-9/10 待 Unity 实跑
+4. **测试覆盖** ✅：kernel +9 例（822→831），EditMode +7 例（含冒烟修复补的门控防回归例），PlayMode +1 例
+5. **AC 对齐** ✅：AC-1~11 全部有证据（AC-9 实机冒烟、AC-10 PlayMode 实跑，见"实跑留证"）
 6. **改动边界** ✅：未动 RuleEngine/MatchController/EffectExecutor/TurnGuard/GreedyAiTargeting
 
 ### 关键修复
@@ -212,14 +212,25 @@ public sealed class AiTurnRunner : MonoBehaviour
 | AgentMatchRunner.cs 322 行超限 | stepMode 状态机逻辑 + TurnPhase 枚举 + 实例字段全部堆在一个文件 | 拆 `GreedyAiAgent.Stepper.cs`（partial） |
 | BattleSceneBootstrap.cs 330 行超限 | PVE 装配 + 输入门控大量新增 | 拆 `BattleSceneBootstrap.Input.cs`（partial）；HotSeatHandler 构造合并为单次 |
 
+### 实机冒烟缺陷修复（2026-10-10，commit 528b988）
+
+| 缺陷 | 根因 | 修复 |
+| --- | --- | --- |
+| AI 回合一瞬间完成、"AI 思考中"提示不可见 | 逐帧 StepOne 无停顿，一回合约 5-15 帧 ≈ 0.1-0.25s | `AiTurnRunner` 加模拟思考节奏：`InitialThinkSeconds=0.8`（激活后首动延迟）+ `ActionIntervalSeconds=0.45`（动作间隔），提示全程可见、操作过程可观察 |
+| PVE 胜负面板"再来一局"点击无反应 | `BindOverlays()` 绑交棒屏+胜利按钮，PVE 跳过导致胜利按钮无监听 | `HotSeatHandler` 拆出 `BindVictoryOverlay()`；PVE 只绑胜负面板，PVP 仍全量绑定 |
+| 测试适配 | EditMode 无帧时钟、PlayMode 整局不能实速跑 | 两套件延迟置 0；EditMode 增思考门控防回归例（共 7）；PlayMode 加 `[Timeout(120000)]` 兜底 |
+
 ### 遗留观察项
 
 - AiTurnRunner 里 `OnSubmitAccepted` 总是调 Pump（Pump 内部 seat 未变直接 return）——语义简化，无需区分 AI/玩家 Submit
-- PlayMode 测试里 ScriptedPlayerAgent 直接发 EndTurn——占位实现，真实玩家交互属 AC-9（Unity 实机）
+- PlayMode 测试里 IdleHumanAgent 不决策、EndTurn 由测试代发——真实玩家交互已由实机冒烟覆盖
 - MainMenuBootstrap 用 `Battle.BattleSceneBootstrap.GameModePrefKey` 全限定引用——同一程序集内可见，无循环依赖
+- PVE 胜负面板文案"玩家 1/2 获胜"在 PVE 语境下可优化为"胜利/失败"（ cosmetic，不阻塞）
+- 终局后 EndTurn/技能按钮未显式禁用（点击被权威拒绝并记日志，无实际影响）
 
-### 待确认（用户 Unity 实跑留证）
+### 实跑留证（2026-10-10，用户 Test Runner 回报）
 
-- AC-9：MainMenu→人机对战→Battle→AI 回合分帧跑→玩家可操作→胜负→再来一局
-- AC-10：PlayMode PveAiTurnRunnerTests 在 Test Runner 里通过
+- AC-9 实机冒烟 ✅：MainMenu → 人机对战 → AI 回合有思考停顿、提示可见、动作可观察；胜负结算正常；再来一局可重开（PVE 模式保持）
+- AC-10 PlayMode ✅：`PveAiTurnRunnerTests.PveAi_EndToEnd_StepsToCompletion` 通过
+- 汇总：**EditMode 1041 passed / 0 failed；PlayMode 4 passed / 0 failed**
 
