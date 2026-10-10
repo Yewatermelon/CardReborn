@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M7 进行中 2/5（2026-10-08：M7-T2 GreedyAiAgent 完成，kernel 801 / EditMode 1004）｜任务顺序：M7-T3（步数/时间上限与无进展检测）→ M7-OBS-1（PVE 人机实盘，决策见表）→ M7-T4 → M7-T5；HANDOFF 快照随 M7 收官统一刷新**
+**当前阶段：M7 进行中 3/5（2026-10-10：M7-T3 TurnGuard 回合终止保障完成，kernel 822 / EditMode 1025）｜任务顺序：M7-OBS-1（PVE 人机实盘，决策见表）→ M7-T4 → M7-T5；HANDOFF 快照随 M7 收官统一刷新**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -17,7 +17,7 @@
 | M4 回合状态机与效果系统 | ✅ 完成 | 10/10 | 通过 | 2026-10-07 评审：十项任务全部完成；无 Unity 工具链 741 用例全过、编译 0 error/0 warning、`check.ps1` PASS（209 文件）、覆盖率 `0_Core 96.52%` / `Domain + App 91.39%`；Unity 编辑器 Test Runner（EditMode）补验 **761 passed / 0 failed**；三项 ★（控制器流水线/录制重放/进程内回环）完成联网可行性预演；详见 [M4 评审与复盘](./reviews/M4-回合状态机与效果系统-评审与复盘.md) |
 | M5 表现层与交互 | ✅ 完成 | 8/8 | 通过 | 依赖 TMP Essentials；M5-T1~T8 全部完成（Unity 补验 920 通过）；★ 项确认：表现层依赖只读视图模型（IReadOnly*），View 层无法拿到可写状态；PVP 下发状态经同一套 FromInstance 渲染等价已证明；详见 [M5 评审与复盘](./reviews/M5-表现层与交互-评审与复盘.md) |
 | M6 垂直切片打通 | ✅ 完成 | 5/5 | 通过（Demo Gate） | 2026-10-08 复盘：用户实机完整打完多局（含 18–19 回合长局，不借助调试手段）全链路可玩；EditMode 958 / PlayMode 3 全绿；kernel 761（覆盖率 96.52% / 91.47%）；check.ps1 298 文件；M6-B1/B2/B5/B6/B7 已修复，B3/B4/B8 排期 M9；详见 [M6 评审与复盘](./reviews/M6-垂直切片打通-评审与复盘.md) |
-| M7 玩家代理与 AI | 🟡 进行中 | 2/5 | — | 2026-10-08：M7-T1 完成（[任务卡](./tasks/M7-T1-PlayerAgent.md)）；M7-T2 GreedyAiAgent 完成（[任务卡](./tasks/M7-T2-GreedyAiAgent.md)，22 例新测试，kernel 801，Unity EditMode 1004） |
+| M7 玩家代理与 AI | 🟡 进行中 | 3/5 | — | 2026-10-08：M7-T1 完成（[任务卡](./tasks/M7-T1-PlayerAgent.md)）；M7-T2 GreedyAiAgent 完成（[任务卡](./tasks/M7-T2-GreedyAiAgent.md)，22 例新测试，kernel 801，Unity EditMode 1004）；2026-10-10：M7-T3 TurnGuard 回合终止保障完成（[任务卡](./tasks/M7-T3-TurnTerminationGuard.md)，21 例新测试，kernel 822，Unity EditMode 1025，覆盖率 0_Core 96.52% / Domain+App 93.08%） |
 | M8 元游戏 | ⬜ 未开始 | 0/8 | — | 可与 M5–M7 并行 |
 | M9 内容扩充与打磨 | ⬜ 未开始 | 0/8 | — | — |
 | M10 发布与验收 | ⬜ 未开始 | 0/6 | — | — |
@@ -167,6 +167,16 @@
 | M6-T1 对战场景组装 | ✅ | 任务卡 [tasks/M6-T1-BattleScene.md](./tasks/M6-T1-BattleScene.md)；代码：Presentation 点击加法（`CardView.BindClick/UnbindClick`、`HandView`/`BoardView` 增 `CardClicked` 事件与 `TryGetCardView`、`HeroView` 增 `SetName`）+ `5_Bootstrap/Battle|Menu/` 组合根（`BattleComposition` 纯 C# 开局装配、`BattleUiFactory`/`BattleUiPrimitive` 全代码 UI、`BattleViewSynchronizer` 只读快照刷新/对手牌背/嘲讽标记、`UiTargetPicker`/`TableFeedbackLocator`/`SceneCamera`、`BattleSceneBootstrap`/`MainMenuBootstrap`、`UiEventSystem` 静态令牌避 R8）+ `6_Editor/M6/M6SceneSetup.cs`（一键部署配置到 StreamingAssets/生成两场景并写 Build Settings/生成中文 TMP 动态字体资产）+ Noto Sans CJK SC 入库（OFL 1.1）；测试 11 例（点击 6 + 装配 4 + HeroView 1），kernel 工程排除 Bootstrap 测试目录；无 Unity 工具链 **750 passed / 0 failed**（748 + 2 效果解析新例），覆盖率 `0_Core 96.52%` / `Domain + App 91.52%`，`check.ps1` PASS（288 文件）；用户编辑器实跑（2026-10-07）：两菜单执行、MainMenu→Battle 开局、AC-1~7 功能验收通过、EditMode 全绿（基线 920 + 11 新例）。修复记录：效果 DSL 分隔符统一为 `/`（M4 遗留数据/解析不一致，Docs/01 §428 补规范）；无相机致箭头拖影（新增 SceneCamera）；编辑器 OS 动态字体不可用致中文 □（工程内字体 + 菜单生成动态字体资产）。P3 观察：卡名占位键待 M8 本地化；灰板美术待 M9；对手行动 M6-T3/M10 |
 | M6-T2 端到端 PlayMode 冒烟测试 | ✅ | 任务卡 [tasks/M6-T2-EndToEndSmoke.md](./tasks/M6-T2-EndToEndSmoke.md)；代码：`7_Tests/PlayMode/BattleSmokeDriver.cs`（166 行，冒烟级驱动器：读只读视图 → 试出牌 None/敌英雄/敌随从/己随从 → 试攻击敌英雄/敌随从 → 无行动则 EndTurn → 终局或步限停；物化快照避免边遍历边改）+ `BattleSmokeTests.cs`（79 行，2 例：完整对局开局→驱动→断言终局/出牌/攻击/事件/可重复 + 配置缺失返回错误）；纯测试加法，不改规则三层；kernel 不变（PlayMode 不在 kernel 编译范围）；无 Unity 工具链 **750 passed / 0 failed**，`check.ps1` PASS（290 文件）；Unity 用户实跑 **933 passed / 0 failed**（2026-10-08，含 PlayMode 2 例）。设计要点：驱动器靠"试错→接受/拒绝"推进，不复制 RuleEngine 逻辑；固定种子两遍运行步数/事件数一致（AC-6 可重复）。P3 观察：不做最优选牌（M7 范围） |
 | M6-T3 双人本地对局 | ✅ | 任务卡 [tasks/M6-T3-HotSeat.md](./tasks/M6-T3-HotSeat.md)；代码：新增 `5_Bootstrap/Battle/HotSeatHandler.cs`（133 行，交棒屏/视角切换/胜负面板/再来一局；从 Bootstrap 抽出满足 R5，Bootstrap 327→193 行）+ 视角切换六处接线（Synchronizer.SwitchSeats/Input/Targeting/UiTargetPicker/TableFeedbackLocator/BattleFeedbackPlayer）+ BuildPassScreen/BuildVictoryPanel 两 UI；无 Unity 工具链 **759 passed / 0 failed**（+9 效果测试），覆盖率 `0_Core 96.52%` / `Domain + App 91.47%`，`check.ps1` PASS（292 文件）；Unity 实跑 EditMode **942** / PlayMode **3**（端到端冒烟首次真正跑通整局）；AC-1~6 人工验收通过（2026-10-08）。验收暴露并修复：① 补齐 M4-T4 遗留效果类型 GainMana/GainArmor/Destroy/Composite（数据+执行器+解析，执行器拆 EffectExecutors.cs）+ DrawEffect 历史别名；② CARD_032 配置两效果分隔符 `/`→`|`（CSV+双 JSON+README）；③ Button 图元重复 AddComponent\<Image\> 改先 GetComponent 复用。缺陷登记 M6-B1/B2/B3 待 T4 |
+
+---
+
+## M7 任务级状态（进行中 3/5）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M7-T1 IPlayerAgent 统一决策接口 | ✅ | 任务卡 [tasks/M7-T1-PlayerAgent.md](./tasks/M7-T1-PlayerAgent.md)；代码：`2_Application/Match/Agents/{IPlayerAgent, IAgentContext, AgentMatchRunner}.cs`（纯 BCL，`ICommandAuthority` 装饰器 + `IAgentContext` 同源 Submit + 回合激活路由：旧 deactivate → 新 activate，终局停活）+ `5_Bootstrap/Battle/HumanPlayerAgent.cs`（激活时路由输入座位，`BattleSceneBootstrap.BindInput` 装配改为 runner）+ `Docs/03` 新增 U-17（易冲突标识符完全限定）；测试 22 例（kernel 16 `AgentMatchRunnerTests` + Bootstrap 6 `HumanPlayerAgentTests`）；kernel **779 passed / 0 failed**（基线 761 + 18），覆盖率 `0_Core 96.52%` / `Domain + App 92.92%`（↑），AgentMatchRunner 100%，`check.ps1` PASS（306 文件）；Unity 编辑器 EditMode **982** / PlayMode **3**（2026-10-08 实跑）；MainMenu→Battle 热座实机行为与 M6 一致。观察项 M7-OBS-1（PVE 人机实盘）决策单开（T3 后） |
+| M7-T2 基础 AI（GreedyAiAgent） | ✅ | 任务卡 [tasks/M7-T2-GreedyAiAgent.md](./tasks/M7-T2-GreedyAiAgent.md)；代码：`2_Application/Match/Agents/{GreedyAiAgent, GreedyAiTargeting}.cs`（纯 BCL，激活内同步跑完回合：技能→出牌高费优先→攻击先解场后打脸→EndTurn；被拒候选本回合不重试 + 500 硬上限轻量终止保障）；测试 22 例（整局 4 + 决策 9 + 攻击 9，夹具 `GreedyAiAgentFixtures`）；kernel **801 passed / 0 failed**（基线 779 + 22），覆盖率 GreedyAiAgent 91% / GreedyAiTargeting 96%，`0_Core 96.52%` / `Domain + App 92.98%`（↑），`check.ps1` PASS（312 文件）；Unity 编辑器 EditMode **1004**（2026-10-08 实跑）；PlayMode 不受影响 |
+| M7-T3 回合终止保障（TurnGuard） | ✅ | 任务卡 [tasks/M7-T3-TurnTerminationGuard.md](./tasks/M7-T3-TurnTerminationGuard.md)；代码：`2_Application/Match/Agents/TurnGuard.cs`（`TurnGuardOptions` MaxSteps=500/MaxTicks=0/NoProgressLimit=8 + `TurnGuard`：三层独立兜底，触发顺序步数→时间→无进展，`OnActivationStarted` 重置、exhausted 后幂等；`IClock` 抽象时间上限，铁律 11 零 `UnityEngine.Time`）+ `GreedyAiAgent.cs` 接入（构造可选 `(TurnGuardOptions?, IClock?)` 向后兼容，`BuildStateSignature` 局面签名，删除 T2 的 500 常量，**EndTurn 不受 guard 约束**保证必然结束）；测试 21 例（TurnGuard 单元 16 + agent 集成 5，含 `ManualClock`+时钟推进装饰器分帧泵预演）；kernel **822 passed / 0 failed**（基线 801 + 21），覆盖率 TurnGuard 97% / GreedyAiAgent 93%，`0_Core 96.52%` / `Domain + App 93.08%`（↑），`check.ps1` PASS（315 文件）；Unity 编辑器 EditMode **1025** / PlayMode **3**（2026-10-10 实跑） |
 
 ---
 
