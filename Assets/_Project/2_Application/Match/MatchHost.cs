@@ -178,7 +178,7 @@ namespace Card.Application.Match
             JsonValue[] items = new JsonValue[events.Count];
             for (int i = 0; i < events.Count; i++)
             {
-                items[i] = JsonValue.From(events[i].GetType().Name);
+                items[i] = EventSerializer.WriteEvent(events[i]);
             }
 
             return items;
