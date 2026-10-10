@@ -52,12 +52,7 @@ namespace Card.Network
 
             public bool TryReceive(out byte[] data)
             {
-                if (!_connected)
-                {
-                    data = Array.Empty<byte>();
-                    return false;
-                }
-
+                // 即使已断开，仍能 drain 队列（对端可能在 Dispose 前发了最后一条消息）
                 if (_incoming.TryDequeue(out byte[]? item))
                 {
                     data = item!;
