@@ -13,11 +13,11 @@
     },
     {
       "id": 2,
-      "key": "HERO_POWER_ARMOR",
+      "key": "HERO_POWER_BASH",
       "cost": 2,
-      "targetRule": "None",
+      "targetRule": "Any",
       "effects": [
-        "GainArmorEffect:2"
+        "DamageEffect:1"
       ]
     }
   ]

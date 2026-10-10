@@ -637,7 +637,8 @@
       "keywords": "",
       "targetRule": "EnemyMinion",
       "effects": [
-        "DamageEffect:5|GainArmorEffect:5"
+        "DamageEffect:5",
+        "GainArmorEffect:5"
       ],
       "setKey": "Expansion",
       "artKey": "art_spell_032",

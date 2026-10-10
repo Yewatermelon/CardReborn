@@ -148,7 +148,7 @@ namespace Card.Tests.EditMode.Match
             MatchState match = NewMatch(seed: 5);
 
             Assert.That(match.GetPlayer(0).Hero.HeroPowerKey, Is.EqualTo("HERO_POWER_FIREBALL"));
-            Assert.That(match.GetPlayer(1).Hero.HeroPowerKey, Is.EqualTo("HERO_POWER_ARMOR"));
+            Assert.That(match.GetPlayer(1).Hero.HeroPowerKey, Is.EqualTo("HERO_POWER_BASH"));
         }
 
         [Test]

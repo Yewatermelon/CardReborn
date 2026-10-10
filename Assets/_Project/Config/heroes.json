@@ -15,7 +15,7 @@
       "key": "HERO_WARRIOR",
       "nameKey": "HERO_002_NAME",
       "health": 30,
-      "heroPowerKey": "HERO_POWER_ARMOR",
+      "heroPowerKey": "HERO_POWER_BASH",
       "class": "Warrior"
     }
   ]
