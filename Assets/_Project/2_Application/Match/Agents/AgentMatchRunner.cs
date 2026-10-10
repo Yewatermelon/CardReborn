@@ -27,6 +27,13 @@ namespace Card.Application.Match.Agents
         private readonly IPlayerAgent?[] _agents = new IPlayerAgent?[2];
         private int _activeSeat = NoActiveSeat;
 
+        /// <summary>
+        /// 外部 Pump 回调：Submit accepted 后调此回调替代自动 Pump。
+        /// 默认 null = 自动 Pump（向后兼容热座/整局同步）；
+        /// 非 null 时由外部（如 AiTurnRunner）决定是否路由——PVE 人机分帧泵场景用。
+        /// </summary>
+        public Action? OnSubmitAccepted { get; set; }
+
         public AgentMatchRunner(
             ICommandAuthority authority,
             IReadOnlyMatchState view,
@@ -88,7 +95,15 @@ namespace Card.Application.Match.Agents
             CommandResult result = _authority.Submit(command);
             if (result.IsValid)
             {
-                Pump();
+                if (OnSubmitAccepted != null)
+                {
+                    // 外部决定是否路由（PVE 分帧泵场景：AI Submit 跳过 Pump、玩家 Submit 执行 Pump）。
+                    OnSubmitAccepted();
+                }
+                else
+                {
+                    Pump();
+                }
             }
 
             return result;

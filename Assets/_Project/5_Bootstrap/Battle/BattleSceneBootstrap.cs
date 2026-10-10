@@ -19,11 +19,19 @@ namespace Card.Bootstrap.Battle
     /// Start：读 StreamingAssets 配置 → MatchFactory 开局 → 代码构建 UI → 装配
     /// 事件泵/反馈/日志/输入/指向/热座处理器 → 首帧同步。Update：泵事件后同步视图、回收浮动数字。
     /// 热座切换与胜负结算委托 <see cref="HotSeatHandler"/>。
+    ///
+    /// M7-OBS-1：读 PlayerPrefs("GameMode") 区分 PVP/PVE。
+    /// PVE 下 seat1 = GreedyAiAgent(stepMode:true)，由 <see cref="AiTurnRunner"/> 分帧驱动；
+    /// 禁用 HotSeatHandler 的交棒屏，HumanPlayerAgent 固定 seat0。
+    /// 输入回调与 ScreenPosition 辅助方法见 <see cref="BattleSceneBootstrap.Input.cs"/>（partial）。
     /// </summary>
-    public sealed class BattleSceneBootstrap : MonoBehaviour
+    public sealed partial class BattleSceneBootstrap : MonoBehaviour
     {
         public const int LocalSeat = 0;
         public const int EnemySeat = 1;
+        public const string GameModePrefKey = "GameMode";
+        public const string PvpMode = "PVP";
+        public const string PveMode = "PVE";
         private const string ConfigFolder = "CardConfig";
         private const string LocalizationFile = "localization.csv";
 
@@ -39,18 +47,13 @@ namespace Card.Bootstrap.Battle
         private UiTargetPicker? _picker;
         private TableFeedbackLocator? _locator;
         private HotSeatHandler? _hotSeat;
-        private PendingIntent _pendingIntent;
-        private int _pendingCardId;
-
-        private enum PendingIntent
-        {
-            None = 0,
-            PlayCard = 1,
-            HeroPower = 2,
-        }
+        private AiTurnRunner? _aiRunner;
+        private bool _isPve;
 
         private void Start()
         {
+            _isPve = PlayerPrefs.GetString(GameModePrefKey, PvpMode) == PveMode;
+
             SceneCamera.Ensure();
             BattleUi ui = BattleUiFactory.Create();
             _ui = ui;
@@ -73,15 +76,16 @@ namespace Card.Bootstrap.Battle
             _synchronizer = new BattleViewSynchronizer(ui, database, texts, LocalSeat, EnemySeat);
             _pump = new MatchEventPump(controller.Events);
             BindFeedback(ui, _pump);
-            BindInput(ui, controller);
+            BindInput(ui, controller, database);
 
             _pump.EventAppended += ui.Log.Append;
             _synchronizer.Push(controller.View);
 
+            // 胜负结算走 HotSeatHandler；PVP 额外需要交棒屏（BindOverlays），PVE 跳过。
             _hotSeat = new HotSeatHandler(
                 ui, controller, _pump, _synchronizer!,
                 _input!, _targeting!, _picker!, _locator!, _feedback!, LocalSeat);
-            _hotSeat.BindOverlays();
+            if (!_isPve) _hotSeat.BindOverlays();
         }
 
         private void BindFeedback(BattleUi ui, MatchEventPump pump)
@@ -99,7 +103,7 @@ namespace Card.Bootstrap.Battle
             feedback.Bind(pump);
         }
 
-        private void BindInput(BattleUi ui, MatchController controller)
+        private void BindInput(BattleUi ui, MatchController controller, CardDatabase database)
         {
             _input = gameObject.AddComponent<PlayerInputController>();
             _input._localPlayerId = LocalSeat;
@@ -108,15 +112,28 @@ namespace Card.Bootstrap.Battle
             _targeting._localPlayerId = LocalSeat;
             _targeting._arrow = ui.Arrow;
 
-            // M7-T1：权威包一层 AgentMatchRunner，两个座位各注册一个人类 agent；
-            // 输入组件共用，本地座位由激活回调路由，交棒屏仍为输入门控。
-            var runner = new AgentMatchRunner(
-                controller, controller.View,
-                new IPlayerAgent[]
+            IPlayerAgent[] agents;
+            GreedyAiAgent? aiAgent = null;
+
+            if (_isPve)
+            {
+                aiAgent = new GreedyAiAgent(EnemySeat, database, stepMode: true);
+                agents = new IPlayerAgent[]
+                {
+                    new HumanPlayerAgent(LocalSeat, _input, _targeting),
+                    aiAgent,
+                };
+            }
+            else
+            {
+                agents = new IPlayerAgent[]
                 {
                     new HumanPlayerAgent(LocalSeat, _input, _targeting),
                     new HumanPlayerAgent(EnemySeat, _input, _targeting),
-                });
+                };
+            }
+
+            var runner = new AgentMatchRunner(controller, controller.View, agents);
 
             _sink = new MatchControllerCommandSink(runner);
             _input.Initialize(_sink);
@@ -139,74 +156,14 @@ namespace Card.Bootstrap.Battle
             ui.EndTurnButton.onClick.AddListener(OnEndTurnClicked);
             ui.HeroPowerButton.onClick.AddListener(OnHeroPowerClicked);
 
+            if (_isPve && aiAgent != null)
+            {
+                var runnerGo = gameObject.AddComponent<AiTurnRunner>();
+                runnerGo.Bind(runner, aiAgent, controller, ui);
+                _aiRunner = runnerGo;
+            }
+
             runner.Start();
-        }
-
-        private void OnHandCardClicked(int instanceId)
-        {
-            _pendingIntent = PendingIntent.PlayCard;
-            _pendingCardId = instanceId;
-            _input!.NotifyHandCardClicked(instanceId);
-        }
-
-        private void OnBoardMinionClicked(int attackerInstanceId)
-        {
-            _targeting!.BeginAttackTargeting(attackerInstanceId, () => CardScreenPosition(attackerInstanceId));
-        }
-
-        private void OnHeroPowerClicked()
-        {
-            _pendingIntent = PendingIntent.HeroPower;
-            _input!.NotifyHeroPowerClicked();
-        }
-
-        private void OnEndTurnClicked()
-        {
-            _sink!.Submit(new EndTurnCommand(_controller!.View.ActivePlayerId));
-        }
-
-        private void OnInputRejected(CommandError error)
-        {
-            if (error == CommandError.TargetRequired)
-            {
-                BeginTargetingForPendingIntent();
-            }
-
-            _pendingIntent = PendingIntent.None;
-        }
-
-        private void BeginTargetingForPendingIntent()
-        {
-            switch (_pendingIntent)
-            {
-                case PendingIntent.PlayCard:
-                    int cardId = _pendingCardId;
-                    _targeting!.BeginPlayCardTargeting(cardId, () => CardScreenPosition(cardId));
-                    break;
-                case PendingIntent.HeroPower:
-                    _targeting!.BeginHeroPowerTargeting(HeroPowerScreenPosition);
-                    break;
-            }
-        }
-
-        private Vector2 CardScreenPosition(int instanceId)
-        {
-            if (_ui != null
-                && (_ui.LocalHand.TryGetCardView(instanceId, out CardView? view)
-                    || _ui.LocalBoard.TryGetCardView(instanceId, out view))
-                && view != null)
-            {
-                return RectTransformUtility.WorldToScreenPoint(null, view.transform.position);
-            }
-
-            return Vector2.zero;
-        }
-
-        private Vector2 HeroPowerScreenPosition()
-        {
-            return _ui == null
-                ? Vector2.zero
-                : RectTransformUtility.WorldToScreenPoint(null, _ui.HeroPowerButton.transform.position);
         }
 
         private void Update()
@@ -215,11 +172,18 @@ namespace Card.Bootstrap.Battle
                 return;
 
             _hotSeat?.CheckGameEnd();
-            if (_hotSeat is { IsBlocked: true })
-                return;
 
-            if (_hotSeat != null && _hotSeat.CheckTurnChange())
-                return;
+            if (_isPve)
+            {
+                if (_controller.IsFinished) return;
+            }
+            else
+            {
+                if (_hotSeat is { IsBlocked: true })
+                    return;
+                if (_hotSeat != null && _hotSeat.CheckTurnChange())
+                    return;
+            }
 
             if (_pump.Pump() > 0)
                 _synchronizer.Push(_controller.View);
@@ -227,10 +191,6 @@ namespace Card.Bootstrap.Battle
             _textPool?.ReclaimFinished();
         }
 
-        /// <summary>
-        /// 加载最小中文文本表（M6-T4）：文件缺失/损坏不阻断开局，
-        /// 回退直通解析器（卡面显示 Key）并 Warn；M8 由正式本地化系统替换。
-        /// </summary>
         private static ITextResolver LoadTextResolver(string configDir)
         {
             string path = Path.Combine(configDir, LocalizationFile);
@@ -255,15 +215,9 @@ namespace Card.Bootstrap.Battle
         private static void ShowError(BattleUi ui, string message)
         {
             if (ui.ErrorPanel != null)
-            {
                 ui.ErrorPanel.gameObject.SetActive(true);
-            }
-
             if (ui.ErrorText != null)
-            {
                 ui.ErrorText.text = message;
-            }
-
             GameLog.Error(LogChannel.Boot, message);
         }
     }

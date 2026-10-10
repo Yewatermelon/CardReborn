@@ -51,5 +51,8 @@ namespace Card.Bootstrap.Battle
         public CanvasGroup? VictoryPanel;
         public TMP_Text? VictoryLabel;
         public Button? VictoryButton;
+
+        // M7-OBS-1 人机 AI 回合思考提示
+        public TMP_Text? ThinkingLabel;
     }
 }

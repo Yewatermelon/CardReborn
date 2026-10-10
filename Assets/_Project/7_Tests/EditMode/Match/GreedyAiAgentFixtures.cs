@@ -129,6 +129,22 @@ namespace Card.Tests.EditMode.Match
             runner.Start();
             return recorder;
         }
+
+        /// <summary>
+        /// 装配 PVE 人机 runner：座位 0 = GreedyAiAgent(stepMode=true)，座位 1 = ScriptedPlayerAgent。
+        /// 返回 runner + controller，供 AiTurnRunner 或逐步驱动测试用。
+        /// </summary>
+        public static AgentMatchRunner BuildRunnerWithGreedyStepper(
+            MatchState state, CardDatabase database, out MatchController controller)
+        {
+            controller = new MatchController(state, database);
+            IPlayerAgent[] agents =
+            {
+                new GreedyAiAgent(0, database, stepMode: true),
+                new ScriptedPlayerAgent(1, null),
+            };
+            return new AgentMatchRunner(controller, controller.View, agents);
+        }
     }
 
     /// <summary>命令记录装饰器：记录每条命令签名并统计被拒数（M7-T2 零非法断言用）。</summary>

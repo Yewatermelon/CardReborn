@@ -45,6 +45,7 @@ namespace Card.Bootstrap.Battle
             BuildErrorLayer(ui, root);
             BuildPassScreen(ui, root);
             BuildVictoryPanel(ui, root);
+            BuildThinkingLabel(ui, root);
 
             return ui;
         }
@@ -260,6 +261,15 @@ namespace Card.Bootstrap.Battle
             ui.VictoryButton = Button(btn, out _);
             Text(btn, "再来一局", 22);
             panel.gameObject.SetActive(false);
+        }
+
+        private static void BuildThinkingLabel(BattleUi ui, RectTransform root)
+        {
+            // M7-OBS-1：人机 AI 回合思考提示，位于敌人英雄下方。
+            RectTransform box = CreateBox("ThinkingLabel", root, new Vector2(-800f, 380f), new Vector2(300f, 40f));
+            ui.ThinkingLabel = Text(box, "AI 思考中...", 20);
+            ui.ThinkingLabel.color = new Color(0.85f, 0.75f, 0.45f, 1f);
+            box.gameObject.SetActive(false);
         }
 
         private static RectTransform CreateBox(string name, Transform parent, Vector2 position, Vector2 size)
