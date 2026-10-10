@@ -17,7 +17,14 @@ namespace Card.Network
     {
         private readonly MatchHost _matchHost;
         private readonly BclTcpHostListener _listener;
+        private readonly IClock _clock;
         private bool _disposed;
+
+        /// <summary>心跳间隔（权威 tick，10 Hz — 30 tick ≈ 3 秒）。</summary>
+        public const int HeartbeatIntervalTicks = 30;
+
+        /// <summary>超时阈值（权威 tick — 60 tick ≈ 6 秒无响应判定断开）。</summary>
+        public const int TimeoutTicks = 60;
 
         /// <summary>房主监听端口。</summary>
         public int ListenPort => _listener.LocalEndPoint.Port;
@@ -31,9 +38,10 @@ namespace Card.Network
         /// <summary>
         /// 创建房主宿主：监听指定端口（0 = OS 分配），内部持有 <see cref="MatchHost"/>。
         /// </summary>
-        public PeerHost(MatchHost matchHost, int listenPort = 0)
+        public PeerHost(MatchHost matchHost, IClock clock, int listenPort = 0)
         {
             _matchHost = matchHost;
+            _clock = clock;
             _listener = BclTcpTransport.Listen(listenPort);
         }
 
@@ -48,7 +56,7 @@ namespace Card.Network
         {
             ITransport? transport = _listener.Accept();
             if (transport == null) return null;
-            return new PeerSession(_matchHost, transport, peerSeat: 1);
+            return new PeerSession(_matchHost, transport, _clock, peerSeat: 1);
         }
 
         public void Dispose()
@@ -62,22 +70,29 @@ namespace Card.Network
     }
 
     /// <summary>
-    /// 房主与一个对手的会话（M12-T6）：处理 Hello 握手、Ready 状态、MatchStart 开局。
+    /// 房主与一个对手的会话（M12-T6 + T7）：处理 Hello 握手、Ready 状态、MatchStart 开局、心跳与超时。
     /// 生命周期：AcceptPeer 返回会话 → PeerHost 侧 Pump 驱动 → 对局运行中。
+    /// 心跳基于 <see cref="IClock.CurrentTick"/>（权威 10 Hz tick）：
+    /// 30 tick ≈ 3 秒无消息 → 发 Ping；60 tick ≈ 6 秒无响应 → 标记断开。
     /// </summary>
     public sealed class PeerSession
     {
         private readonly MatchHost _matchHost;
         private readonly ITransport _transport;
+        private readonly IClock _clock;
         private readonly int _peerSeat;
         private bool _handshook;
         private bool _peerReady;
+        private int _lastActivityTick;
+        private bool _timedOut;
 
-        public PeerSession(MatchHost matchHost, ITransport transport, int peerSeat)
+        public PeerSession(MatchHost matchHost, ITransport transport, IClock clock, int peerSeat)
         {
             _matchHost = matchHost;
             _transport = transport;
+            _clock = clock;
             _peerSeat = peerSeat;
+            _lastActivityTick = clock.CurrentTick;
         }
 
         /// <summary>对手是否已 Ready。</summary>
@@ -86,16 +101,35 @@ namespace Card.Network
         /// <summary>握手是否完成（Hello ↔ HelloAck 已交换）。</summary>
         public bool Handshook => _handshook;
 
+        /// <summary>是否因超时判定断开。</summary>
+        public bool TimedOut => _timedOut;
+
+        /// <summary>传输层是否仍连接。</summary>
+        public bool IsConnected => _transport.Connected && !_timedOut;
+
         /// <summary>
-        /// Pump 驱动：读取对手上行消息，按握手阶段处理。
+        /// Pump 驱动：读取对手上行消息，按握手阶段处理，执行心跳与超时检测。
         /// 返回 true 表示对局已开局，后续应走 MatchHost.Pump + PeerHost 广播流程（M13）。
         /// </summary>
         public bool Pump()
         {
+            // 心跳超时检测
+            int now = _clock.CurrentTick;
+            int idleTicks = now - _lastActivityTick;
+
+            if (idleTicks >= PeerHost.TimeoutTicks)
+            {
+                _timedOut = true;
+                _transport.Dispose();
+                return false;
+            }
+
             while (_transport.TryReceive(out byte[]? frame))
             {
                 RawMessage msg = MessageCodec.TryUnframe(frame, 0, frame.Length, out _)
                     ?? throw new ProtocolException("PeerSession 收到畸形帧。");
+
+                _lastActivityTick = now; // 任何有效消息都重置活动时间
 
                 switch (msg.Type)
                 {
@@ -108,10 +142,27 @@ namespace Card.Network
                     case NetworkMessageType.Leave:
                         _transport.Dispose();
                         break;
+                    case NetworkMessageType.Ping:
+                        HandlePing(msg);
+                        break;
+                    case NetworkMessageType.Pong:
+                        HandlePong();
+                        break;
                     default:
                         // Command 等对局消息——暂不处理，M13 接入 MatchHost 上行
                         break;
                 }
+            }
+
+            // 发心跳 Ping
+            if (idleTicks >= PeerHost.HeartbeatIntervalTicks && _handshook)
+            {
+                JsonValue ping = JsonValue.Object()
+                    .Add("timestamp", JsonValue.From(now));
+                _transport.Send(MessageCodec.Frame(
+                    NetworkMessageType.Ping,
+                    MessageCodec.CurrentProtocolVersion,
+                    ping.ToJson()));
             }
 
             return false;
@@ -147,6 +198,22 @@ namespace Card.Network
                 .Add("hostSeat", JsonValue.From(0))
                 .Add("peerSeat", JsonValue.From(_peerSeat));
             _transport.Send(MessageCodec.Frame(NetworkMessageType.MatchStart, MessageCodec.CurrentProtocolVersion, start.ToJson()));
+        }
+
+        private void HandlePing(RawMessage msg)
+        {
+            // 对手发 Ping——立即回 Pong（带原始时间戳用于 RTT 计算）
+            JsonValue pong = JsonValue.Object()
+                .Add("timestamp", JsonValue.From(msg.PayloadJson)); // 原样回传
+            _transport.Send(MessageCodec.Frame(
+                NetworkMessageType.Pong,
+                MessageCodec.CurrentProtocolVersion,
+                pong.ToJson()));
+        }
+
+        private void HandlePong()
+        {
+            // 只重置活动时间戳（已在 Pump 循环开头处理）
         }
 
         private void SendError(string code)

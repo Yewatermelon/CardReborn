@@ -18,6 +18,7 @@ namespace Card.Tests.EditMode.Network
     {
         private MatchController _controller = null!;
         private MatchHost _matchHost = null!;
+        private ManualClock _clock = null!;
 
         [OneTimeSetUp]
         public void SetUp()
@@ -26,6 +27,7 @@ namespace Card.Tests.EditMode.Network
             var deck = MatchControllerFixtures.LoadEnabledDeckKeys();
             _controller = new MatchController(
                 MatchControllerFixtures.NewMatch(database, deck, seed: 42), database);
+            _clock = new ManualClock();
             _matchHost = new MatchHost(_controller);
         }
 
@@ -33,7 +35,7 @@ namespace Card.Tests.EditMode.Network
         public void HelloHelloAck_ProtocolVersionMismatch_ReturnsError()
         {
             InMemoryTransport.CreatePair(out ITransport hostSide, out ITransport peerSide);
-            var session = new PeerSession(_matchHost, hostSide, peerSeat: 1);
+            var session = new PeerSession(_matchHost, hostSide, _clock, peerSeat: 1);
 
             // 对手发 Hello（协议版本 999 不匹配）
             JsonValue hello = JsonValue.Object()
@@ -53,7 +55,7 @@ namespace Card.Tests.EditMode.Network
         public void HelloHelloAck_ProtocolMatch_HandshakeCompleted()
         {
             InMemoryTransport.CreatePair(out ITransport hostSide, out ITransport peerSide);
-            var session = new PeerSession(_matchHost, hostSide, peerSeat: 1);
+            var session = new PeerSession(_matchHost, hostSide, _clock, peerSeat: 1);
 
             // 对手发 Hello（协议版本正确）
             JsonValue hello = JsonValue.Object()
@@ -76,7 +78,7 @@ namespace Card.Tests.EditMode.Network
         public void ReadyAfterHello_MatchStartSent()
         {
             InMemoryTransport.CreatePair(out ITransport hostSide, out ITransport peerSide);
-            var session = new PeerSession(_matchHost, hostSide, peerSeat: 1);
+            var session = new PeerSession(_matchHost, hostSide, _clock, peerSeat: 1);
 
             // 先 Hello
             JsonValue hello = JsonValue.Object()
@@ -100,7 +102,7 @@ namespace Card.Tests.EditMode.Network
         public void LeaveMessage_DisposesTransport()
         {
             InMemoryTransport.CreatePair(out ITransport hostSide, out ITransport peerSide);
-            var session = new PeerSession(_matchHost, hostSide, peerSeat: 1);
+            var session = new PeerSession(_matchHost, hostSide, _clock, peerSeat: 1);
 
             peerSide.Send(MessageCodec.Frame(NetworkMessageType.Leave, MessageCodec.CurrentProtocolVersion, "{}"));
             session.Pump();
@@ -112,7 +114,7 @@ namespace Card.Tests.EditMode.Network
         public void PeerSession_UnknownCommand_DuringHandshake_Ignored()
         {
             InMemoryTransport.CreatePair(out ITransport hostSide, out ITransport peerSide);
-            var session = new PeerSession(_matchHost, hostSide, peerSeat: 1);
+            var session = new PeerSession(_matchHost, hostSide, _clock, peerSeat: 1);
 
             // 在 Hello 之前发 Command——应该被忽略，不崩溃
             JsonValue cmd = JsonValue.Object()
