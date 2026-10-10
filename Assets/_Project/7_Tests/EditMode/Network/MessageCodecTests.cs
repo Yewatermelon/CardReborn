@@ -21,9 +21,9 @@ namespace Card.Tests.EditMode.Network
 
             RawMessage? result = MessageCodec.TryUnframe(framed, 0, framed.Length, out int consumed);
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Value.Type, Is.EqualTo(NetworkMessageType.Hello));
-            Assert.That(result.Value.ProtocolVersion, Is.EqualTo(MessageCodec.CurrentProtocolVersion));
-            Assert.That(result.Value.PayloadJson, Is.EqualTo("{\"playerName\":\"test\"}"));
+            Assert.That(result!.Value.Type, Is.EqualTo(NetworkMessageType.Hello));
+            Assert.That(result!.Value.ProtocolVersion, Is.EqualTo(MessageCodec.CurrentProtocolVersion));
+            Assert.That(result!.Value.PayloadJson, Is.EqualTo("{\"playerName\":\"test\"}"));
             Assert.That(consumed, Is.EqualTo(framed.Length));
         }
 
