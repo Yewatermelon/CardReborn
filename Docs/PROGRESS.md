@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：M7 进行中（2026-10-10：M7-T4 AI vs AI 批量模拟器完成，kernel 837 / 500 局门禁通过；M7-B1 英雄技能再平衡完成——镜像技能标定 500 局 48.4%/51.6% 回归 [45%,55%]）｜任务顺序：M7-OBS-1（✅）→ M7-T4（✅）→ M7-B1（✅）→ M7-T5；HANDOFF 快照随 M7 收官统一刷新**
+**当前阶段：M7 收官（2026-10-10：M7-T5 AI 难度分级完成——三档难度胜率单调验证通过）｜M7 全 5/5 任务完成，等待 Unity EditMode 实跑留证 + 双提交；HANDOFF 快照随 M7 收官统一刷新**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -170,7 +170,7 @@
 
 ---
 
-## M7 任务级状态（进行中 4/5）
+## M7 任务级状态（进行中 5/5，收官等待留证）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
@@ -179,6 +179,7 @@
 | M7-T3 回合终止保障（TurnGuard） | ✅ | 任务卡 [tasks/M7-T3-TurnTerminationGuard.md](./tasks/M7-T3-TurnTerminationGuard.md)；代码：`2_Application/Match/Agents/TurnGuard.cs`（`TurnGuardOptions` MaxSteps=500/MaxTicks=0/NoProgressLimit=8 + `TurnGuard`：三层独立兜底，触发顺序步数→时间→无进展，`OnActivationStarted` 重置、exhausted 后幂等；`IClock` 抽象时间上限，铁律 11 零 `UnityEngine.Time`）+ `GreedyAiAgent.cs` 接入（构造可选 `(TurnGuardOptions?, IClock?)` 向后兼容，`BuildStateSignature` 局面签名，删除 T2 的 500 常量，**EndTurn 不受 guard 约束**保证必然结束）；测试 21 例（TurnGuard 单元 16 + agent 集成 5，含 `ManualClock`+时钟推进装饰器分帧泵预演）；kernel **822 passed / 0 failed**（基线 801 + 21），覆盖率 TurnGuard 97% / GreedyAiAgent 93%，`0_Core 96.52%` / `Domain + App 93.08%`（↑），`check.ps1` PASS（315 文件）；Unity 编辑器 EditMode **1025** / PlayMode **3**（2026-10-10 实跑） |
 | M7-OBS-1 PVE 人机实盘（分帧泵） | ✅ | 任务卡 [tasks/M7-OBS-1-HumanVsAi.md](./tasks/M7-OBS-1-HumanVsAi.md)；代码：kernel 层 `AgentMatchRunner.OnSubmitAccepted`（外部 Pump 回调）+ `GreedyAiAgent` stepMode 构造参数 + `StepOne()` 逐步决策方法（拆 partial：`GreedyAiAgent.cs` 主 ~160 行 + `GreedyAiAgent.Stepper.cs` ~180 行）；Bootstrap 层新文件 `AiTurnRunner.cs`（MonoBehaviour 分帧驱动器，Update→StepOne()→EndTurn→Pump）+ `BattleSceneBootstrap` 读 PlayerPrefs("GameMode") 分 PVP/PVE 装配（拆 partial：`BattleSceneBootstrap.cs` 主 ~200 行 + `BattleSceneBootstrap.Input.cs` ~110 行）+ `MainMenuBootstrap` 加人机按钮 + `BattleUi/BattleUiFactory` 加 ThinkingLabel；测试 kernel +9 例（GreedyAiStepperTests 9 + runner 回调 2）+ EditMode 7 例（AiTurnRunnerTests，含思考门控防回归例）+ PlayMode 1 例（PveAiTurnRunnerTests，`[Timeout(120000)]` 兜底）；kernel **831 passed / 0 failed**（基线 822 + 9），覆盖率 `0_Core 96.52%` / `Domain + App 93.19%`（↑），`check.ps1` PASS（321 文件）；**实机冒烟（2026-10-10）**：首测暴露两缺陷已修（commit 528b988）——① AI 回合瞬间完成 → `AiTurnRunner` 加模拟思考节奏（激活 0.8s + 动作间隔 0.45s），"AI 思考中"提示全程可见；② PVE"再来一局"无监听 → `HotSeatHandler.BindVictoryOverlay()` 只绑胜负面板；复测功能正常；**实跑留证：EditMode 1041 passed / 0 failed，PlayMode 4 passed / 0 failed**；关键修复：`OnTurnDeactivated` 恢复为空操作避免栈溢出 + R5 行数超限拆 partial |
 | M7-T4 AI vs AI 批量模拟器 | ✅ | 任务卡 [tasks/M7-T4-AiVsAiSimulator.md](./tasks/M7-T4-AiVsAiSimulator.md)；代码：`2_Application/Match/Agents/AiVsAiSimulator.cs`（静态 `Run`：固定种子 `BaseSeed+i` 逐局装配双 `GreedyAiAgent` 同步整局，`CountingAuthority` 提交计数/被拒统计 + `MaxSubmissionsPerMatch=2000` 批量级防死循环硬保险，单局异常/超限记 `Failure` 后继续批量不中断）+ `SimulationModels.cs`（Options/MatchRecord/Report：胜率、平均回合、异常清单、`Summary()` 人可读摘要、统计守恒）；测试 6 例（`AiVsAiSimulatorTests`：小批量正确性/确定性/超限容错/Summary 字段/守恒/500 局门禁）；kernel **837 passed / 0 failed**（基线 831 + 6），覆盖率 `0_Core 96.52%` / `Domain + App 92.96%`（≥ 门禁），`check.ps1` PASS（324 文件）；**500 局门禁结果：零失败、零被拒命令、全部终局，平均回合数 29.6**；P0(Mage) 胜率 67.8% 超门禁区间 [45%,55%] → 按 Docs/02 "或给出调整记录"口径登记 **M7-B1**（英雄技能强度不对齐，不阻塞交付）；顺带修复 M4-T4 遗留 TODO：`SummonExecutor` 满场召唤抛异常违反 NFR-7 → 软失败跳过（EffectExecutorTests 补满场防回归例） |
+| M7-T5 AI 难度分级 | ✅ | 任务卡 [tasks/M7-T5-AiDifficulty.md](./tasks/M7-T5-AiDifficulty.md)；代码：`2_Application/Match/Agents/AiDifficultyProfile.cs`（纯 BCL：`AiEvaluationPolicy` 枚举 + `AiDifficultyProfile` record 三档预设 Easy/Normal/Hard + `FromKey` 工厂）+ `GreedyAiAgent` 加可选 `difficulty` 构造参数（默认 Normal，向后兼容）+ 拆分 partial：`GreedyAiAgent.Stepper.cs`（224 行）保留逐步模式 + `GreedyAiAgent.Evaluator.cs`（73 行）Hard 评估函数 + 斩杀意识 + `SimulationModels.cs` Options 加 `Player0Difficulty`/`Player1Difficulty` + `AiVsAiSimulator.RunOne` 传参 + `5_Bootstrap/Battle/BattleSceneBootstrap` 读 `PlayerPrefs("AiDifficulty")` 注入 PVE Agent；测试 11 例（Profile 单元 5 + 向后兼容 1 + Easy/Normal/Hard 差异 2 + 模拟器参数 1 + 单调性 2）；kernel **848 passed / 0 failed**（基线 837 + 11），覆盖率 `0_Core 96.52%` / `Domain + App 93.05%`（≥ 门禁），`check.ps1` PASS（325 文件）；**单调性验证**：同英雄镜像 200 局——Normal vs Easy 胜率 68.5%（≥ 55% ✅）、Hard vs Normal 胜率 54.5%（≥ 50% ✅）；**Unity EditMode 实跑** ⏳ 待用户 Test Runner 回报（预期 ~1058） |
 
 ---
 
