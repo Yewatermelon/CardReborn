@@ -5,6 +5,7 @@
         "Card.Core",
         "Card.Domain",
         "Card.Application",
+        "Card.Network",
         "Card.Infrastructure",
         "Card.Presentation",
         "Card.Bootstrap",
