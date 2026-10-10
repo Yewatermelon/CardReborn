@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
@@ -13,20 +14,23 @@ namespace Card.Application.Match.Agents
     /// 决策只读 <see cref="IAgentContext.View"/> + <see cref="CardDatabase"/>（数值/规则来自配置，铁律 6）；
     /// 命令一律 <see cref="IAgentContext.Submit"/> 上行经 RuleEngine 校验（铁律 5、FR-6.5）。
     /// 无随机：同种子命令序列逐位一致；被拒候选本回合不重试；候选耗尽必发 EndTurn（终止性）。
+    /// 回合终止保障（M7-T3，FR-6.4）：决策循环接入 <see cref="TurnGuard"/>
+    /// （可配置步数上限 + IClock 时间上限 + 无进展检测），任一触发即停止决策、必发 EndTurn。
     /// </summary>
     public sealed class GreedyAiAgent : IPlayerAgent
     {
-        /// <summary>单次激活内提交数硬上限（防御性兜底，正式步数/时间上限归 M7-T3）。</summary>
-        internal const int MaxSubmissionsPerActivation = 500;
-
         private static readonly IReadOnlyList<TriggeredEffect> NoEffects = new TriggeredEffect[0];
 
         private readonly CardDatabase _database;
+        private readonly TurnGuard _guard;
 
-        public GreedyAiAgent(int playerId, CardDatabase database)
+        public GreedyAiAgent(
+            int playerId, CardDatabase database,
+            TurnGuardOptions? guardOptions = null, IClock? clock = null)
         {
             PlayerId = playerId;
             _database = Guard.NotNull(database, nameof(database));
+            _guard = new TurnGuard(guardOptions, clock);
         }
 
         public int PlayerId { get; }
@@ -34,17 +38,18 @@ namespace Card.Application.Match.Agents
         public void OnTurnActivated(IAgentContext context)
         {
             Guard.NotNull(context, nameof(context));
+            _guard.OnActivationStarted();
             HashSet<int> rejectedCards = new HashSet<int>();
             HashSet<int> exhaustedAttackers = new HashSet<int>();
             Dictionary<int, int> attacksUsed = new Dictionary<int, int>();
-            int submissions = 0;
 
-            TryUseHeroPower(context, ref submissions);
-            PlayCards(context, rejectedCards, ref submissions);
-            AttackWithAll(context, exhaustedAttackers, attacksUsed, ref submissions);
+            TryUseHeroPower(context);
+            PlayCards(context, rejectedCards);
+            AttackWithAll(context, exhaustedAttackers, attacksUsed);
 
             if (CanAct(context.View))
             {
+                // EndTurn 不受守卫约束：守卫只停止"后续决策"，回合必须收尾（FR-6.4）。
                 context.Submit(new EndTurnCommand(PlayerId));
             }
         }
@@ -59,9 +64,9 @@ namespace Card.Application.Match.Agents
             return !view.IsFinished && view.ActivePlayerId == PlayerId;
         }
 
-        private void TryUseHeroPower(IAgentContext context, ref int submissions)
+        private void TryUseHeroPower(IAgentContext context)
         {
-            if (!CanAct(context.View) || submissions >= MaxSubmissionsPerActivation)
+            if (!CanAct(context.View) || _guard.IsExhausted)
             {
                 return;
             }
@@ -85,12 +90,12 @@ namespace Card.Application.Match.Agents
             }
 
             context.Submit(new UseHeroPowerCommand(PlayerId, target));
-            submissions++;
+            _guard.RegisterStep(BuildStateSignature(context.View));
         }
 
-        private void PlayCards(IAgentContext context, HashSet<int> rejectedCards, ref int submissions)
+        private void PlayCards(IAgentContext context, HashSet<int> rejectedCards)
         {
-            while (CanAct(context.View) && submissions < MaxSubmissionsPerActivation)
+            while (CanAct(context.View) && !_guard.IsExhausted)
             {
                 if (!TryPickPlayableCard(context.View, rejectedCards, out int cardInstanceId, out TargetRef target))
                 {
@@ -98,7 +103,7 @@ namespace Card.Application.Match.Agents
                 }
 
                 CommandResult result = context.Submit(new PlayCardCommand(PlayerId, cardInstanceId, target));
-                submissions++;
+                _guard.RegisterStep(BuildStateSignature(context.View));
                 if (result.IsInvalid)
                 {
                     // 预校验与引擎口径不一致：本回合内不再重试该候选（FR-6.5 轻量终止保障）。
@@ -141,9 +146,9 @@ namespace Card.Application.Match.Agents
 
         private void AttackWithAll(
             IAgentContext context, HashSet<int> exhaustedAttackers,
-            Dictionary<int, int> attacksUsed, ref int submissions)
+            Dictionary<int, int> attacksUsed)
         {
-            while (CanAct(context.View) && submissions < MaxSubmissionsPerActivation)
+            while (CanAct(context.View) && !_guard.IsExhausted)
             {
                 IReadOnlyCardInstance? attacker = context.View.GetPlayer(PlayerId).Board.Cards
                     .Where(c => CanAttack(c, exhaustedAttackers, attacksUsed))
@@ -160,7 +165,7 @@ namespace Card.Application.Match.Agents
                 }
 
                 CommandResult result = context.Submit(new AttackCommand(PlayerId, attacker.InstanceId, target));
-                submissions++;
+                _guard.RegisterStep(BuildStateSignature(context.View));
                 if (result.IsInvalid)
                 {
                     exhaustedAttackers.Add(attacker.InstanceId);
@@ -170,6 +175,39 @@ namespace Card.Application.Match.Agents
                 attacksUsed.TryGetValue(attacker.InstanceId, out int used);
                 attacksUsed[attacker.InstanceId] = used + 1;
             }
+        }
+
+        /// <summary>
+        /// 决策相关局面签名（确定性遍历、无 Random）：双方英雄/法力/分区张数/疲劳 + 场面每张卡关键值。
+        /// 签名不变 ≈ 命令对局面无实质影响（含被拒/合法但无效）——无进展检测的输入面。
+        /// </summary>
+        private static string BuildStateSignature(IReadOnlyMatchState view)
+        {
+            var sb = new StringBuilder();
+            sb.Append('T').Append(view.TurnNumber)
+                .Append(";P").Append(view.ActivePlayerId)
+                .Append(";F").Append(view.IsFinished ? 1 : 0);
+            foreach (IReadOnlyPlayerState player in view.Players)
+            {
+                sb.Append("|p").Append(player.Id)
+                    .Append(",hp").Append(player.Hero.Health)
+                    .Append(",ar").Append(player.Hero.Armor)
+                    .Append(",pw").Append(player.Hero.PowerUsedThisTurn ? 1 : 0)
+                    .Append(",m").Append(player.Mana.Current).Append('/').Append(player.Mana.Max)
+                    .Append(",d").Append(player.Deck.Count)
+                    .Append(",h").Append(player.Hand.Count)
+                    .Append(",g").Append(player.Graveyard.Count)
+                    .Append(",f").Append(player.FatigueCounter);
+                foreach (IReadOnlyCardInstance card in player.Board.Cards)
+                {
+                    sb.Append(",b").Append(card.InstanceId)
+                        .Append(':').Append(card.Attack).Append('/').Append(card.Health)
+                        .Append(':').Append((int)card.StatusFlags)
+                        .Append(':').Append((int)card.KeywordFlags);
+                }
+            }
+
+            return sb.ToString();
         }
 
         private static bool CanAttack(

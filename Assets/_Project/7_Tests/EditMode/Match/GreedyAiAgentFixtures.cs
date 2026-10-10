@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Card.Application.Match;
 using Card.Application.Match.Agents;
+using Card.Core;
 using Card.Domain.Config;
 using Card.Domain.Match;
 
@@ -93,15 +94,17 @@ namespace Card.Tests.EditMode.Match
             return new MatchState(p0, p1, 0) { Phase = TurnPhase.Main, TurnNumber = 1 };
         }
 
-        /// <summary>装配"座位 0 = GreedyAiAgent、座位 1 = 空脚本"并跑完座位 0 的一个回合。</summary>
+        /// <summary>装配"座位 0 = GreedyAiAgent、座位 1 = 空脚本"并跑完座位 0 的一个回合。
+        /// guardOptions/clock 透传给 GreedyAiAgent（M7-T3 回合守卫），默认与 M7-T2 行为一致。</summary>
         public static RecordingAuthority RunSeatZeroTurn(
-            MatchState state, CardDatabase database, out MatchController controller)
+            MatchState state, CardDatabase database, out MatchController controller,
+            TurnGuardOptions? guardOptions = null, IClock? clock = null)
         {
             controller = new MatchController(state, database);
             RecordingAuthority recorder = new RecordingAuthority(controller);
             IPlayerAgent[] agents =
             {
-                new GreedyAiAgent(0, database),
+                new GreedyAiAgent(0, database, guardOptions, clock),
                 new ScriptedPlayerAgent(1, null),
             };
             AgentMatchRunner runner = new AgentMatchRunner(recorder, controller.View, agents);
