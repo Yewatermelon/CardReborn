@@ -37,7 +37,8 @@ namespace Card.Application.Match
             {
                 Phase = ReadEnum<TurnPhase>(root, "phase", "$"),
                 TurnNumber = RequireInt(root, "turnNumber", "$"),
-                IsFinished = RequireBool(root, "isFinished", "$")
+                IsFinished = RequireBool(root, "isFinished", "$"),
+                NextInstanceId = RequireInt(root, "nextInstanceId", "$")
             };
             return state;
         }

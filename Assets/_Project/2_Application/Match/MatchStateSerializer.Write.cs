@@ -15,6 +15,7 @@ namespace Card.Application.Match
                 .Add("turnNumber", JsonValue.From(state.TurnNumber))
                 .Add("activePlayerId", JsonValue.From(state.ActivePlayerId))
                 .Add("isFinished", JsonValue.From(state.IsFinished))
+                .Add("nextInstanceId", JsonValue.From(state.NextInstanceId))
                 .Add("players", JsonValue.Array(WritePlayer(state.GetPlayer(0)), WritePlayer(state.GetPlayer(1))));
         }
 

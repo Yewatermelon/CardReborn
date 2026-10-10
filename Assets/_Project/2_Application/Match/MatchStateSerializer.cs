@@ -10,7 +10,7 @@ namespace Card.Application.Match
     /// </summary>
     public static partial class MatchStateSerializer
     {
-        private const int FormatVersion = 1;
+        private const int FormatVersion = 2;
 
         /// <summary>序列化为确定性 JSON 文本（字段顺序固定、2 空格缩进）。</summary>
         public static string Serialize(MatchState state)
