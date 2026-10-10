@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Card.Application.Match;
 using Card.Application.Match.Agents;
 using Card.Bootstrap.Battle;
@@ -39,12 +38,12 @@ namespace Card.Tests.EditMode.Bootstrap
             _controller = new MatchController(state, _database);
 
             _ai = new GreedyAiAgent(AiSeat, _database, stepMode: true);
-            var humans = new[]
+            IPlayerAgent[] agents =
             {
                 new ScriptedPlayerAgent(0),
                 _ai,
             };
-            _runner = new AgentMatchRunner(_controller, _controller.View, humans);
+            _runner = new AgentMatchRunner(_controller, _controller.View, agents);
 
             _ui = new BattleUi();
             _aiRunner = _host.AddComponent<AiTurnRunner>();
