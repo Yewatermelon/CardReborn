@@ -90,13 +90,19 @@ namespace Card.Tests.EditMode.Bootstrap
         {
             _aiRunner.Bind(_runner, _ai, _controller, _ui);
             _runner.Start();
-            int firstSeat = _controller.View.ActivePlayerId;
+            int active = _controller.View.ActivePlayerId;
 
-            Assert.That(firstSeat, Is.LessThan(2), "先手必须是 0 或 1");
+            // 如果先手就是 AI（取决于种子），需要先 EndTurn 切到人类再断言。
+            if (active == AiSeat)
+            {
+                _runner.Submit(new EndTurnCommand(AiSeat));
+            }
+
+            Assert.That(_controller.View.ActivePlayerId, Is.Not.EqualTo(AiSeat));
 
             SimulateUpdate();
 
-            Assert.That(_aiRunner.IsAiTurn, Is.False, "先手非 AI 时 IsAiTurn 应为 false。");
+            Assert.That(_aiRunner.IsAiTurn, Is.False, "人类活跃时 IsAiTurn 应为 false。");
         }
 
         [Test]
