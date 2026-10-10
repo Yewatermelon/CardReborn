@@ -52,10 +52,20 @@ namespace Card.Bootstrap.Battle
 
         public bool IsBlocked => _isAwaitingPass || _gameEnded;
 
+        /// <summary>绑定交棒屏与胜负面板（PVP 热座全量绑定）。</summary>
         public void BindOverlays()
         {
             if (_ui.PassScreenButton != null)
                 _ui.PassScreenButton.onClick.AddListener(OnPassScreenClicked);
+            BindVictoryOverlay();
+        }
+
+        /// <summary>
+        /// 仅绑定胜负面板"再来一局"（PVE 用：无交棒屏）。
+        /// 实机冒烟修复：PVE 此前跳过 BindOverlays 导致胜利按钮无监听、点击无反应。
+        /// </summary>
+        public void BindVictoryOverlay()
+        {
             if (_ui.VictoryButton != null)
                 _ui.VictoryButton.onClick.AddListener(OnPlayAgainClicked);
         }

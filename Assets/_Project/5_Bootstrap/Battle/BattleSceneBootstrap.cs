@@ -81,11 +81,18 @@ namespace Card.Bootstrap.Battle
             _pump.EventAppended += ui.Log.Append;
             _synchronizer.Push(controller.View);
 
-            // 胜负结算走 HotSeatHandler；PVP 额外需要交棒屏（BindOverlays），PVE 跳过。
+            // 胜负结算走 HotSeatHandler：PVP 全量绑交棒屏+胜负面板；PVE 只绑胜负与再来一局。
             _hotSeat = new HotSeatHandler(
                 ui, controller, _pump, _synchronizer!,
                 _input!, _targeting!, _picker!, _locator!, _feedback!, LocalSeat);
-            if (!_isPve) _hotSeat.BindOverlays();
+            if (_isPve)
+            {
+                _hotSeat.BindVictoryOverlay();
+            }
+            else
+            {
+                _hotSeat.BindOverlays();
+            }
         }
 
         private void BindFeedback(BattleUi ui, MatchEventPump pump)

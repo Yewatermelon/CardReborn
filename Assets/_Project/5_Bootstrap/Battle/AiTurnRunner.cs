@@ -8,8 +8,11 @@ namespace Card.Bootstrap.Battle
 {
     /// <summary>
     /// PVE 人机实盘——AI 回合分帧驱动器（M7-OBS-1）：
-    /// 持有 GreedyAiAgent(stepMode:true)，<see cref="Update"/> 里每帧调 <see cref="GreedyAiAgent.StepOne"/>
-    /// 产出单条命令，StepOne 返回 <c>false</c> 时发 EndTurn 收尾。
+    /// 持有 GreedyAiAgent(stepMode:true)，<see cref="Update"/> 里按模拟思考节奏调
+    /// <see cref="GreedyAiAgent.StepOne"/> 产出单条命令，StepOne 返回 <c>false</c> 时发 EndTurn 收尾。
+    /// 节奏：AI 激活后先"思考" <see cref="InitialThinkSeconds"/> 再首次行动，
+    /// 之后每个动作间隔 <see cref="ActionIntervalSeconds"/>——让玩家可观察 AI 操作过程，
+    /// "AI 思考中"提示全程可见（实机冒烟反馈：逐帧无延迟时回合瞬间完成，显得突兀）。
     /// 通过 <see cref="AgentMatchRunner.OnSubmitAccepted"/> 拦截默认 Pump，统一由本类调
     /// <see cref="AgentMatchRunner.Pump"/>（Pump 内部 seat 未变时直接 return，安全）。
     /// AI 回合门控 UI 输入（禁用按钮 + 显示思考提示），玩家回合恢复。
@@ -18,11 +21,19 @@ namespace Card.Bootstrap.Battle
     {
         private const int AiSeat = 1;
 
+        /// <summary>AI 激活后到首次行动的模拟思考时间（秒）。测试可置 0。</summary>
+        public float InitialThinkSeconds = 0.8f;
+
+        /// <summary>AI 两个动作之间的模拟思考间隔（秒）。测试可置 0。</summary>
+        public float ActionIntervalSeconds = 0.45f;
+
         private AgentMatchRunner? _runner;
         private GreedyAiAgent? _ai;
         private MatchController? _controller;
         private BattleUi? _ui;
         private bool _bound;
+        private bool _wasAiActive;
+        private float _nextActionTime;
 
         /// <summary>AI 回合为 <c>true</c>，用于 BattleSceneBootstrap 输入回调门控。</summary>
         public bool IsAiTurn { get; private set; }
@@ -66,6 +77,7 @@ namespace Card.Bootstrap.Battle
 
             if (_controller.IsFinished)
             {
+                _wasAiActive = false;
                 SetThinkingVisible(false);
                 IsAiTurn = false;
                 return;
@@ -77,13 +89,36 @@ namespace Card.Bootstrap.Battle
             SetButtonsInteractable(!aiActive);
 
             if (!aiActive)
+            {
+                _wasAiActive = false;
                 return;
+            }
 
-            // AI 回合：每帧 StepOne；返回 false → 回合结束，发 EndTurn 收尾。
+            if (!_wasAiActive)
+            {
+                // 玩家 → AI 切换瞬间：先"思考"一段再首次行动（延迟≤0 直接放行）。
+                _wasAiActive = true;
+                _nextActionTime = Time.unscaledTime + InitialThinkSeconds;
+                if (InitialThinkSeconds > 0f)
+                {
+                    return;
+                }
+            }
+
+            if (Time.unscaledTime < _nextActionTime)
+            {
+                return;  // 仍在"思考"
+            }
+
+            // AI 行动：一次一步；返回 false → 回合结束，发 EndTurn 收尾。
             if (!_ai.StepOne())
             {
                 _runner.Submit(new EndTurnCommand(AiSeat));
                 // Submit accepted → OnSubmitAccepted → Pump → seat 变 → 激活玩家
+            }
+            else
+            {
+                _nextActionTime = Time.unscaledTime + ActionIntervalSeconds;
             }
         }
 

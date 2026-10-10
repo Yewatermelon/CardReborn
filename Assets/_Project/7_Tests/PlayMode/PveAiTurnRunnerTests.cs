@@ -27,6 +27,7 @@ namespace Card.Tests.PlayMode
             Path.Combine(UnityEngine.Application.dataPath, "_Project", "Config");
 
         [UnityTest]
+        [Timeout(120000)]  // 兜底：默认思考延迟若未在 SetUp 置 0，整局会跑几十秒真实时间
         public IEnumerator PveAi_EndToEnd_StepsToCompletion()
         {
             (CardDatabase? database, var errors) = BattleComposition.LoadDatabase(GeneratedConfigDir);
@@ -45,6 +46,9 @@ namespace Card.Tests.PlayMode
 
             var host = new GameObject("PveSmoke_Test");
             var aiRunner = host.AddComponent<AiTurnRunner>();
+            // 模拟思考节奏置 0：测试只验证分帧链路正确性，不测节奏（默认 0.8/0.45 秒为实机体验）。
+            aiRunner.InitialThinkSeconds = 0f;
+            aiRunner.ActionIntervalSeconds = 0f;
             aiRunner.Bind(runner, ai, controller, new BattleUi());
 
             runner.Start();

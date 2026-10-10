@@ -47,6 +47,9 @@ namespace Card.Tests.EditMode.Bootstrap
 
             _ui = new BattleUi();
             _aiRunner = _host.AddComponent<AiTurnRunner>();
+            // EditMode 无推进帧时钟：延迟置 0 保证确定性（默认 0.8/0.45 秒为实机节奏）。
+            _aiRunner.InitialThinkSeconds = 0f;
+            _aiRunner.ActionIntervalSeconds = 0f;
         }
 
         [TearDown]
@@ -83,6 +86,32 @@ namespace Card.Tests.EditMode.Bootstrap
             SimulateUpdate();
 
             Assert.That(_aiRunner.IsAiTurn, Is.True, "AI 活跃时 IsAiTurn 应为 true。");
+        }
+
+        [Test]
+        public void Update_ThinkingDelay_ActiveStaysAiWithoutActing()
+        {
+            // 思考门控防回归：AI 激活后仍在思考期内时，Update 不得提交任何命令
+            // （否则回合瞬间完成；若门控丢失，StepOne 无动作时会立即发 EndTurn 切走）。
+            _aiRunner.Bind(_runner, _ai, _controller, _ui);
+            _aiRunner.InitialThinkSeconds = 999f;  // 思考期覆盖整个测试时长
+            _aiRunner.ActionIntervalSeconds = 999f;
+            _runner.Start();
+
+            int firstSeat = _controller.View.ActivePlayerId;
+            if (firstSeat != AiSeat)
+            {
+                _runner.Submit(new EndTurnCommand(firstSeat));
+            }
+
+            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(AiSeat));
+
+            SimulateUpdate();
+            SimulateUpdate();
+
+            Assert.That(_controller.View.ActivePlayerId, Is.EqualTo(AiSeat),
+                "思考期内 Update 不应提交任何命令（含 EndTurn）。");
+            Assert.That(_aiRunner.IsAiTurn, Is.True, "思考期内 IsAiTurn 仍应为 true。");
         }
 
         [Test]
