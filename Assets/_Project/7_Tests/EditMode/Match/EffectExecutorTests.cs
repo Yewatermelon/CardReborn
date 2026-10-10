@@ -139,6 +139,24 @@ namespace Card.Tests.EditMode.Match
         }
 
         [Test]
+        public void Summon_FullBoard_SkipsWithoutThrowing()
+        {
+            MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
+            PlayerState self = state.GetPlayer(0);
+            for (int i = 0; i < 7; i++)
+            {
+                RuleEngineTestHelpers.AddToBoard(self, MatchTestCards.Minion("F" + i, 1, 1), 300 + i);
+            }
+
+            CardInstance src = RuleEngineTestHelpers.AddToHand(self, MatchTestCards.Spell("SUMMON"), 100);
+            EffectContext ctx = NewContext(state, src, 0, TargetRef.None);
+
+            Assert.DoesNotThrow(() => new EffectExecutor().Execute(new SummonEffectData("M1", 1), ctx),
+                "NFR-7：满场不得崩溃，召唤软失败。");
+            Assert.That(self.Board.Count, Is.EqualTo(7));
+        }
+
+        [Test]
         public void Buff_IncreasesAttackAndHealth()
         {
             MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);

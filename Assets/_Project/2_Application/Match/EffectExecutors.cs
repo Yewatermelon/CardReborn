@@ -123,7 +123,7 @@ namespace Card.Application.Match.Effects
         }
     }
 
-    /// <summary>召唤随从到己方战场（T4 不处理战场满，失败抛异常；T5 补）。</summary>
+    /// <summary>召唤随从到己方战场；满场软失败——跳过召唤不抛异常（NFR-7 满场不得崩溃）。</summary>
     internal sealed class SummonExecutor : IEffectExecutor
     {
         public void Execute(IEffectData effect, EffectContext context)
@@ -134,13 +134,15 @@ namespace Card.Application.Match.Effects
 
             for (int i = 0; i < s.Count; i++)
             {
+                if (!self.Board.CanAdd())
+                {
+                    // 满场时不能召唤（Docs/01 规则表）：效果软失败，不中断结算链。
+                    break;
+                }
+
                 CardInstance minion = CardInstance.FromDefinition(
                     def, context.State.AllocateInstanceId(), context.SelfSeat);
-                Result add = self.Board.Add(minion);
-                if (add.IsFailure)
-                {
-                    throw new InvalidOperationException("召唤失败（战场已满）：" + add.ErrorCode);
-                }
+                self.Board.Add(minion);
 
                 // 召唤进场触发 OnSummon（链式触发，深度由 TriggerDispatcher 限制）。
                 context.Settlement?.Dispatcher.RaiseOnSummon(context.Settlement, minion);
