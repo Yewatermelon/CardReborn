@@ -1,4 +1,4 @@
-# 交接说明（AI → AI）
+﻿# 交接说明（AI → AI）
 
 > 这份文档写给**接手的 AI 代理**（以及未来的人类维护者）。
 > 目标：不依赖任何聊天记录，也能在 30 分钟内搞清楚"项目是什么、现在到哪、下一步做什么、怎么验证、哪里容易踩坑"。
@@ -16,10 +16,10 @@
 - [ ] **6. 确认新 AI 的访问与授权**（第 8 节）：仓库访问权限（私有仓库需给凭据）；是否允许联网（首次 `dotnet restore`、`git push`、`git lfs fetch`）；是否允许必要时聚焦 Unity 窗口（多数验证已做成无界面方式）。
 - [ ] **7. 把"开场指令"粘给新 AI**（可直接复制下面这段）：
 
-  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），**M0–M7 全部收官**（M7 AI 难度分级 2026-10-10 通过，三档难度胜率单调验证）。
+  > 这是一个 Unity 2022.3 卡牌游戏项目（`CardReborn`），**M0–M7 完成 + M11-T2 MatchHost 权威运行时落地**（M7 AI 难度分级 2026-10-10 通过，三档难度胜率单调验证）。
   > 请先按顺序读：`AGENTS.md` → `Docs/HANDOFF.md` → `Docs/PROGRESS.md` → `Docs/02` 看 M8/M9/M10 任务表。
   > 然后跑三条命令确认环境：`Tools/check.ps1`、`Tools/check.ps1 -SelfTest`、`Tools/coverage.ps1`。
-  > 期望结果：静态门禁 PASS、自检 PASS、**848 用例全过**、覆盖率 `0_Core 96.52%` / `Domain + App 93.05%`（Unity 侧 EditMode 1058 例、PlayMode 4 例）。
+  > 期望结果：静态门禁 PASS、自检 PASS、**~853 用例全过（M11-T2 新增 12 条）**、覆盖率 `0_Core 96.52%` / `Domain + App 92.85%`（Unity 侧 EditMode 1058 例、PlayMode 4 例）。
   > 把这三条命令的**实际输出**贴回来；数字对得上才算交接成功（对不上先查环境，不要急着改代码）。
   > 确认环境无误后，先和用户确认**下一个里程碑方向**（M8 元游戏 / M9 内容打磨 / M10 发布验收 / 阶段二 M11 联网），再开工。
   > 按仓库既有流程：先写任务卡、先写测试再实现。
@@ -34,7 +34,7 @@
 | 项 | 内容 |
 | --- | --- |
 | 项目 | `Card`：炉石式回合制卡牌游戏（Unity 2022.3 LTS），仓库 `E:\Unity\Project\CardReborn`（GitHub: `https://github.com/Yewatermelon/CardReborn.git`） |
-| 当前阶段 | **阶段一（PVE）已完成 M0–M7（M7 AI 难度分级通过 2026-10-10，三档难度胜率单调验证）；下一步是 M8 元游戏 / M9 内容与打磨** |
+| 当前阶段 | **阶段一（PVE）已完成 M0–M7（M7 AI 难度分级通过 2026-10-10，三档难度胜率单调验证）；下一步 M8/M9/M12 可并行（M11 联网已提前启动）** |
 | 交付方式 | 每个任务一张任务卡（`Docs/tasks/`）+ 先写测试 + 双环境验证 + 提交里带证据 |
 | 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环**、**可游玩的 Battle 场景（主菜单开局 / 点击出牌与攻击指向 / 英雄技能 / 双人热座视角切换 / 胜负结算与再来一局 / 中文卡面文本）**、**PVE 人机对战（分帧驱动 AI 回合 + 三档难度 Easy/Normal/Hard）**、命令录制重放、状态快照/增量、进程内回环、PlayMode 端到端冒烟；**AiVsAiSimulator（批量 500 局门禁 + 胜率统计 + 难度单调性验证）**；测试 **kernel 848 例 / Unity EditMode 1058 + PlayMode 4**、静态门禁、无 Unity 覆盖率工具链 |
 | 下一步第一件事 | 读 `Docs/02` 的 M8/M9 任务表 → 确定是做 M8 元游戏还是 M9 内容打磨；或按阶段二 M11 准备联网 |
@@ -51,7 +51,7 @@
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-10（M7 收官）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-10（M7 收官 + M11-T2 MatchHost 落地）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
@@ -59,8 +59,8 @@
 | 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（`checkpoint/m4-complete` 已推送远端）、M5 ✅ 8/8、M6 ✅ 5/5、**M7 ✅ 5/5 + 1 项再平衡**（2026-10-10 收官，含 M7-B1 英雄技能再平衡标定） |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（1058 用例实跑验证）；无 Unity kernel 工程 0 warning |
 | 测试 | **Unity EditMode 1058 passed / 0 failed + PlayMode 4 passed / 0 failed**；无 Unity 工具链 **848 passed / 0 failed**（排除 Infrastructure 20 例） |
-| 覆盖率 | `0_Core 96.52%`、`Domain + Application 93.05%`（门禁 90% / 80%） |
-| 静态门禁 | `Tools/check.ps1` PASS（325 文件；R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
+| 覆盖率 | `0_Core 96.52%`、`Domain + Application 92.85%`（门禁 90% / 80%） |
+| 静态门禁 | `Tools/check.ps1` PASS（329 文件；R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |
 | AI 能力 | `GreedyAiAgent`（贪心 + 可选难度 Profile）+ `AiVsAiSimulator`（批量 500 局门禁 + 胜率统计）+ 三档难度 Easy（劣化排序）/ Normal（贪心）/ Hard（评估函数 + 斩杀意识），同英雄镜像 200 局：Normal vs Easy 68.5%、Hard vs Normal 54.5% |
 | 未关闭项 | 无 P0/P1；P3：M7-T5-L1（SearchDepth ≥ 1 前瞻未实现）、M7-T5-L2（MistakeRate / RandomTarget 未真正实现）、M7-T5-L3（MainMenu 难度选择 UI 未做）、M7-T5-L4（FR-10.2 关卡配置化未做）、M9（4 英雄 / 60 卡 / 职业差异化） |
