@@ -41,7 +41,11 @@ namespace Card.Bootstrap.Battle
         private void OnEndTurnClicked()
         {
             if (InputBlocked()) return;
-            _sink!.Submit(new EndTurnCommand(_controller!.View.ActivePlayerId));
+            // 联机模式（M14-T3）无本地 controller，行动方读客户端同步的权威状态
+            int activeId = _netDriver != null
+                ? _netDriver.Sync.State.ActivePlayerId
+                : _controller!.View.ActivePlayerId;
+            _sink!.Submit(new EndTurnCommand(activeId));
         }
 
         private bool InputBlocked() => _isPve && _aiRunner is { IsAiTurn: true };

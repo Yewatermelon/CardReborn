@@ -58,6 +58,9 @@ namespace Card.Network
             }
         }
 
+        /// <summary>是否有待接受的连接（非阻塞轮询用，M14-T3）。</summary>
+        public bool Pending => !_disposed && _listener.Pending();
+
         public void Dispose()
         {
             if (!_disposed)

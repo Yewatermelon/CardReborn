@@ -96,6 +96,24 @@ namespace Card.Presentation.Battle.Feedback
                 + (string.IsNullOrEmpty(resolution.Detail) ? string.Empty : "（" + resolution.Detail + "）"));
         }
 
+        /// <summary>
+        /// 快照重置恢复后调用（M14-T3 接线）：清空在途登记与待确认视觉——
+        /// 落位以恢复的快照为准（Confirm 复位，不回退）。
+        /// </summary>
+        public void ClearPending()
+        {
+            _tracker.Clear();
+            for (int i = 0; i < _visuals.Count; i++)
+            {
+                if (TryLocate(_visuals[i].CardInstanceId, out CardView? view))
+                {
+                    GetPendingView(view!).Confirm();
+                }
+            }
+
+            _visuals.Clear();
+        }
+
         private int? TakeVisualCardId(int? resolvedSeq)
         {
             for (int i = 0; i < _visuals.Count; i++)

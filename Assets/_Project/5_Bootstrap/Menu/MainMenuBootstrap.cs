@@ -32,6 +32,7 @@ namespace Card.Bootstrap.Menu
             CreateTitle(canvasGo.transform);
             CreateStartButton(canvasGo.transform);
             CreatePveButton(canvasGo.transform);
+            CreateNetButton(canvasGo.transform);
         }
 
         private static void CreateTitle(Transform parent)
@@ -104,6 +105,37 @@ namespace Card.Bootstrap.Menu
             {
                 PlayerPrefs.SetString(Battle.BattleSceneBootstrap.GameModePrefKey, Battle.BattleSceneBootstrap.PveMode);
                 GameLog.Info(LogChannel.Boot, "主菜单：进入人机对战（Greedy AI）。");
+                SceneManager.LoadScene(BattleSceneName);
+            });
+        }
+
+        /// <summary>联机对战入口（M14-T3）：设 GameMode=PVPNet 载入 Battle（内置联机大厅）。</summary>
+        private static void CreateNetButton(Transform parent)
+        {
+            var go = new GameObject("NetButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchoredPosition = new Vector2(0f, -260f);
+            rect.sizeDelta = new Vector2(360f, 110f);
+            go.GetComponent<Image>().color = new Color(0.35f, 0.28f, 0.45f, 1f);
+
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var labelRect = (RectTransform)labelGo.transform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            var label = labelGo.AddComponent<TextMeshProUGUI>();
+            label.fontSize = 32;
+            label.color = Color.white;
+            label.alignment = TextAlignmentOptions.Center;
+            label.text = "联机对战（本机验证）";
+
+            go.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                PlayerPrefs.SetString(Battle.BattleSceneBootstrap.GameModePrefKey, Battle.BattleSceneBootstrap.PvpNetMode);
+                GameLog.Info(LogChannel.Boot, "主菜单：进入联机对战（房主托管 · 仅用于本机验证）。");
                 SceneManager.LoadScene(BattleSceneName);
             });
         }

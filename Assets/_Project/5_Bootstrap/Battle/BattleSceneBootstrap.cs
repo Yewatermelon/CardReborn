@@ -53,7 +53,14 @@ namespace Card.Bootstrap.Battle
 
         private void Start()
         {
-            _isPve = PlayerPrefs.GetString(GameModePrefKey, PvpMode) == PveMode;
+            string mode = PlayerPrefs.GetString(GameModePrefKey, PvpMode);
+            if (mode == PvpNetMode)
+            {
+                StartNetMode(); // M14-T3：联机大厅 + 网络战斗管线（partial）
+                return;
+            }
+
+            _isPve = mode == PveMode;
 
             SceneCamera.Ensure();
             BattleUi ui = BattleUiFactory.Create();
@@ -76,7 +83,7 @@ namespace Card.Bootstrap.Battle
             ITextResolver texts = LoadTextResolver(configDir);
             _synchronizer = new BattleViewSynchronizer(ui, database, texts, LocalSeat, EnemySeat);
             _pump = new MatchEventPump(controller.Events);
-            BindFeedback(ui, _pump);
+            BindFeedback(ui, _pump, LocalSeat);
             BindInput(ui, controller, database);
 
             _pump.EventAppended += ui.Log.Append;
@@ -96,17 +103,17 @@ namespace Card.Bootstrap.Battle
             }
         }
 
-        private void BindFeedback(BattleUi ui, MatchEventPump pump)
+        private void BindFeedback(BattleUi ui, MatchEventPump pump, int localSeat)
         {
             var locator = new TableFeedbackLocator(
                 ui.LocalBoard, ui.EnemyBoard,
-                LocalSeat, ui.LocalHeroAnchor, EnemySeat, ui.EnemyHeroAnchor);
+                localSeat, ui.LocalHeroAnchor, EnemySeat - localSeat, ui.EnemyHeroAnchor);
             _locator = locator;
             var settings = new FeedbackSettings();
             _textPool = ui.FloatingTextPool;
             var feedback = new BattleFeedbackPlayer(
                 locator, ui.FloatingTextPool, ui.FloatingTextLayer,
-                ui.Banner, new NullAudioCuePlayer(), settings, LocalSeat);
+                ui.Banner, new NullAudioCuePlayer(), settings, localSeat);
             _feedback = feedback;
             feedback.Bind(pump);
         }
@@ -178,6 +185,12 @@ namespace Card.Bootstrap.Battle
 
         private void Update()
         {
+            if (_netLobby != null || _netDriver != null)
+            {
+                UpdateNet(); // M14-T3：联机模式独立泵路径
+                return;
+            }
+
             if (_controller == null || _pump == null || _synchronizer == null)
                 return;
 

@@ -108,6 +108,26 @@ namespace Card.Network
             ITransport? transport = _listener.Accept();
             if (transport == null) return null;
 
+            return TakeOverPeer(transport);
+        }
+
+        /// <summary>
+        /// 非阻塞 Accept（M14-T3）：仅当监听器有待接受连接时才接管，否则立即返回 null——
+        /// 供 Unity 主线程按帧轮询（AcceptPeer 的阻塞语义保留给测试与命令行宿主）。
+        /// </summary>
+        public PeerSession? TryAcceptPeer()
+        {
+            if (!_listener.Pending)
+            {
+                return null;
+            }
+
+            return AcceptPeer();
+        }
+
+        /// <summary>以新传输接管座位 1：旧会话端点摘除（重连接管）→ 建桥接器与新会话。</summary>
+        private PeerSession TakeOverPeer(ITransport transport)
+        {
             if (_bridge != null)
             {
                 _matchHost.Detach(_bridge.KernelEndpoint);
