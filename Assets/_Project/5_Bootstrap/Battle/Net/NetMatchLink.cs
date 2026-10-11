@@ -55,7 +55,12 @@ namespace Card.Bootstrap.Battle.Net
 
         public bool MatchStarted => _peerHost.MatchLive;
 
+        // 接口统一性占位：房主侧终局信息全部经 step.finished/MatchEndedEvent 下行
+        // （PeerHost.SendMatchEndIfDecided 只通知对手，本地回环无 MatchEnd 帧），
+        // 故本事件在房主链路有意不触发（任务卡 M14-T3 §11.3 设计决策 4）。
+#pragma warning disable CS0067
         public event Action<int?, string>? MatchEnded;
+#pragma warning restore CS0067
 
         public void Pump(Action<JsonValue> onDownlink)
         {

@@ -179,6 +179,11 @@ namespace Card.Bootstrap.Battle
 
         private void BindNetFeedback(int localSeat, int enemySeat)
         {
+            if (_ui == null)
+            {
+                return;
+            }
+
             var locator = new TableFeedbackLocator(
                 _ui.LocalBoard, _ui.EnemyBoard,
                 localSeat, _ui.LocalHeroAnchor, enemySeat, _ui.EnemyHeroAnchor);
@@ -202,6 +207,11 @@ namespace Card.Bootstrap.Battle
 
         private void BindNetInput(int localSeat, int enemySeat)
         {
+            if (_ui == null)
+            {
+                return;
+            }
+
             _input = gameObject.AddComponent<PlayerInputController>();
             _input._localPlayerId = localSeat;
 
