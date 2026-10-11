@@ -50,7 +50,9 @@ namespace Card.Tests.EditMode.Match
             MatchState? restored = MatchStateSerializer.ReadStateTree(stateJson);
             Assert.That(restored, Is.Not.Null);
             Assert.That(restored!.NextInstanceId, Is.EqualTo(controller.State.NextInstanceId));
-            Assert.That(MatchStateSerializer.Serialize(restored), Is.EqualTo(MatchStateSerializer.Serialize(controller.State)));
+            // M13-T6：快照按座位裁剪——座位 0 视图 = 投影后的权威（自己手牌完整、双方牌库遮蔽）
+            Assert.That(MatchStateSerializer.Serialize(restored), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, 0))));
         }
 
         // -----------------------------------------------------------------
@@ -154,20 +156,6 @@ namespace Card.Tests.EditMode.Match
             Assert.That(controller.LastOutcome, Is.Not.Null);
             Assert.That(controller.LastOutcome!.WinnerId, Is.EqualTo(initialActive));
             Assert.That(host.StateVersion, Is.EqualTo((ulong)acceptedCount));
-        }
-
-        // -----------------------------------------------------------------
-        // AC-7: PlayerViewProjector 默认 identity
-        // -----------------------------------------------------------------
-
-        [Test]
-        public void PlayerViewProjector_Identity_RoundtripMatches()
-        {
-            MatchController controller = NewController();
-            MatchState projected = PlayerViewProjector.Project(controller.State, observerPlayerId: 0);
-            Assert.That(
-                MatchStateSerializer.Serialize(projected),
-                Is.EqualTo(MatchStateSerializer.Serialize(controller.State)));
         }
 
         // -----------------------------------------------------------------

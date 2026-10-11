@@ -69,6 +69,10 @@ namespace Card.Tests.EditMode.Match
 
         private LoopbackEndpoint Ep(int seat) => seat == 0 ? _c0 : _c1;
 
+        /// <summary>座位 0 的投影权威序列化（M13-T6：客户端视图与投影权威等值，非裸权威）。</summary>
+        private string ProjectedAuthorityJson()
+            => MatchStateSerializer.Serialize(PlayerViewProjector.Project(_controller.State, 0));
+
         /// <summary>
         /// 推进到恢复点：v1 应用 → 跳过 v2 → v3 判空洞 → 请求快照 → 基线重置为 v3；
         /// 返回 gap 期间被跳过/拒绝应用的旧步（step2、step3）原文供重放断言。
@@ -84,13 +88,17 @@ namespace Card.Tests.EditMode.Match
             int first = _controller.State.ActivePlayerId;
             int second = 1 - first;
             _sync = NewSync(_host, _c0);
-            JsonValue step1 = BroadcastSteps(Ep(first), Ep(second), _host,
-                CommandEnvelope(1, EndTurnPayload(first)))[0];
+            // sync 只应用 c0（座位 0）端点收到的副本（M13-T6 起 step 按座位裁剪）
+            JsonValue[] steps1 = BroadcastSteps(Ep(first), Ep(second), _host,
+                CommandEnvelope(1, EndTurnPayload(first)));
+            JsonValue step1 = first == 0 ? steps1[0] : steps1[1];
             Assert.That(_sync.ApplyStep(step1).Status, Is.EqualTo(StepApplyStatus.Applied), "v1 应应用");
-            JsonValue step2 = BroadcastSteps(Ep(second), Ep(first), _host,
-                CommandEnvelope(1, EndTurnPayload(second)))[0]; // v2 被跳过（模拟丢包）
-            JsonValue step3 = BroadcastSteps(Ep(first), Ep(second), _host,
-                CommandEnvelope(2, EndTurnPayload(first)))[0];
+            JsonValue[] steps2 = BroadcastSteps(Ep(second), Ep(first), _host,
+                CommandEnvelope(1, EndTurnPayload(second))); // v2 被跳过（模拟丢包）
+            JsonValue step2 = second == 0 ? steps2[0] : steps2[1];
+            JsonValue[] steps3 = BroadcastSteps(Ep(first), Ep(second), _host,
+                CommandEnvelope(2, EndTurnPayload(first)));
+            JsonValue step3 = first == 0 ? steps3[0] : steps3[1];
             Assert.That(MemberNumber(step3, "basedOn"), Is.EqualTo(2UL));
             Assert.That(_sync.ApplyStep(step3).Status, Is.EqualTo(StepApplyStatus.VersionGap), "跳过 v2 应判空洞");
 
@@ -143,7 +151,7 @@ namespace Card.Tests.EditMode.Match
             // AC-2 + AC-3：版本冲突经快照恢复一致；恢复后重放过期步被丢弃，状态与版本不变
             (JsonValue step2, JsonValue step3) = RunToRecovery();
             Assert.That(MatchStateSerializer.Serialize(_sync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(_controller.State)), "恢复后视图应与权威一致");
+                Is.EqualTo(ProjectedAuthorityJson()), "恢复后视图应与投影权威一致");
 
             Assert.That(_sync.ApplyStep(step2).Status, Is.EqualTo(StepApplyStatus.DuplicateDiscarded),
                 "过期步 v2 应被丢弃");
@@ -151,7 +159,7 @@ namespace Card.Tests.EditMode.Match
                 "过期步 v3 应被丢弃");
             Assert.That(_sync.LocalVersion, Is.EqualTo(3UL), "丢弃过期步不得推进版本");
             Assert.That(MatchStateSerializer.Serialize(_sync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(_controller.State)), "丢弃后视图仍与权威一致");
+                Is.EqualTo(ProjectedAuthorityJson()), "丢弃后视图仍与投影权威一致");
         }
 
         [Test]
@@ -161,8 +169,10 @@ namespace Card.Tests.EditMode.Match
             // seq=2：second 的收件箱在 RunToRecovery 已消费 seq=1（同 seq 同载荷会触发 T3 幂等重放而非广播）
             RunToRecovery();
             int next = _controller.State.ActivePlayerId;
-            JsonValue step4 = BroadcastSteps(Ep(next), next == 0 ? _c1 : _c0, _host,
-                CommandEnvelope(2, EndTurnPayload(next)))[0];
+            bool nextIs0 = next == 0;
+            JsonValue[] steps4 = BroadcastSteps(Ep(next), nextIs0 ? _c1 : _c0, _host,
+                CommandEnvelope(2, EndTurnPayload(next)));
+            JsonValue step4 = nextIs0 ? steps4[0] : steps4[1]; // c0（座位 0）端点副本
             Assert.That(MemberNumber(step4, "basedOn"), Is.EqualTo(3UL), "新步应基于恢复后的版本");
             Assert.That(MemberNumber(step4, "version"), Is.EqualTo(4UL));
 
@@ -170,7 +180,7 @@ namespace Card.Tests.EditMode.Match
             Assert.That(outcome.Status, Is.EqualTo(StepApplyStatus.Applied), "恢复后新步应正常应用");
             Assert.That(_sync.LocalVersion, Is.EqualTo(4UL));
             Assert.That(MatchStateSerializer.Serialize(_sync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(_controller.State)), "最终视图应与权威一致");
+                Is.EqualTo(ProjectedAuthorityJson()), "最终视图应与投影权威一致");
         }
     }
 }

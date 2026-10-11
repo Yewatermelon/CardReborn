@@ -161,7 +161,10 @@ namespace Card.Application.Match
             return true;
         }
 
-        /// <summary>提交命令给权威并广播 step（StateDelta：basedOn + version + 变化 + 事件）；带序号时记录回执。</summary>
+        /// <summary>
+        /// 提交命令并按座位构建各自裁剪视角的 step 下发（M13-T6：快照与增量统一走
+        /// <see cref="PlayerViewProjector"/>，对手手牌/牌库不下发明细）；带序号时记录命令座位回执。
+        /// </summary>
         private void SubmitAndBroadcast(SeatCommandInbox? inbox, int? seq, IGameCommand command, JsonValue envelope)
         {
             ulong basedOn = _stateVersion; // 增量基线 = 结算前版本（M13-T4）
@@ -174,34 +177,40 @@ namespace Card.Application.Match
             int eventStart = _controller.Events.Count;
 
             CommandResult result = _controller.Submit(command);
-            bool accepted = result.IsValid;
-
-            IReadOnlyList<StateChange> changes;
-            IReadOnlyList<GameEvent> events;
-
-            if (accepted)
+            if (result.IsValid)
             {
                 _stateVersion++;
-                changes = MatchStateDiffer.Diff(before, _controller.State);
-                events = CollectNewEvents(eventStart);
-            }
-            else
-            {
-                changes = Array.Empty<StateChange>();
-                events = Array.Empty<GameEvent>();
             }
 
-            string stepJson = MatchHostProtocol.WriteStep(
-                    _stateVersion, basedOn, seq, accepted, result.Error, result.Detail,
-                    _controller.IsFinished, changes, events)
-                .ToJson();
+            IReadOnlyList<GameEvent> events = result.IsValid
+                ? CollectNewEvents(eventStart)
+                : Array.Empty<GameEvent>();
+
+            Dictionary<int, string> steps = MatchHostStepFactory.BuildSeatSteps(
+                before, _controller.State, DistinctSeats(), _stateVersion, basedOn, seq,
+                result.IsValid, result.Error, result.Detail, _controller.IsFinished, events);
+
+            foreach (LoopbackEndpoint endpoint in _endpoints)
+            {
+                endpoint.Send(steps[_seats[endpoint]]);
+            }
 
             if (inbox != null && seq.HasValue)
             {
-                inbox.Record(seq.Value, ExtractPayloadJson(envelope), stepJson);
+                inbox.Record(seq.Value, ExtractPayloadJson(envelope), steps[command.PlayerId]);
+            }
+        }
+
+        /// <summary>端点座位去重集合（同座位多端点复用同一份 step）。</summary>
+        private HashSet<int> DistinctSeats()
+        {
+            HashSet<int> seats = new HashSet<int>();
+            foreach (LoopbackEndpoint endpoint in _endpoints)
+            {
+                seats.Add(_seats[endpoint]);
             }
 
-            Broadcast(stepJson);
+            return seats;
         }
 
         /// <summary>按事件起点截取本轮新增事件（EventLog 只追加）。</summary>

@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Card.Core;
 using Card.Application.Match;
-using Card.Domain.Config;
 using Card.Domain.Match;
 using NUnit.Framework;
+// 夹具助手（对局/信封/步收取/座位副本）来自 StateSyncTestHarness（M13-T6 拆出）
+using static Card.Tests.EditMode.Match.StateSyncTestHarness;
 
 namespace Card.Tests.EditMode.Match
 {
@@ -12,86 +13,15 @@ namespace Card.Tests.EditMode.Match
     [TestFixture]
     public class ClientStateSyncTests
     {
-        private CardDatabase _database = null!;
-        private IReadOnlyList<string> _deck = null!;
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            _database = MatchControllerFixtures.BuildDatabase();
-            _deck = MatchControllerFixtures.LoadEnabledDeckKeys();
-        }
-
-        private MatchController NewController()
-            => new MatchController(
-                MatchControllerFixtures.NewMatch(_database, _deck, seed: 42), _database);
-
-        private static string CommandEnvelope(int seq, string payloadJson)
-            => JsonValue.Object()
-                    .Add("kind", JsonValue.From("command"))
-                    .Add("seq", JsonValue.From(seq))
-                    .Add("payload", JsonValue.Parse(payloadJson))
-                    .ToJson();
-
-        private static string EndTurnPayload(int seat)
-            => CommandSerializer.Serialize(new EndTurnCommand(seat));
-
-        private static string HelloSnapshot(MatchHost host, LoopbackEndpoint clientEp)
-        {
-            clientEp.Send("{\"kind\":\"hello\"}");
-            host.Pump();
-            Assert.That(clientEp.TryReceive(out string? snapRaw), Is.True, "hello 应回快照");
-            return snapRaw!;
-        }
-
-        private static ClientStateSync NewSync(MatchHost host, LoopbackEndpoint clientEp)
-        {
-            ClientStateSync sync = new ClientStateSync();
-            sync.ApplySnapshot(JsonValue.Parse(HelloSnapshot(host, clientEp)));
-            return sync;
-        }
-
-        private static JsonValue SendStep(LoopbackEndpoint clientEp, MatchHost host, string raw)
-        {
-            clientEp.Send(raw);
-            host.Pump();
-            Assert.That(clientEp.TryReceive(out string? stepRaw), Is.True, "应产出 step 消息");
-            return JsonValue.Parse(stepRaw!);
-        }
-
-        /// <summary>双端点广播取回：Pump 后两个客户端端点各有一份相同 step，逐一取出。</summary>
-        private static JsonValue[] BroadcastSteps(
-            LoopbackEndpoint senderEp, LoopbackEndpoint otherEp, MatchHost host, string raw)
-        {
-            senderEp.Send(raw);
-            host.Pump();
-            bool toSender = senderEp.TryReceive(out string? s);
-            bool toOther = otherEp.TryReceive(out string? o);
-            Assert.That(toSender && toOther, Is.True, "广播步应到达两端点");
-            return new[] { JsonValue.Parse(s!), JsonValue.Parse(o!) };
-        }
-
-        private static bool IsAccepted(JsonValue step)
-            => step.TryGetMember("accepted", out JsonValue accepted) && accepted.BoolValue;
-
-        private static ulong MemberNumber(JsonValue step, string key)
-        {
-            Assert.That(step.TryGetMember(key, out JsonValue value) && value.Kind == JsonKind.Number,
-                Is.True, $"step 应含数字字段 {key}");
-            return (ulong)value.IntValue;
-        }
-
-        private static int EventCount(JsonValue step)
-            => step.TryGetMember("events", out JsonValue events) ? events.Items.Count : 0;
-
         [Test]
         public void Snapshot_CarriesVersion_AndLoadsBaseline()
         {
-            // AC-1：快照含 version 字段；载入后基线与权威一致
+            // AC-1：快照含 version 字段；载入后基线与座位投影权威一致（M13-T6 裁剪）
             MatchController controller = NewController();
             MatchHost host = new MatchHost(controller);
             LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp, controller.State.ActivePlayerId);
+            int seat = controller.State.ActivePlayerId;
+            host.Attach(serverEp, seat);
             JsonValue snapshot = JsonValue.Parse(HelloSnapshot(host, clientEp));
             Assert.That(snapshot.TryGetMember("version", out JsonValue v) && v.IntValue == 0, Is.True,
                 "快照应携带 version=0");
@@ -99,8 +29,8 @@ namespace Card.Tests.EditMode.Match
             ClientStateSync sync = new ClientStateSync();
             sync.ApplySnapshot(snapshot);
             Assert.That(sync.LocalVersion, Is.EqualTo(0UL));
-            Assert.That(MatchStateSerializer.Serialize(sync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(controller.State)));
+            Assert.That(MatchStateSerializer.Serialize(sync.State), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, seat))));
         }
 
         [Test]
@@ -126,9 +56,9 @@ namespace Card.Tests.EditMode.Match
         }
 
         [Test]
-        public void TwoSeats_MultipleCommands_ClientViewMatchesAuthority()
+        public void TwoSeats_MultipleCommands_ClientViewMatchesProjectedAuthority()
         {
-            // AC-3（核心）：双座位交替命令，客户端应用每步增量后与权威全文一致
+            // AC-3（核心）：双座位交替命令，客户端应用每步增量后与各自座位的投影权威一致（M13-T6）
             MatchController controller = NewController();
             MatchHost host = new MatchHost(controller);
             LoopbackLink.CreatePair(out LoopbackEndpoint s0, out LoopbackEndpoint c0);
@@ -142,16 +72,23 @@ namespace Card.Tests.EditMode.Match
             {
                 int active = controller.State.ActivePlayerId;
                 int seq = active == 0 ? seq0++ : seq1++;
-                JsonValue[] steps = BroadcastSteps(active == 0 ? c0 : c1, active == 0 ? c1 : c0, host,
+                bool activeIs0 = active == 0;
+                JsonValue[] steps = BroadcastSteps(activeIs0 ? c0 : c1, activeIs0 ? c1 : c0, host,
                     CommandEnvelope(seq, EndTurnPayload(active)));
                 Assert.That(IsAccepted(steps[0]), Is.True, $"第 {round + 1} 步应被接受");
-                Assert.That(sync0.ApplyStep(steps[0]).Status, Is.EqualTo(StepApplyStatus.Applied));
-                Assert.That(sync1.ApplyStep(steps[1]).Status, Is.EqualTo(StepApplyStatus.Applied));
+                // 各 sync 只应用自己端点收到的副本（M13-T6 起步按座位裁剪，他人视图不可混用）
+                Assert.That(sync0.ApplyStep(StepForSeat(0, active, steps)).Status,
+                    Is.EqualTo(StepApplyStatus.Applied));
+                Assert.That(sync1.ApplyStep(StepForSeat(1, active, steps)).Status,
+                    Is.EqualTo(StepApplyStatus.Applied));
             }
 
-            string authority = MatchStateSerializer.Serialize(controller.State);
-            Assert.That(MatchStateSerializer.Serialize(sync0.State), Is.EqualTo(authority), "座位 0 视图应与权威一致");
-            Assert.That(MatchStateSerializer.Serialize(sync1.State), Is.EqualTo(authority), "座位 1 视图应与权威一致");
+            Assert.That(MatchStateSerializer.Serialize(sync0.State), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, 0))),
+                "座位 0 视图应与其投影权威一致");
+            Assert.That(MatchStateSerializer.Serialize(sync1.State), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, 1))),
+                "座位 1 视图应与其投影权威一致");
             Assert.That(host.StateVersion, Is.EqualTo(3UL));
             Assert.That(sync0.LocalVersion, Is.EqualTo(host.StateVersion));
         }
@@ -181,8 +118,8 @@ namespace Card.Tests.EditMode.Match
             Assert.That(outcome.Error, Is.EqualTo(CommandError.NotYourTurn));
             Assert.That(outcome.Detail, Does.Contain("回合"));
             Assert.That(sync.LocalVersion, Is.EqualTo(1UL), "拒绝步不得推进客户端版本");
-            Assert.That(MatchStateSerializer.Serialize(sync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(controller.State)));
+            Assert.That(MatchStateSerializer.Serialize(sync.State), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, seat))));
         }
 
         [Test]
@@ -219,9 +156,13 @@ namespace Card.Tests.EditMode.Match
             int second = 1 - first;
             ClientStateSync sync = NewSync(host, c0);
             LoopbackEndpoint Ep(int seat) => seat == 0 ? c0 : c1;
-            JsonValue step1 = BroadcastSteps(Ep(first), Ep(second), host, CommandEnvelope(1, EndTurnPayload(first)))[0];
-            JsonValue step2 = BroadcastSteps(Ep(second), Ep(first), host, CommandEnvelope(1, EndTurnPayload(second)))[0];
-            JsonValue step3 = BroadcastSteps(Ep(first), Ep(second), host, CommandEnvelope(2, EndTurnPayload(first)))[0];
+            // sync 只应用 c0（座位 0）端点的副本（M13-T6 起步按座位裁剪）
+            JsonValue step1 = StepForSeat(0, first, BroadcastSteps(
+                Ep(first), Ep(second), host, CommandEnvelope(1, EndTurnPayload(first))));
+            JsonValue step2 = StepForSeat(0, second, BroadcastSteps(
+                Ep(second), Ep(first), host, CommandEnvelope(1, EndTurnPayload(second))));
+            JsonValue step3 = StepForSeat(0, first, BroadcastSteps(
+                Ep(first), Ep(second), host, CommandEnvelope(2, EndTurnPayload(first))));
             Assert.That(MemberNumber(step3, "basedOn"), Is.EqualTo(2UL));
 
             Assert.That(sync.ApplyStep(step1).Status, Is.EqualTo(StepApplyStatus.Applied));
@@ -234,8 +175,9 @@ namespace Card.Tests.EditMode.Match
 
             Assert.That(sync.ApplyStep(step2).Status, Is.EqualTo(StepApplyStatus.Applied));
             Assert.That(sync.ApplyStep(step3).Status, Is.EqualTo(StepApplyStatus.Applied), "补齐后 step3 可重新应用");
-            Assert.That(MatchStateSerializer.Serialize(sync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(controller.State)), "补齐后应恢复与权威一致");
+            Assert.That(MatchStateSerializer.Serialize(sync.State), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, 0))),
+                "补齐后应恢复与座位投影权威一致");
         }
 
         [Test]
@@ -285,14 +227,14 @@ namespace Card.Tests.EditMode.Match
             lateSync.ApplySnapshot(snapshot);
             Assert.That(lateSync.LocalVersion, Is.EqualTo(1UL));
 
-            // 下一条增量（basedOn=1）正常应用不判空洞（取 c1 端点收到的副本）
+            // 下一条增量（basedOn=1）正常应用不判空洞（取 c1 端点的副本）
             int second = controller.State.ActivePlayerId;
             JsonValue[] next = BroadcastSteps(second == 0 ? c0 : c1, second == 0 ? c1 : c0, host,
                 CommandEnvelope(1, EndTurnPayload(second)));
-            StepOutcome outcome = lateSync.ApplyStep(next[second == 0 ? 1 : 0]);
+            StepOutcome outcome = lateSync.ApplyStep(StepForSeat(1, second, next));
             Assert.That(outcome.Status, Is.EqualTo(StepApplyStatus.Applied), "基于快照版本的增量不应判空洞");
-            Assert.That(MatchStateSerializer.Serialize(lateSync.State),
-                Is.EqualTo(MatchStateSerializer.Serialize(controller.State)));
+            Assert.That(MatchStateSerializer.Serialize(lateSync.State), Is.EqualTo(
+                MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, 1))));
         }
     }
 }
