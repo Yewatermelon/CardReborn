@@ -79,6 +79,19 @@ namespace Card.Tests.EditMode.Match
         }
 
         [Test]
+        public void Serialize_ForfeitCommand_RoundTrips()
+        {
+            var cmd = new ForfeitCommand(1);
+
+            string json = CommandSerializer.Serialize(cmd);
+            IGameCommand back = CommandSerializer.Deserialize(json);
+
+            Assert.That(back, Is.TypeOf<ForfeitCommand>());
+            var typed = (ForfeitCommand)back;
+            Assert.That(typed.PlayerId, Is.EqualTo(1));
+        }
+
+        [Test]
         public void Deserialize_UnknownType_Throws()
         {
             const string json = "{ \"type\": \"FlyCard\", \"playerId\": 0 }";

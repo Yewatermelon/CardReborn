@@ -57,6 +57,26 @@ namespace Card.Network
         }
 
         /// <summary>
+        /// MatchEnd 帧（M13-T8，S→C）：对局终态通知——winner 为 null 表示对局作废
+        /// （房主退出）。传输已断开时静默跳过（"尽力通知"语义，不抛异常）。
+        /// </summary>
+        public void SendMatchEnd(int? winner, string reason)
+        {
+            if (!_transport.Connected)
+            {
+                NetworkLogger.Warn($"HostBridge MatchEnd 未发送（传输已断开）：seat={_seat}，reason={reason}");
+                return;
+            }
+
+            JsonValue payload = JsonValue.Object()
+                .Add("winner", winner.HasValue ? JsonValue.From(winner.Value) : JsonValue.Null())
+                .Add("reason", JsonValue.From(reason));
+            _transport.Send(MessageCodec.Frame(
+                NetworkMessageType.MatchEnd, MessageCodec.CurrentProtocolVersion, payload.ToJson()));
+            _diag?.Record(NetworkEventType.SendFrame, $"type=MatchEnd, seat={_seat}");
+        }
+
+        /// <summary>
         /// 把权威下行（快照 / 步进）帧化发送到网络；传输已断开时立即停止。返回发送条数。
         /// </summary>
         public int PumpKernelToNetwork()

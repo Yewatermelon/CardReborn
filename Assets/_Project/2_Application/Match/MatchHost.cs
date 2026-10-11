@@ -13,7 +13,7 @@ namespace Card.Application.Match
     /// 命令序号与幂等（M13-T3）：信封 seq 按座位独立裁决（<see cref="SeatCommandInbox"/>），
     /// 重复包只执行一次并幂等重放回执，过期/冲突序号结构化拒绝；编解码见 <see cref="MatchHostProtocol"/>。
     /// </summary>
-    public sealed class MatchHost : IMatchHost
+    public sealed partial class MatchHost : IMatchHost
     {
         private readonly MatchController _controller;
         private readonly List<LoopbackEndpoint> _endpoints = new List<LoopbackEndpoint>();
@@ -180,7 +180,7 @@ namespace Card.Application.Match
         /// 提交命令并按座位构建各自裁剪视角的 step 下发（M13-T6：快照与增量统一走
         /// <see cref="PlayerViewProjector"/>，对手手牌/牌库不下发明细）；带序号时记录命令座位回执。
         /// </summary>
-        private void SubmitAndBroadcast(SeatCommandInbox? inbox, int? seq, IGameCommand command, JsonValue envelope)
+        private CommandResult SubmitAndBroadcast(SeatCommandInbox? inbox, int? seq, IGameCommand command, JsonValue envelope)
         {
             ulong basedOn = _stateVersion; // 增量基线 = 结算前版本（M13-T4）
 
@@ -214,6 +214,8 @@ namespace Card.Application.Match
             {
                 inbox.Record(seq.Value, MatchHostProtocol.ExtractPayloadJson(envelope), steps[command.PlayerId]);
             }
+
+            return result;
         }
 
         /// <summary>端点座位去重集合（同座位多端点复用同一份 step）。</summary>

@@ -57,25 +57,16 @@ namespace Card.Network
         /// </summary>
         public bool Pump()
         {
-            // 心跳超时检测
             int now = _clock.CurrentTick;
-            int idleTicks = now - _lastActivityTick;
 
-            if (idleTicks >= PeerHost.TimeoutTicks)
-            {
-                _timedOut = true;
-                _diag?.Record(NetworkEventType.HeartbeatTimeout, $"idle={idleTicks} ticks");
-                NetworkLogger.Warn($"PeerSession 心跳超时：peerSeat={_peerSeat}, idle={idleTicks} ticks");
-                _transport.Dispose();
-                return false;
-            }
-
+            // 先处理积压消息（任何有效消息都重置活动时间）——超时判定必须在消息处理之后，
+            // 否则"消息已到达但 ReceiveLoop 线程尚未入队完成"会被误判为心跳超时（M13-T8 修复）。
             while (_transport.TryReceive(out byte[]? frame))
             {
                 RawMessage msg = MessageCodec.TryUnframe(frame, 0, frame.Length, out _)
                     ?? throw new ProtocolException("PeerSession 收到畸形帧。");
 
-                _lastActivityTick = now; // 任何有效消息都重置活动时间
+                _lastActivityTick = now;
 
                 switch (msg.Type)
                 {
@@ -108,6 +99,17 @@ namespace Card.Network
                         NetworkLogger.Warn($"PeerSession 收到未知消息类型 {msg.Type}：peerSeat={_peerSeat}");
                         break;
                 }
+            }
+
+            // 心跳超时检测（消息处理之后：以"60 tick 无任何已到达消息"为准）
+            int idleTicks = now - _lastActivityTick;
+            if (idleTicks >= PeerHost.TimeoutTicks)
+            {
+                _timedOut = true;
+                _diag?.Record(NetworkEventType.HeartbeatTimeout, $"idle={idleTicks} ticks");
+                NetworkLogger.Warn($"PeerSession 心跳超时：peerSeat={_peerSeat}, idle={idleTicks} ticks");
+                _transport.Dispose();
+                return false;
             }
 
             // 发心跳 Ping

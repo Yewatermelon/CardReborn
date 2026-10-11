@@ -6,7 +6,7 @@ namespace Card.Domain.Match
     /// <summary>
     /// GameCommand 紧凑 JSON 序列化（M4-T9；FR-13/14 联网前置）。
     /// 纯 BCL（Card.Core.JsonValue），不使用 JsonUtility。
-    /// 格式：{ "type": "PlayCard|Attack|UseHeroPower|EndTurn", "playerId": N, ... }
+    /// 格式：{ "type": "PlayCard|Attack|UseHeroPower|EndTurn|Forfeit", "playerId": N, ... }
     /// </summary>
     public static class CommandSerializer
     {
@@ -35,6 +35,9 @@ namespace Card.Domain.Match
                     break;
                 case EndTurnCommand _:
                     obj.Add("type", JsonValue.From("EndTurn"));
+                    break;
+                case ForfeitCommand _:
+                    obj.Add("type", JsonValue.From("Forfeit"));
                     break;
                 default:
                     throw new ArgumentException("未知命令类型：" + command.GetType().Name);
@@ -69,6 +72,8 @@ namespace Card.Domain.Match
                         DeserializeTarget(RequireMember(root, "target")));
                 case "EndTurn":
                     return new EndTurnCommand(playerId);
+                case "Forfeit":
+                    return new ForfeitCommand(playerId);
                 default:
                     throw new ArgumentException("未知命令类型标签：" + type);
             }

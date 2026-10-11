@@ -145,6 +145,30 @@ namespace Card.Tests.EditMode.Match
             Assert.That(controller.History[0].Accepted, Is.False);
         }
 
+        /// <summary>M13-T8 AC-1：非行动方 Forfeit 判负（回合/阶段豁免）——对手胜、终局后命令全拒。</summary>
+        [Test]
+        public void Submit_NonActiveSeatForfeit_ForfeitsAndEndsMatch()
+        {
+            MatchState state = RuleEngineTestHelpers.BuildState(activePlayerId: 0);
+            MatchController controller = new MatchController(state, Db);
+
+            // 座位 1（非行动方）判负——掉线判负场景：权威代发不要求当前回合
+            CommandResult result = controller.Submit(new ForfeitCommand(1));
+
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(state.GetPlayer(1).Hero.Health, Is.EqualTo(0));
+            Assert.That(state.GetPlayer(0).Hero.Health, Is.GreaterThan(0));
+            Assert.That(controller.IsFinished, Is.True);
+            Assert.That(controller.LastOutcome, Is.Not.Null);
+            Assert.That(controller.LastOutcome!.WinnerId, Is.EqualTo(0));
+            Assert.That(controller.Events, Has.Some.InstanceOf<MatchEndedEvent>());
+
+            // 终局后 Forfeit 同样被拒
+            CommandResult after = controller.Submit(new ForfeitCommand(0));
+            Assert.That(after.IsInvalid, Is.True);
+            Assert.That(after.Error, Is.EqualTo(CommandError.InvalidTarget));
+        }
+
         private readonly struct BogusCommand : IGameCommand
         {
             public int PlayerId => 0;

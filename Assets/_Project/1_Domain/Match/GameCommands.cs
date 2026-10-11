@@ -66,4 +66,18 @@ namespace Card.Domain.Match
 
         public int PlayerId { get; }
     }
+
+    /// <summary>
+    /// 判负（M13-T8）：判负者立即输、对手获胜。任何回合阶段均可提交（掉线判负场景中
+    /// 判负方可能非行动方）；对局已结束后拒绝。通常由权威宿主代发（Docs/05 §8.2）。
+    /// </summary>
+    public readonly struct ForfeitCommand : IGameCommand
+    {
+        public ForfeitCommand(int playerId)
+        {
+            PlayerId = playerId;
+        }
+
+        public int PlayerId { get; }
+    }
 }

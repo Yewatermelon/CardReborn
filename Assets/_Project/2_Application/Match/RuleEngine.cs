@@ -33,6 +33,13 @@ namespace Card.Application.Match
                 return CommandResult.Invalid(CommandError.NotYourTurn, "玩家座位不存在。");
             }
 
+            // 判负（M13-T8）：任何回合阶段均可（掉线判负场景中判负方可能非行动方），
+            // 因此豁免回合/阶段检查；只要求座位存在、对局未结束。
+            if (command is ForfeitCommand)
+            {
+                return CommandResult.Valid();
+            }
+
             if (player.Id != state.ActivePlayerId)
             {
                 return CommandResult.Invalid(CommandError.NotYourTurn, "当前不是你的回合。");
