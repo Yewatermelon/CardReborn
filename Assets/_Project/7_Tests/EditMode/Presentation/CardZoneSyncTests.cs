@@ -109,7 +109,7 @@ namespace Card.Tests.EditMode.Presentation
         }
 
         [Test]
-        public void SetCards_DrawAppends_NewBackEntersExistingStay()
+        public void SetCards_DrawAppends_NewBackEnters_ExistingSlideWithoutEntry()
         {
             _view.SetCards(new List<ICardViewData> { CardBack(), CardBack() });
             SettleMotions();
@@ -117,13 +117,23 @@ namespace Card.Tests.EditMode.Presentation
             _view.SetCards(new List<ICardViewData> { CardBack(), CardBack(), CardBack() });
 
             Assert.That(_view.ChildCount, Is.EqualTo(3));
-            Assert.That(_view.Children[0].GetComponent<CardMotionView>().IsPlaying, Is.False);
-            Assert.That(_view.Children[1].GetComponent<CardMotionView>().IsPlaying, Is.False);
+            // 存量牌背：居中布局重排使槽位平移（-50→-100 / +50→0），平滑滑位（MoveTo）；
+            // 但绝不重新进场——alpha/scale 保持常态（这是与 entering 的判别标志）。
+            for (int i = 0; i < 2; i++)
+            {
+                CardMotionView motion = _view.Children[i].GetComponent<CardMotionView>();
+                Assert.That(motion.IsPlaying, Is.True, $"存量卡 {i} 因布局重排平滑滑位");
+                Assert.That(_view.Children[i].GetComponent<CanvasGroup>().alpha, Is.EqualTo(1f), "存量卡不得重新淡入");
+                Assert.That(_view.Children[i].transform.localScale, Is.EqualTo(Vector3.one), "存量卡不得重新缩放");
+            }
+
+            // 新抽牌背：进场动画（位置即落槽，从全透明淡入）。
             Assert.That(_view.Children[2].GetComponent<CardMotionView>().IsPlaying, Is.True, "新抽的牌背应播进场动画");
+            Assert.That(_view.Children[2].GetComponent<CanvasGroup>().alpha, Is.EqualTo(0f), "进场从全透明淡入");
         }
 
         [Test]
-        public void SetCards_ShrinkFromEnd_NoFalseEntry()
+        public void SetCards_ShrinkFromEnd_SurvivorsSlide_NoFalseEntry()
         {
             _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1, 1), Minion("B", 2, 2, 2), Minion("C", 3, 3, 3) });
             SettleMotions();
@@ -131,10 +141,22 @@ namespace Card.Tests.EditMode.Presentation
             _view.SetCards(new List<ICardViewData> { Minion("A", 1, 1, 1), Minion("B", 2, 2, 2) });
 
             Assert.That(_view.ChildCount, Is.EqualTo(2));
+            // 尾部收缩：幸存卡不得产生虚假进场（NoFalseEntry）——居中重排使槽位平移（-100→-50 / 0→+50），
+            // 走 MoveTo 滑位而非淡入缩放。
             foreach (CardView child in _view.Children)
             {
-                Assert.That(child.GetComponent<CardMotionView>().IsPlaying, Is.False, "槽位未变的卡不得播动画");
+                Assert.That(child.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1f), "幸存卡不得重新淡入");
+                Assert.That(child.transform.localScale, Is.EqualTo(Vector3.one), "幸存卡不得重新缩放入场");
             }
+
+            // 滑位而非瞬移：Tick 后到达重排后的新槽位。
+            foreach (CardView child in _view.Children)
+            {
+                child.GetComponent<CardMotionView>().Tick(1f);
+            }
+
+            Assert.That(_view.Children[0].transform.localPosition.x, Is.EqualTo(-50f).Within(0.001f));
+            Assert.That(_view.Children[1].transform.localPosition.x, Is.EqualTo(50f).Within(0.001f));
         }
 
         [Test]
