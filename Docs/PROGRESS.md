@@ -28,7 +28,7 @@
 | --- | --- | --- | --- | --- |
 | M11 权威运行时与状态序列化 | ✅ 完成（2026-10-10 补记） | 8/8 | 无 Unity 跑完整对局（kernel 门禁实证） | 提交 a501425…953b4f5 |
 | M12 本机双进程与直连传输 | ✅ 完成（2026-10-10 补记） | 9/9 | 双进程握手全流程 + 心跳超时 + 角色切换 | BCL TCP 零依赖；提交 61751b4…1e4c248 |
-| M13 权威状态同步与裁剪 | 🔶 进行中 | 1/9 | — | T1 完成 |
+| M13 权威状态同步与裁剪 | 🔶 进行中 | 2/9 | kernel 919/0；0_Core 91.96% / Domain+App 93.02% | T1、T2 完成 |
 | M14 双人验证与体验打磨 | ⬜ 未开始 | 0/7 | — | — |
 
 > **阶段三（未来，暂不做）**：专用服务器、公网对战、匹配服务、NAT 穿透与中继、反作弊加固、客户端预测与和解、主机迁移。
@@ -209,11 +209,12 @@
 | M12-T8 角色切换入口 | ✅ | 提交 1e4c248：`CommandLineRoleParser`（-host / -join / 默认 HotSeat） |
 | M12-T9 网络日志与诊断 | ✅ | 提交 c511be7：`NetworkDiagnostics` 256 槽环形缓冲 + 关键路径打点 |
 
-## M13 任务级状态（进行中 1/9）
+## M13 任务级状态（进行中 2/9）
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | M13-T1 MatchHost 接线 | ✅ | 任务卡 [tasks/M13-T1-MatchHost接线.md](./tasks/M13-T1-MatchHost接线.md)；代码：`MatchHost.Attach(endpoint, seat)` 座位化 + `AttachedSeats`（hello 快照按端点座位投影）+ 新文件 `2_Network/HostBridge.cs`（Command 帧上行注入、snapshot/step 下行帧化为 MatchSnapshot/StateDelta，畸形载荷丢弃记日志不断摆）+ `PeerSession` 桥接装配与 `MatchStarted` 门控（开局前 Command 丢弃）+ `HandleReady` 触发开局快照 + `PeerHost` 本地座位 0 回环 / AcceptPeer 建桥 / `RunNetworkTick` 编排（会话泵→权威推进→桥接下行）；测试 9 例（MatchHostSeatTests 2 + HostBridgeTests 5 + PeerHostTickTests 2，后者真实 TCP 回环全链路）；kernel **911 passed / 0 failed**（基线 902 + 9），覆盖率 `0_Core 91.96%` / `Domain + App 93.02%`（≥ 门禁），`check.ps1` PASS；**Unity EditMode 实跑留证 1131 passed / 0 failed**（2026-10-11，新测试套件首提环境覆盖门禁通过；M12 网络测试经 M12-B1 修复后首次进入 Unity 编译并通过） |
+| M13-T2 命令上行与校验 | ✅ | 任务卡 [tasks/M13-T2-命令上行与校验.md](./tasks/M13-T2-命令上行与校验.md)；代码：`MatchHost.ProcessCommand` 信封级校验两段式（`TryReadCommand` 载荷校验：缺 payload/非法 JSON/未知类型/缺成员 → `UnknownCommand` 结构化拒绝不抛异常 + 座位归属校验：`command.PlayerId` ≠ 端点座位 → `NotYourTurn`，状态零变更）+ step 消息新增 `detail` 字段（`CommandResult.Detail` 透传，协议向后兼容）；M13-OBS-1 关闭：`PeerSession` 拆分至独立 `2_Network/PeerSession.cs`（`PeerHost.cs` 298 → 103 行）；测试 +8 例（MatchHostCommandValidationTests 7 + HostBridgeTests 1，M11 测试按座位语义演进 4 处）；先红 9 failed → 后绿 kernel **919 passed / 0 failed**（基线 911 + 8），覆盖率 `0_Core 91.96%` / `Domain + App 93.02%`，`check.ps1` PASS；**Unity EditMode 实跑留证待用户回报** |
 
 ---
 
@@ -223,7 +224,7 @@
 | --- | --- | --- | --- | --- | --- |
 | M3-B1 | P2（已解除 2026-10-06） | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。T3 起各任务以无 Unity 工具链（588/588）为验收口径；**2026-10-06 用户在编辑器 Test Runner（EditMode）手动补验 608 passed / 0 failed，.meta 导入与程序集编译实跑无误，阻塞解除** | AI | ✅ 已解除 |
 | M4-OBS-1 | P3（观察项） | M4-T10 | phase 等枚举存在两套线上编码：快照写枚举名、增量写整数；StateChangeApplier 已兼容两种。阶段二正式传输协议（M11/M13）必须统一编码并补跨组件契约测试 | AI | 🔵 待阶段二处理 |
-| M13-OBS-1 | P3（观察项） | M13-T1 | `PeerHost.cs` 298 行贴近 300 行上限（PeerHost + PeerSession 同文件）——T2 改造时把 PeerSession 拆分为独立文件 | AI | 🔵 待 M13-T2 处理 |
+| M13-OBS-1 | P3（观察项，已关闭 2026-10-11） | M13-T1 | `PeerHost.cs` 298 行贴近 300 行上限（PeerHost + PeerSession 同文件）。**M13-T2 已拆分**：PeerSession 独立文件（PeerHost.cs 103 行），新 meta GUID 全仓查重通过 | AI | ✅ 已关闭 |
 | M12-B1 | P0（缺陷，已关闭） | M12 | M12 批次手工生成 5 个 .meta 的 GUID 为 33/34 位（合法须 32 位十六进制）：Unity 导入静默排除 `PeerHost.cs`/`BclTcpTransport.cs`/3 个网络测试文件 → Card.Network.dll 缺类型、EditMode 测试编译 CS0246 "PeerHost not found"；dotnet kernel 通配符编译全程不暴露。2026-10-11 重写 5 个 meta 为合法随机 GUID，全仓 462 个 meta 复扫 0 异常；生成 .meta 必须校验 GUID 恰为 32 位（教训登记 HANDOFF 已知坑） | AI | ✅ 已关闭 |
 | M4-OBS-2 | P3（观察项） | M3-T9/M4-T10 | `MatchStateSerializer` 快照不含 `NextInstanceId`；纯视图客户端不分配 Id 故当前无影响。阶段二断线重连快照前必须补字段并加往返测试 | AI | 🔵 待阶段二处理 |
 | M6-B1 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌费用数字与卡名文本位置重叠，小尺寸手牌上看不清。属 BattleUiFactory 卡牌布局缺陷（_costText 与 _nameText 锚点冲突） | AI | ✅ 已修复（M6-T4：BattleUiPrefabs 费用独立底板 + 名字右移） |
