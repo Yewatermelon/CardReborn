@@ -117,12 +117,21 @@ namespace Card.Tests.EditMode.Bootstrap
         [Test]
         public void ReadyActions_ForwardToLink()
         {
+            // 一个 flow 实例只扮演一个角色：房主准备转发房主链路，
+            // 加入方准备转发加入链路，互不串扰（角色 guard）。
             _flow.CreateAsHost();
             _flow.MarkHostReady();
             Assert.That(_hostLink.ReadyCount, Is.EqualTo(1));
 
-            _flow.SendJoinerReady();
+            var joinFlow = new PvpLobbyFlow(_database, PvpLobbyFlow.DefaultListenPort, new ManualClock(),
+                () => _hostLink, _ => _joinLink);
+            joinFlow.ConnectAsJoiner("127.0.0.1:7777");
+            joinFlow.SendJoinerReady();
             Assert.That(_joinLink.ReadyCount, Is.EqualTo(1));
+            Assert.That(_hostLink.ReadyCount, Is.EqualTo(1), "加入方准备不得误发房主链路");
+
+            joinFlow.MarkHostReady();
+            Assert.That(_joinLink.ReadyCount, Is.EqualTo(1), "房主准备动作在加入方角色下不应生效");
         }
 
         [Test]

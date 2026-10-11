@@ -73,6 +73,9 @@ namespace Card.Tests.EditMode.Bootstrap
             {
                 _hostDriver.Pump();
                 _joinDriver.Pump();
+                // 让渡后台接收线程：真实 TCP 回环依赖 BclTcpTransport.ReceiveLoop
+                // 把 socket 数据读入队列，纯忙循环会饿死 IO 线程（Unity 实跑暴露）。
+                System.Threading.Thread.Sleep(1);
             }
         }
 

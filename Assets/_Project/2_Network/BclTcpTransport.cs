@@ -165,9 +165,14 @@ namespace Card.Network
                     for (int i = 0; i < n; i++) buffer.Add(chunk[i]);
                 }
             }
-            catch (IOException) when (!_connected) { }
-            catch (SocketException) when (!_connected) { }
-            catch (ObjectDisposedException) when (!_connected) { }
+            // 三类 IO 异常都意味着连接不可用（主动关闭或对端断链/RST）：
+            // 统一静默走 finally Dispose 断链路径。M12-B2 曾加"when (!_connected)"
+            // 意图只吞主动关闭，但 M14-T3 Unity 复跑证明对端 RST 时本端 _connected
+            // 仍为 true → 异常逃逸线程顶层 → Unity 记 Exception 日志判测试失败。
+            // 接收循环语境下 IO 异常 = 断链，无"需要上抛的真异常"。
+            catch (IOException) { }
+            catch (SocketException) { }
+            catch (ObjectDisposedException) { }
             finally
             {
                 Dispose();

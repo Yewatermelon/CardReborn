@@ -87,8 +87,8 @@ namespace Card.Tests.EditMode.Bootstrap
         [Test]
         public void Buttons_RouteToEvents()
         {
-            InvokeButton("PvpLobbyRoot/HostButton");
-            InvokeButton("PvpLobbyRoot/JoinButton");
+            InvokeButton("PvpLobbyRoot/ChooseGroup/HostButton");
+            InvokeButton("PvpLobbyRoot/ChooseGroup/JoinButton");
             InvokeButton("PvpLobbyRoot/ReadyGroup/ReadyButton");
             InvokeButton("PvpLobbyRoot/BackButton");
 

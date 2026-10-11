@@ -104,6 +104,46 @@ namespace Card.Tests.EditMode.Network
         }
 
         [Test]
+        public void PeerReset_NoExceptionEscapes_ServerDetectsDisconnect()
+        {
+            // M14-T3 复跑暴露：对端 RST（LingerState(true,0) 关闭）时本端 _connected 仍为
+            // true，"when (!_connected)" 过滤器失效 → IOException 逃逸接收线程顶层
+            // （Unity 记 Exception 日志判测试失败，即 M12-B2 修复不完整）。防回归：
+            // 对端 RST 必须静默断链 + 触发 Disconnected，不产生线程逃逸异常。
+            using var listener = BclTcpTransport.Listen(0);
+            int port = listener.LocalEndPoint.Port;
+
+            ITransport? serverEp = null;
+            bool serverDisconnected = false;
+            var acceptThread = new Thread(() =>
+            {
+                serverEp = listener.Accept();
+                if (serverEp != null) serverEp.OnDisconnected += () => serverDisconnected = true;
+            }) { IsBackground = true };
+            acceptThread.Start();
+
+            // 原始 socket 客户端（不经 BclTcpTransport，避免其接收线程干扰断言）：
+            // 连接后以 RST 方式关闭
+            using var raw = new System.Net.Sockets.TcpClient();
+            raw.Connect("127.0.0.1", port);
+            acceptThread.Join(2000);
+            Assert.That(serverEp, Is.Not.Null);
+
+            raw.LingerState = new System.Net.Sockets.LingerOption(true, 0);
+            raw.Close();
+
+            int attempts = 0;
+            while (!serverDisconnected && attempts < 30)
+            {
+                Thread.Sleep(50);
+                attempts++;
+            }
+
+            Assert.That(serverDisconnected, Is.True, "对端 RST 后服务端应触发断链事件");
+            Assert.That(serverEp!.Connected, Is.False);
+        }
+
+        [Test]
         public void MultipleMessages_SequentialReceive()
         {
             using var listener = BclTcpTransport.Listen(0);

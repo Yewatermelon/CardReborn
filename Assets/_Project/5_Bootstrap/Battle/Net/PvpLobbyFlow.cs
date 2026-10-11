@@ -79,6 +79,9 @@ namespace Card.Bootstrap.Battle.Net
                 INetMatchLink link = _hostFactoryOverride != null
                     ? _hostFactoryOverride()
                     : CreateHostLink();
+                // 真实路径已在 CreateHostLink 内按实际监听端口写入；注入路径（测试）
+                // 无 PeerHost，回落配置端口——大厅状态文本依赖该地址展示。
+                ListenAddress ??= HostAddressPrefix + _listenPort.ToString(CultureInfo.InvariantCulture);
                 _isHosting = true;
                 _link = link;
                 _driver = new NetMatchDriver(link, 0);
@@ -117,16 +120,26 @@ namespace Card.Bootstrap.Battle.Net
             }
         }
 
-        /// <summary>房主准备（流程引导；不门控开局，M12 语义）。</summary>
+        /// <summary>房主准备（流程引导；不门控开局，M12 语义）。仅房主角色有效。</summary>
         public void MarkHostReady()
         {
+            if (!_isHosting)
+            {
+                return;
+            }
+
             _link?.SendReady();
             Raise("已准备。等待对手加入后自动开局…");
         }
 
-        /// <summary>加入方准备（SendReady；双方 Ready 后宿主自动开局）。</summary>
+        /// <summary>加入方准备（SendReady；双方 Ready 后宿主自动开局）。仅加入方角色有效。</summary>
         public void SendJoinerReady()
         {
+            if (_isHosting)
+            {
+                return;
+            }
+
             _link?.SendReady();
             Raise("已准备。等待房主确认开局…");
         }
