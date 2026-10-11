@@ -197,6 +197,7 @@ internal sealed class PvpLobbyFlow
 - 本地预编译拦截（新增手段：临时 csproj 引引擎 dll 全量编译 0_Core→5_Bootstrap + 全部 EditMode 测试，0 警告 0 错误）：**首轮拦下 6 个真问题**——tracker.Clear 重复定义（CS0111）、NetMatchLink/PvpLobbyFlow/NetMatchDriver/partial 缺 using、PvpLobbyUi 事件外部不可 Invoke（event→Action 属性）——Presentation/Bootstrap 测试"本地拦不住"缺陷的工程化闭环。
 - 测试矩阵：kernel NetworkMatchClientTests 15（握手/版本门/Ready/快照增量分发/命令信封/Ping-Pong/畸形帧/未知帧/断链/Dispose）；Unity-only PvpNetFlowTests 6（**真实 TCP 回环端到端**：双向座位快照+版本一致 / Ready-M12 语义 / 命令交替推进 / 拒绝不推版本 / Forfeit 终局 / sink 在途裁决）+ PvpLobbyFlowTests 8（fake 链路状态机）+ PvpCommandSinkTests 6（seq/信封/登记/卡视觉）+ PvpLobbyUiTests 5（标注文案/阶段/状态色/地址/事件路由）。
 - **待用户实跑**：Unity EditMode Test Runner 预期 **1270 passed / 0 failed**（基线 1230 + kernel 15 + Unity-only 25）。
+- Unity 侧编译警告修复（2026-10-12）：`BindNetFeedback`/`BindNetInput` 补 `_ui` 非空 guard（CS8602×2，跨方法调用后字段可空收窄失效）+ `HostNetLink.MatchEnded` 占位事件 pragma 压制（CS0067，接口统一性有意不触发——房主终局经 step 路径，见 §11.3 决策 4）；临时 csproj 全量预编译复验 **0 警告 0 错误**。
 
 ### 11.3 设计决策（装配期裁定）
 
