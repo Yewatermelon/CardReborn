@@ -1,4 +1,4 @@
-﻿# 交接说明（AI → AI）
+# 交接说明（AI → AI）
 
 > 这份文档写给**接手的 AI 代理**（以及未来的人类维护者）。
 > 目标：不依赖任何聊天记录，也能在 30 分钟内搞清楚"项目是什么、现在到哪、下一步做什么、怎么验证、哪里容易踩坑"。
@@ -130,6 +130,7 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 | 9 | 抢用户窗口焦点/反复弹审批很烦 | 沙箱下写 `.git`、读 `%LOCALAPPDATA%`、联网都要批准 | 用批处理副本 + `-executeMethod` + `Tools/*.ps1`，把需要批准的次数压到最少；确需 GUI 时一次合并多步 |
 | 10 | 改内容后一批测试红了 | 早期测试断言了"恰好 N 张卡"这类绝对值 | 内容规模统一由 `ConfigContentTests`（≥ 阈值）把关；单测只断言特定对象的值 |
 | 11 | TRAE 沙箱里 Unity 批处理 `-runTests` exit 0 但无结果（M3-B1） | 沙箱拦截 `bee\trash`/`upm.log`，`isUpdating` 恒真、测试调度器不启动 | 优先用无 Unity 工具链（第 4.1 节）；Unity 权威验证请用户在编辑器 Test Runner（EditMode）手动跑并回报数字（M3 收官即用此路径：608/608）；禁沙箱跑批处理仍会因项目被编辑器占用而崩溃 |
+| 12 | 手工 `.meta` 里 GUID 不是 32 位（M12-B1：33/34 位）→ Unity 静默排除该源文件，程序集缺类型、下游编译 CS0246 | GUID 长度非法时 Unity 拒绝导入该资产；dotnet kernel 通配符编译不暴露 | 生成/校验 `.meta` 时 GUID 必须恰为 32 位十六进制且全仓唯一（`Get-ChildItem -Recurse -Filter *.meta \| Select-String 'guid:'` 扫描长度 + 重复）；修复后让 Unity 重新 Refresh 导入 |
 
 ## 7. 还没做的事（交接时请确认）
 

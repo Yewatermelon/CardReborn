@@ -224,6 +224,7 @@
 | M3-B1 | P2（已解除 2026-10-06） | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。T3 起各任务以无 Unity 工具链（588/588）为验收口径；**2026-10-06 用户在编辑器 Test Runner（EditMode）手动补验 608 passed / 0 failed，.meta 导入与程序集编译实跑无误，阻塞解除** | AI | ✅ 已解除 |
 | M4-OBS-1 | P3（观察项） | M4-T10 | phase 等枚举存在两套线上编码：快照写枚举名、增量写整数；StateChangeApplier 已兼容两种。阶段二正式传输协议（M11/M13）必须统一编码并补跨组件契约测试 | AI | 🔵 待阶段二处理 |
 | M13-OBS-1 | P3（观察项） | M13-T1 | `PeerHost.cs` 298 行贴近 300 行上限（PeerHost + PeerSession 同文件）——T2 改造时把 PeerSession 拆分为独立文件 | AI | 🔵 待 M13-T2 处理 |
+| M12-B1 | P0（缺陷，已关闭） | M12 | M12 批次手工生成 5 个 .meta 的 GUID 为 33/34 位（合法须 32 位十六进制）：Unity 导入静默排除 `PeerHost.cs`/`BclTcpTransport.cs`/3 个网络测试文件 → Card.Network.dll 缺类型、EditMode 测试编译 CS0246 "PeerHost not found"；dotnet kernel 通配符编译全程不暴露。2026-10-11 重写 5 个 meta 为合法随机 GUID，全仓 462 个 meta 复扫 0 异常；生成 .meta 必须校验 GUID 恰为 32 位（教训登记 HANDOFF 已知坑） | AI | ✅ 已关闭 |
 | M4-OBS-2 | P3（观察项） | M3-T9/M4-T10 | `MatchStateSerializer` 快照不含 `NextInstanceId`；纯视图客户端不分配 Id 故当前无影响。阶段二断线重连快照前必须补字段并加往返测试 | AI | 🔵 待阶段二处理 |
 | M6-B1 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌费用数字与卡名文本位置重叠，小尺寸手牌上看不清。属 BattleUiFactory 卡牌布局缺陷（_costText 与 _nameText 锚点冲突） | AI | ✅ 已修复（M6-T4：BattleUiPrefabs 费用独立底板 + 名字右移） |
 | M6-B2 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌名称/描述只显示本地化 Key（如 `CARD_001_NAME`/`CARD_001_DESC`），无中文文本；项目尚无本地化系统。CardViewData 透传 DescKey/NameKey，需补本地化表 + 解析（简易方案可先在配置侧直填中文） | AI | ✅ 已修复（M6-T4：最小本地化表 Localization.csv + ITextResolver + CsvTextResolver；M8 由正式本地化系统替换） |
