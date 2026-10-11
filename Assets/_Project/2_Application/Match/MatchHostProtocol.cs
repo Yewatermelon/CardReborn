@@ -8,7 +8,9 @@ namespace Card.Application.Match
     /// <summary>
     /// MatchHost 上/下行消息编解码（M13-T3 自 MatchHost 拆出，保持单文件 ≤300 行）：
     /// kind 读取、命令载荷解析、快照与 step 构造、事件序列化。无状态纯函数。
-    /// step 消息：{ kind, version, seq(仅当命令带 seq), accepted, error, detail, finished, changes[], events[] }。
+    /// step 消息（M13-T4 起即 Docs/05 §5.2 StateDelta）：
+    /// { kind, version, basedOn, seq(仅当命令带 seq), accepted, error, detail, finished, changes[], events[] }。
+    /// 快照：{ kind, version, state }——version 为产生快照的权威版本（客户端增量基线）。
     /// </summary>
     internal static class MatchHostProtocol
     {
@@ -56,16 +58,22 @@ namespace Card.Application.Match
             }
         }
 
-        public static JsonValue WriteSnapshot(MatchState state)
+        /// <summary>构造开局快照；version = 产生快照的权威版本（M13-T4：客户端增量基线）。</summary>
+        public static JsonValue WriteSnapshot(MatchState state, ulong version)
         {
             return JsonValue.Object()
                 .Add("kind", JsonValue.From("snapshot"))
+                .Add("version", JsonValue.From((int)version))
                 .Add("state", MatchStateSerializer.WriteStateTree(state));
         }
 
-        /// <summary>构造 step 回执；seq 仅在命令携带序号时输出（协议"只加不删"的可选字段）。</summary>
+        /// <summary>
+        /// 构造 step 回执（StateDelta）；seq 仅在命令携带序号时输出（协议"只加不删"的可选字段）。
+        /// basedOn = 增量所基于的权威版本（接受时 = version − 1；拒绝时状态未变 = version）。
+        /// </summary>
         public static JsonValue WriteStep(
             ulong version,
+            ulong basedOn,
             int? seq,
             bool accepted,
             CommandError error,
@@ -76,7 +84,8 @@ namespace Card.Application.Match
         {
             JsonValue message = JsonValue.Object()
                 .Add("kind", JsonValue.From("step"))
-                .Add("version", JsonValue.From((int)version));
+                .Add("version", JsonValue.From((int)version))
+                .Add("basedOn", JsonValue.From((int)basedOn));
             if (seq.HasValue)
             {
                 message = message.Add("seq", JsonValue.From(seq.Value));

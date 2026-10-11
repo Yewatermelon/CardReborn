@@ -94,9 +94,10 @@ namespace Card.Application.Match
 
         private void ProcessHello(LoopbackEndpoint endpoint)
         {
-            // M13-T1：按端点座位投影（M11 identity 实现，M13-T6 落地真实裁剪）
+            // M13-T1：按端点座位投影（M11 identity 实现，M13-T6 落地真实裁剪）；
+            // M13-T4：快照携带当前权威版本，作为客户端应用增量的基线
             MatchState viewState = PlayerViewProjector.Project(_controller.State, _seats[endpoint]);
-            Send(endpoint, MatchHostProtocol.WriteSnapshot(viewState));
+            Send(endpoint, MatchHostProtocol.WriteSnapshot(viewState, _stateVersion));
         }
 
         private void ProcessCommand(LoopbackEndpoint endpoint, JsonValue json)
@@ -158,9 +159,11 @@ namespace Card.Application.Match
             return true;
         }
 
-        /// <summary>提交命令给权威并广播 step（增量 + 事件 / 拒绝原因）；带序号时记录回执。</summary>
+        /// <summary>提交命令给权威并广播 step（StateDelta：basedOn + version + 变化 + 事件）；带序号时记录回执。</summary>
         private void SubmitAndBroadcast(SeatCommandInbox? inbox, int? seq, IGameCommand command, JsonValue envelope)
         {
+            ulong basedOn = _stateVersion; // 增量基线 = 结算前版本（M13-T4）
+
             // before 副本 = 序列化往返（进程内模拟不追性能，M4-T10 已有此设计）
             MatchState before = MatchStateSerializer.Deserialize(
                 MatchStateSerializer.Serialize(_controller.State));
@@ -187,7 +190,7 @@ namespace Card.Application.Match
             }
 
             string stepJson = MatchHostProtocol.WriteStep(
-                    _stateVersion, seq, accepted, result.Error, result.Detail,
+                    _stateVersion, basedOn, seq, accepted, result.Error, result.Detail,
                     _controller.IsFinished, changes, events)
                 .ToJson();
 
@@ -212,11 +215,11 @@ namespace Card.Application.Match
             return roundEvents;
         }
 
-        /// <summary>广播一条结构化拒绝 step（M13-T2）：状态零变更，拒绝原因可观测。</summary>
+        /// <summary>广播一条结构化拒绝 step（M13-T2）：状态零变更，拒绝原因可观测；basedOn = 当前版本（未推进）。</summary>
         private void Reject(CommandError error, string detail, int? seq = null)
         {
             string stepJson = MatchHostProtocol.WriteStep(
-                    _stateVersion, seq, accepted: false, error, detail,
+                    _stateVersion, _stateVersion, seq, accepted: false, error, detail,
                     finished: _controller.IsFinished,
                     Array.Empty<StateChange>(), Array.Empty<GameEvent>())
                 .ToJson();
