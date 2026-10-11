@@ -1,5 +1,6 @@
 using Card.Presentation.Battle;
 using Card.Presentation.Battle.Feedback;
+using Card.Domain.Config;
 using NUnit.Framework;
 using UnityEngine;
 
