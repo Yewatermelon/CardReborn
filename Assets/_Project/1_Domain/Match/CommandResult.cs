@@ -44,7 +44,10 @@ namespace Card.Domain.Match
         MustTargetTaunt,
 
         /// <summary>英雄技能本回合已使用。</summary>
-        HeroPowerAlreadyUsed
+        HeroPowerAlreadyUsed,
+
+        /// <summary>命令序号过期或已被其他命令占用（重放/乱序包，M13-T3）。</summary>
+        StaleSequence
     }
 
     /// <summary>
