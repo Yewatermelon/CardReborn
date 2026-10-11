@@ -91,7 +91,8 @@ namespace Card.Tests.EditMode.Bootstrap
         [Test]
         public void EndToEnd_Handshake_BothDriversReceiveSeatSnapshots()
         {
-            PumpUntil(() => _joinDriver.HasSnapshot && _hostDriver.HasSnapshot);
+            // 快照随 MatchStart 下发（M12：双方 Ready 才开局），必须先走完整握手
+            ReadyUp();
 
             Assert.That(_client.Handshook, Is.True);
             Assert.That(_hostDriver.HasSnapshot, Is.True);
@@ -181,6 +182,8 @@ namespace Card.Tests.EditMode.Bootstrap
             var feedback = new PendingActionFeedback(tracker, null, null, null);
             int active = _hostDriver.Sync.State.ActivePlayerId;
             NetMatchDriver activeDriver = active == 0 ? _hostDriver : _joinDriver;
+            // 复刻 BindNetFeedback 接线：权威 step 裁决驱动在途反馈
+            activeDriver.StepApplied += outcome => feedback.NotifyStep(outcome);
             var sink = new PvpCommandSink(activeDriver, feedback);
 
             CommandResult result = sink.Submit(new EndTurnCommand(active));

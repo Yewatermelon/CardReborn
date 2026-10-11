@@ -101,9 +101,10 @@ namespace Card.Tests.EditMode.Network
         }
 
         /// <summary>
-        /// 分批快进（每批 ≤50 tick，批间对手上行 Pong 保持会话活跃）——模拟"在线但不出牌"，
+        /// 分批快进（每批 ≤50 tick，批间整批上行 Pong 保持会话活跃）——模拟"在线但不出牌"，
         /// 避免长快进触发 PeerSession 心跳超时（60 tick）与掉线判负路径（回合超时用例专用）。
-        /// 批间短 Sleep 给 host 接收线程调度机会，否则 Pong 积压会被误判心跳超时。
+        /// 每批发整批帧而非单帧：编辑器高负载下 IO 接收线程调度延迟可超任何固定 Sleep，
+        /// 单帧迟到即触发心跳超时误判负（M14-T3 复跑暴露），整批缓存后接收线程醒一次即可清零 idle。
         /// </summary>
         private void AdvanceIdle(int totalTicks)
         {
@@ -113,9 +114,13 @@ namespace Card.Tests.EditMode.Network
                 int step = Math.Min(remaining, 50);
                 _clock.Advance(step);
                 remaining -= step;
-                JsonValue pong = JsonValue.Object().Add("timestamp", JsonValue.From(_clock.CurrentTick));
-                _client.Send(MessageCodec.Frame(NetworkMessageType.Pong, MessageCodec.CurrentProtocolVersion, pong.ToJson()));
-                Thread.Sleep(5);
+                for (int i = 0; i < step; i++)
+                {
+                    JsonValue pong = JsonValue.Object().Add("timestamp", JsonValue.From(_clock.CurrentTick));
+                    _client.Send(MessageCodec.Frame(NetworkMessageType.Pong, MessageCodec.CurrentProtocolVersion, pong.ToJson()));
+                }
+
+                Thread.Sleep(10);
                 _peerHost.RunNetworkTick();
             }
         }
