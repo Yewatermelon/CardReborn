@@ -220,5 +220,5 @@ internal sealed class PvpLobbyFlow
 | 编号 | 级别 | 内容 | 处置 |
 | --- | --- | --- | --- |
 | M14-T3-O1 | P3（观察项） | 先手为加入方且极快出牌的竞争窗口（M12 Ready 语义），本机并排验证可接受 | 75s 回合超时兜底；体验优化属 M14-T6 |
-| M14-T3-T1 | 待验证 | Unity EditMode 实跑（预期 1270/0）待用户回报后留证收官 | 用户实跑 |
+| M14-T3-T1 | ✅ 留证 | Unity EditMode 实跑 **1271 passed / 0 failed**（2026-10-12，与预期一致） | 用户实跑 |
 
