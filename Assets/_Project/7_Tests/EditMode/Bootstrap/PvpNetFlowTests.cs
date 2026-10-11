@@ -79,13 +79,14 @@ namespace Card.Tests.EditMode.Bootstrap
             }
         }
 
-        /// <summary>握手 + 双方快照基线就绪 + 双方准备 → 双侧 MatchStarted。</summary>
+        /// <summary>握手 + 双方准备 → 双侧 MatchStarted 且快照基线就绪（战斗装配同款前置）。
+        /// 快照随 MatchStart 下发——Ready 前不存在快照，故一次性等到四条件齐备。</summary>
         private void ReadyUp()
         {
-            PumpUntil(() => _joinDriver.HasSnapshot && _hostDriver.HasSnapshot);
             _peerHost.SetHostReady();
             _joinLink.SendReady();
-            PumpUntil(() => _joinDriver.MatchStarted && _hostDriver.MatchStarted);
+            PumpUntil(() => _joinDriver.MatchStarted && _hostDriver.MatchStarted
+                && _joinDriver.HasSnapshot && _hostDriver.HasSnapshot);
         }
 
         [Test]
