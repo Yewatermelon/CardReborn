@@ -27,7 +27,7 @@ namespace Card.Tests.EditMode.Presentation
         private FloatingTextPool _texts = null!;
         private Transform _textParent = null!;
         private PendingActionFeedback _feedback = null!;
-        private readonly List<Object> _trash = new List<Object>();
+        private readonly List<UnityEngine.Object> _trash = new List<UnityEngine.Object>();
 
         [SetUp]
         public void SetUp()
@@ -44,15 +44,15 @@ namespace Card.Tests.EditMode.Presentation
         [TearDown]
         public void TearDown()
         {
-            foreach (Object asset in _trash)
+            foreach (UnityEngine.Object asset in _trash)
             {
                 if (asset != null)
                 {
-                    Object.DestroyImmediate(asset);
+                    UnityEngine.Object.DestroyImmediate(asset);
                 }
             }
 
-            Object.DestroyImmediate(_textParent.gameObject);
+            UnityEngine.Object.DestroyImmediate(_textParent.gameObject);
         }
 
         /// <summary>定位委托 stub：命中测试登记的卡牌视图。</summary>

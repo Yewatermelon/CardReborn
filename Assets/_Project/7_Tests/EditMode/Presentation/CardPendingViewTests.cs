@@ -30,7 +30,7 @@ namespace Card.Tests.EditMode.Presentation
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(_root);
+            UnityEngine.Object.DestroyImmediate(_root);
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace Card.Tests.EditMode.Presentation
             }
             finally
             {
-                Object.DestroyImmediate(card.gameObject);
+                UnityEngine.Object.DestroyImmediate(card.gameObject);
             }
         }
     }
