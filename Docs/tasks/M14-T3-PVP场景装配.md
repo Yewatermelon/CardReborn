@@ -203,6 +203,7 @@ internal sealed class PvpLobbyFlow
   - **缺陷 M14-T3-B2**（[PvpLobbyFlow.cs](Assets/_Project/5_Bootstrap/Battle/Net/PvpLobbyFlow.cs)）：① fake 工厂路径不写 `ListenAddress`（真实路径才有）→ `CreateAsHost_Success` 断言 null 失败——修复：CreateAsHost 成功后统一 `ListenAddress ??= 127.0.0.1:{port}`（状态文本同样依赖）；② Ready 动作无角色 guard，同一 `_link` 被两个动作重复发送 → `ReadyActions_ForwardToLink` 暴露——修复：MarkHostReady 仅房主角色 / SendJoinerReady 仅加入方角色生效；测试同步拆双 flow 验证互不串扰。
   - **测试修正 ×2**（非实现缺陷）：`Buttons_RouteToEvents` 按钮路径漏 `ChooseGroup` 层级；`PumpUntil` 纯忙循环饿死 `BclTcpTransport.ReceiveLoop` 后台线程 → 真实 TCP 的快照/回执迟到（`EndToEnd_Handshake`/`EndToEnd_CommandSink` 失败）——补 `Thread.Sleep(1)` 让渡（kernel 无此问题：Bootstrap 测试不进 kernel，M14-T3 前仅编译验证过）。
   - 复验：kernel **983 passed / 0 failed**（982 + 1 防回归），临时 csproj 全量预编译 0 警告 0 错误，check.ps1 PASS；Unity 复跑预期 **1271 passed / 0 failed**（1264 + 6 修复 + 1 新用例）。
+- **Unity EditMode 二次复跑 1268 passed / 3 failed 归因与修复**（2026-10-12）：fake 组 3 例全过、Forfeit 的 RST 异常消失（B1 生效）——剩余 3 例中 **2 个为测试逻辑错误**（非实现缺陷）：① `EndToEnd_Handshake` 未 Ready 即等快照，而快照随 MatchStart 下发（M12 双方 Ready 才开局）——改走 ReadyUp；② `EndToEnd_CommandSink` 漏接 `activeDriver.StepApplied → feedback.NotifyStep`（BindNetFeedback 接线未在测试复刻），pending 永不裁决——补接线；③ `TurnTimeout_AutoEndsTurn`（M13 既有测试）：AdvanceIdle 每批单帧 Pong + 5ms 让渡，编辑器高负载下 IO 接收线程调度延迟超 5ms → Pong 不入队 → idle 超 60 心跳超时摘端点 → 下批 Send 抛"TCP 传输已断开"——改整批 50 帧缓存 + Sleep(10)（接收线程醒一次即可清零 idle，不再赌固定延迟）。复验：kernel 983/0 + 全量预编译 0/0 + check PASS；Unity 复跑预期 **1271 passed / 0 failed**（总数不变：1268 + 3 修复）。
 
 ### 11.3 设计决策（装配期裁定）
 
