@@ -52,9 +52,20 @@ namespace Card.Application.Match
     /// 规则（Docs/05 §5.2）：version ≤ 本地 → 重复包丢弃；basedOn ≠ 本地 → 版本空洞不猜合并；
     /// basedOn == 本地且接受 → <see cref="StateChangeApplier"/> 应用增量并推进本地版本；
     /// 拒绝步不动状态与版本，原因透传表现层。纯 BCL、无网络依赖（帧化归 Card.Network）。
+    /// 版本空洞的恢复（M13-T5）：ApplyStep 返回 VersionGap 后，由调用方发
+    /// <see cref="BuildSnapshotRequest"/> 并用收到的快照 <see cref="ApplySnapshot"/> 重置基线。
     /// </summary>
     public sealed class ClientStateSync
     {
+        /// <summary>构造快照请求（Docs/05 §9.1 SnapshotRequest：携带本地版本号；宿主总回当前版本）。</summary>
+        public static string BuildSnapshotRequest(ulong localVersion)
+        {
+            return JsonValue.Object()
+                .Add("kind", JsonValue.From("snapshot_request"))
+                .Add("version", JsonValue.From((int)localVersion))
+                .ToJson();
+        }
+
         private MatchState? _state;
         private ulong _version;
 

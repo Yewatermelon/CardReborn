@@ -77,9 +77,10 @@ namespace Card.Application.Match
             JsonValue json = JsonValue.Parse(raw);
             string kind = MatchHostProtocol.ReadKind(json);
 
-            if (kind == "hello")
+            if (kind == "hello" || kind == "snapshot_request")
             {
-                ProcessHello(endpoint);
+                // hello / snapshot_request（M13-T5）同路：座位投影 + 当前权威版本快照，单播回请求端点
+                SendSnapshot(endpoint);
                 return;
             }
 
@@ -92,7 +93,8 @@ namespace Card.Application.Match
             throw new FormatException("未知上行消息 kind：\"" + kind + "\"。");
         }
 
-        private void ProcessHello(LoopbackEndpoint endpoint)
+        /// <summary>向端点单播快照（开局 hello 与版本冲突 SnapshotRequest 共用，M13-T5）。</summary>
+        private void SendSnapshot(LoopbackEndpoint endpoint)
         {
             // M13-T1：按端点座位投影（M11 identity 实现，M13-T6 落地真实裁剪）；
             // M13-T4：快照携带当前权威版本，作为客户端应用增量的基线
