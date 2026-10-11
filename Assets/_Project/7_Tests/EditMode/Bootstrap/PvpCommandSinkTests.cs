@@ -6,6 +6,7 @@ using Card.Domain.Match;
 using Card.Bootstrap.Battle.Net;
 using Card.Presentation.Battle;
 using Card.Presentation.Battle.Feedback;
+using Card.Tests.EditMode.Match;
 using Card.Tests.EditMode.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -24,17 +25,19 @@ namespace Card.Tests.EditMode.Bootstrap
         private PendingCommandTracker _tracker = null!;
         private PendingActionFeedback _feedback = null!;
         private PvpCommandSink _sink = null!;
+        private CardDatabase _database = null!;
         private readonly List<UnityEngine.Object> _trash = new List<UnityEngine.Object>();
         private readonly Dictionary<int, CardView> _cards = new Dictionary<int, CardView>();
 
         [SetUp]
         public void SetUp()
         {
+            _database = MatchControllerFixtures.BuildDatabase();
             _link = new FakeNetLink();
             _driver = new NetMatchDriver(_link, 0);
             _tracker = new PendingCommandTracker();
             _feedback = new PendingActionFeedback(_tracker, Locate, null, null);
-            _sink = new PvpCommandSink(_driver, _feedback);
+            _sink = new PvpCommandSink(_driver, _feedback, _database);
         }
 
         [TearDown]
@@ -132,6 +135,79 @@ namespace Card.Tests.EditMode.Bootstrap
             _sink.Submit(new EndTurnCommand(0));
 
             Assert.That(card.GetComponent<CardPendingView>(), Is.Null);
+        }
+
+        // -----------------------------------------------------------------
+        // 目标流程预检（缺陷修复）：需要目标的无目标命令 → TargetRequired，
+        // 不上行、不消费 seq（否则白耗序号导致后续 StaleSequence 错位）
+        // -----------------------------------------------------------------
+
+        [Test]
+        public void Preflight_TargetedSpellWithoutTarget_RejectsWithoutConsumingSeq()
+        {
+            UseGreedyDatabase();
+            MatchState state = GreedyAiAgentFixtures.BuildState();
+            RuleEngineTestHelpers.AddToHand(state.GetPlayer(0),
+                _database.RequireCard(GreedyAiAgentFixtures.SpellEnemyMinion), 101);
+            LoadState(state);
+
+            CommandResult result = _sink.Submit(new PlayCardCommand(0, 101, TargetRef.None));
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Error, Is.EqualTo(CommandError.TargetRequired));
+            Assert.That(_link.Uplinks, Is.Empty, "预检拒绝不得上行");
+            Assert.That(_tracker.PendingCount, Is.EqualTo(0), "预检拒绝不得登记在途");
+
+            // 被拒命令不消费 seq：下一条命令仍为 seq=1
+            _sink.Submit(new EndTurnCommand(0));
+            JsonValue envelope = JsonValue.Parse(_link.Uplinks[0]);
+            Assert.That(envelope.TryGetMember("seq", out JsonValue seq) && seq.IntValue == 1, Is.True);
+        }
+
+        [Test]
+        public void Preflight_UntargetedSpellWithoutTarget_PassesThrough()
+        {
+            UseGreedyDatabase();
+            MatchState state = GreedyAiAgentFixtures.BuildState();
+            RuleEngineTestHelpers.AddToHand(state.GetPlayer(0),
+                _database.RequireCard(GreedyAiAgentFixtures.SpellArmor), 102);
+            LoadState(state);
+
+            CommandResult result = _sink.Submit(new PlayCardCommand(0, 102, TargetRef.None));
+
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(_link.Uplinks, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void Preflight_HeroPowerRequiringTarget_RejectsWithoutUplink()
+        {
+            UseGreedyDatabase();
+            // 座位 0 英雄技能 = PingPower（TargetRule.Any）→ 无目标即拒
+            MatchState state = GreedyAiAgentFixtures.BuildState();
+            LoadState(state);
+
+            CommandResult result = _sink.Submit(new UseHeroPowerCommand(0, TargetRef.None));
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Error, Is.EqualTo(CommandError.TargetRequired));
+            Assert.That(_link.Uplinks, Is.Empty);
+        }
+
+        /// <summary>切换到 Greedy 夹具库（预检判据库与主夹具库卡键不同）。</summary>
+        private void UseGreedyDatabase()
+        {
+            _database = GreedyAiAgentFixtures.BuildDatabase();
+            _sink = new PvpCommandSink(_driver, _feedback, _database);
+        }
+
+        /// <summary>把权威状态注入客户端同步器（预检从本地视图读手牌/英雄技能）。</summary>
+        private void LoadState(MatchState state)
+        {
+            JsonValue snapshot = JsonValue.Object()
+                .Add("version", JsonValue.From(0))
+                .Add("state", JsonValue.Parse(MatchStateSerializer.Serialize(state)));
+            _driver.Sync.ApplySnapshot(snapshot);
         }
     }
 }

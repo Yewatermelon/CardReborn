@@ -219,7 +219,7 @@ namespace Card.Bootstrap.Battle
             _targeting._localPlayerId = localSeat;
             _targeting._arrow = _ui.Arrow;
 
-            ICommandSink sink = new PvpCommandSink(_netDriver!, _netPending!);
+            ICommandSink sink = new PvpCommandSink(_netDriver!, _netPending!, _netDatabase!);
             _sink = sink;
             _input.Initialize(sink);
             _input.CommandRejected += OnInputRejected;

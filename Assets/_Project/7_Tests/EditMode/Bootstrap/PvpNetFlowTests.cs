@@ -185,7 +185,7 @@ namespace Card.Tests.EditMode.Bootstrap
             NetMatchDriver activeDriver = active == 0 ? _hostDriver : _joinDriver;
             // 复刻 BindNetFeedback 接线：权威 step 裁决驱动在途反馈
             activeDriver.StepApplied += outcome => feedback.NotifyStep(outcome);
-            var sink = new PvpCommandSink(activeDriver, feedback);
+            var sink = new PvpCommandSink(activeDriver, feedback, _database);
 
             CommandResult result = sink.Submit(new EndTurnCommand(active));
             Assert.That(result.IsValid, Is.True);
