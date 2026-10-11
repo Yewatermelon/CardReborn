@@ -102,6 +102,12 @@ namespace Card.Presentation.Battle
                 fade.Stop();
             }
 
+            // 待确认视觉（M14-T1）同属可视副作用：复用前必须复位 alpha/位置。
+            if (TryGetComponent(out CardPendingView pending))
+            {
+                pending.Stop();
+            }
+
             if (TryGetComponent(out CanvasGroup group))
             {
                 group.alpha = 1f;
