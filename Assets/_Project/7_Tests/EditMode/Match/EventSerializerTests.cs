@@ -202,7 +202,8 @@ namespace Card.Tests.EditMode.Match
 
             var host = new Card.Application.Match.MatchHost(controller);
             LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp);
+            // M13-T2 座位归属校验：端点须挂实际行动座位（seed 42 先手非固定座位 0）
+            host.Attach(serverEp, controller.State.ActivePlayerId);
 
             // hello → 快照
             clientEp.Send("{\"kind\":\"hello\"}");

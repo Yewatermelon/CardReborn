@@ -39,7 +39,8 @@ namespace Card.Tests.EditMode.Network
                 MatchControllerFixtures.NewMatch(_database, _deck, seed: 42), _database);
             _host = new MatchHost(_controller);
             LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint bridgeEp);
-            _host.Attach(serverEp, 1);
+            // M13-T2 座位归属校验：桥端点须挂实际行动座位（先手由种子决定）
+            _host.Attach(serverEp, _controller.State.ActivePlayerId);
             InMemoryTransport.CreatePair(out _netHost, out _netClient);
             _bridge = new HostBridge(bridgeEp, _netHost, seat: 1);
         }
@@ -158,6 +159,28 @@ namespace Card.Tests.EditMode.Network
                 NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, "{\"kind\":\"bogus\"}")));
             Assert.DoesNotThrow(() => _host.Pump());
             Assert.That(_bridge.PumpKernelToNetwork(), Is.EqualTo(0));
+            Assert.That(_host.StateVersion, Is.EqualTo(0));
+        }
+
+        // -----------------------------------------------------------------
+        // M13-T2 AC-6: 缺 payload 的 Command 帧经桥上行 → 结构化拒绝帧回传，宿主存活
+        // -----------------------------------------------------------------
+
+        [Test]
+        public void CommandFrame_MissingPayload_RejectedDeltaReturned_NoThrow()
+        {
+            StartMatch();
+
+            Assert.DoesNotThrow(() => _bridge.ForwardCommand(new RawMessage(
+                NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, "{\"kind\":\"command\"}")));
+            Assert.DoesNotThrow(() => _host.Pump());
+            _bridge.PumpKernelToNetwork();
+
+            RawMessage msg = ReceiveFrame(_netClient);
+            Assert.That(msg.Type, Is.EqualTo(NetworkMessageType.StateDelta));
+            JsonValue step = JsonValue.Parse(msg.PayloadJson);
+            Assert.That(step.TryGetMember("accepted", out JsonValue accepted) && !accepted.BoolValue, Is.True);
+            Assert.That(step.TryGetMember("error", out JsonValue error) && error.StringValue == "UnknownCommand", Is.True);
             Assert.That(_host.StateVersion, Is.EqualTo(0));
         }
     }

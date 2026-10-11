@@ -75,18 +75,31 @@ namespace Card.Tests.EditMode.Network
             Assert.That(session.MatchStarted, Is.True);
             Assert.That(ReceiveFrameAfterTick(peerHost, clientSide).Type, Is.EqualTo(NetworkMessageType.MatchSnapshot));
 
-            // 命令上行 → StateDelta
-            int activeId = controller.State.ActivePlayerId;
-            JsonValue uplink = JsonValue.Object()
+            // 命令上行第一腿：房主本地端点（座位 0 = HostSeat）行动 → 广播 → 对手经网络收到 StateDelta
+            JsonValue hostUplink = JsonValue.Object()
                 .Add("kind", JsonValue.From("command"))
-                .Add("payload", JsonValue.Parse(CommandSerializer.Serialize(new EndTurnCommand(activeId))));
-            clientSide.Send(MessageCodec.Frame(NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, uplink.ToJson()));
+                .Add("payload", JsonValue.Parse(CommandSerializer.Serialize(
+                    new EndTurnCommand(peerHost.HostSeat))));
+            peerHost.LocalClientEndpoint.Send(hostUplink.ToJson());
             RawMessage delta = ReceiveFrameAfterTick(peerHost, clientSide);
 
             Assert.That(delta.Type, Is.EqualTo(NetworkMessageType.StateDelta));
             JsonValue step = JsonValue.Parse(delta.PayloadJson);
             Assert.That(step.TryGetMember("accepted", out JsonValue accepted) && accepted.BoolValue, Is.True);
             Assert.That(matchHost.StateVersion, Is.EqualTo(1));
+
+            // 命令上行第二腿：对手（座位 1）上行自己座位的命令 → 结构化 step 回传
+            JsonValue peerUplink = JsonValue.Object()
+                .Add("kind", JsonValue.From("command"))
+                .Add("payload", JsonValue.Parse(CommandSerializer.Serialize(new EndTurnCommand(1))));
+            clientSide.Send(MessageCodec.Frame(
+                NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, peerUplink.ToJson()));
+            RawMessage delta2 = ReceiveFrameAfterTick(peerHost, clientSide);
+
+            Assert.That(delta2.Type, Is.EqualTo(NetworkMessageType.StateDelta));
+            JsonValue step2 = JsonValue.Parse(delta2.PayloadJson);
+            Assert.That(step2.TryGetMember("accepted", out JsonValue accepted2) && accepted2.BoolValue, Is.True);
+            Assert.That(matchHost.StateVersion, Is.EqualTo(2));
         }
 
         // -----------------------------------------------------------------

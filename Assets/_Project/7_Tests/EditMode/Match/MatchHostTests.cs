@@ -64,7 +64,8 @@ namespace Card.Tests.EditMode.Match
             MatchHost host = new MatchHost(controller);
 
             LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp);
+            // M13-T2 座位归属校验：端点须挂实际行动座位（seed 42 先手非固定座位 0）
+            host.Attach(serverEp, controller.State.ActivePlayerId);
 
             clientEp.Send("{\"kind\":\"hello\"}");
             host.Pump();
@@ -125,8 +126,9 @@ namespace Card.Tests.EditMode.Match
 
             LoopbackLink.CreatePair(out LoopbackEndpoint s0, out LoopbackEndpoint c0);
             LoopbackLink.CreatePair(out LoopbackEndpoint s1, out LoopbackEndpoint c1);
-            host.Attach(s0);
-            host.Attach(s1);
+            // M13-T2 座位归属校验：每个端点绑定一个座位，按行动方发送命令
+            host.Attach(s0, 0);
+            host.Attach(s1, 1);
 
             c0.Send("{\"kind\":\"hello\"}");
             c1.Send("{\"kind\":\"hello\"}");

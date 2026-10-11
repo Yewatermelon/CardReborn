@@ -60,17 +60,26 @@ namespace Card.Tests.EditMode.Match
             Assert.Throws<FormatException>(() => host.Pump());
         }
 
+        // M13-T2 语义演进：缺 payload 从抛 FormatException 改为结构化拒绝（状态零变更）
         [Test]
-        public void MatchHost_CommandMissingPayload_ThrowsFormatException()
+        public void MatchHost_CommandMissingPayload_ProducesRejectedStep()
         {
             MatchController controller = NewController();
             MatchHost host = new MatchHost(controller);
 
             LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp);
+            host.Attach(serverEp, 1);
 
             clientEp.Send("{\"kind\":\"command\"}");
-            Assert.Throws<FormatException>(() => host.Pump());
+            Assert.DoesNotThrow(() => host.Pump());
+            Assert.That(host.StateVersion, Is.EqualTo(0));
+
+            Assert.That(clientEp.TryReceive(out string? stepRaw), Is.True);
+            JsonValue stepJson = JsonValue.Parse(stepRaw!);
+            stepJson.TryGetMember("accepted", out JsonValue accepted);
+            Assert.That(accepted.BoolValue, Is.False);
+            stepJson.TryGetMember("error", out JsonValue error);
+            Assert.That(error.StringValue, Is.EqualTo("UnknownCommand"));
         }
 
         [Test]
@@ -91,18 +100,25 @@ namespace Card.Tests.EditMode.Match
             MatchController controller = NewController();
             MatchHost host = new MatchHost(controller);
 
-            LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp);
+            // M13-T2 座位归属校验：双端点各绑一个座位，按行动方发送
+            LoopbackLink.CreatePair(out LoopbackEndpoint s0, out LoopbackEndpoint c0);
+            LoopbackLink.CreatePair(out LoopbackEndpoint s1, out LoopbackEndpoint c1);
+            host.Attach(s0, 0);
+            host.Attach(s1, 1);
 
-            clientEp.Send("{\"kind\":\"hello\"}");
+            c0.Send("{\"kind\":\"hello\"}");
+            c1.Send("{\"kind\":\"hello\"}");
             host.Pump();
-            clientEp.TryReceive(out _);
+            c0.TryReceive(out _);
+            c1.TryReceive(out _);
 
             for (int i = 0; i < 3; i++)
             {
-                SendCommand(clientEp, new EndTurnCommand(controller.State.ActivePlayerId));
+                LoopbackEndpoint actor = controller.State.ActivePlayerId == 0 ? c0 : c1;
+                SendCommand(actor, new EndTurnCommand(controller.State.ActivePlayerId));
                 host.Pump();
-                clientEp.TryReceive(out _);
+                c0.TryReceive(out _);
+                c1.TryReceive(out _);
             }
 
             Assert.That(host.StateVersion, Is.EqualTo(3));
@@ -115,20 +131,21 @@ namespace Card.Tests.EditMode.Match
             MatchHost host = new MatchHost(controller);
 
             LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp);
+            // M13-T2 座位归属校验：端点挂行动座位，拒绝走"非其回合"规则路径
+            int activeSeat = controller.State.ActivePlayerId;
+            host.Attach(serverEp, activeSeat);
 
             clientEp.Send("{\"kind\":\"hello\"}");
             host.Pump();
             clientEp.TryReceive(out _);
 
-            int activeSeat = controller.State.ActivePlayerId;
             SendCommand(clientEp, new EndTurnCommand(activeSeat));
             host.Pump();
             clientEp.TryReceive(out _);
             Assert.That(host.StateVersion, Is.EqualTo(1));
 
-            int nonActiveSeat = 1 - controller.State.ActivePlayerId;
-            SendCommand(clientEp, new EndTurnCommand(nonActiveSeat));
+            // 行动权已移交，同座位再次 EndTurn → RuleEngine 拒绝 NotYourTurn
+            SendCommand(clientEp, new EndTurnCommand(activeSeat));
             host.Pump();
             clientEp.TryReceive(out _);
             Assert.That(host.StateVersion, Is.EqualTo(1));
@@ -142,17 +159,24 @@ namespace Card.Tests.EditMode.Match
 
             Assert.That(host.IsFinished, Is.False);
 
-            LoopbackLink.CreatePair(out LoopbackEndpoint serverEp, out LoopbackEndpoint clientEp);
-            host.Attach(serverEp);
-            clientEp.Send("{\"kind\":\"hello\"}");
+            // M13-T2 座位归属校验：双端点各绑一个座位，按行动方发送
+            LoopbackLink.CreatePair(out LoopbackEndpoint s0, out LoopbackEndpoint c0);
+            LoopbackLink.CreatePair(out LoopbackEndpoint s1, out LoopbackEndpoint c1);
+            host.Attach(s0, 0);
+            host.Attach(s1, 1);
+            c0.Send("{\"kind\":\"hello\"}");
+            c1.Send("{\"kind\":\"hello\"}");
             host.Pump();
-            clientEp.TryReceive(out _);
+            c0.TryReceive(out _);
+            c1.TryReceive(out _);
 
             while (!controller.IsFinished)
             {
-                SendCommand(clientEp, new EndTurnCommand(controller.State.ActivePlayerId));
+                LoopbackEndpoint actor = controller.State.ActivePlayerId == 0 ? c0 : c1;
+                SendCommand(actor, new EndTurnCommand(controller.State.ActivePlayerId));
                 host.Pump();
-                clientEp.TryReceive(out _);
+                c0.TryReceive(out _);
+                c1.TryReceive(out _);
             }
 
             Assert.That(host.IsFinished, Is.True);

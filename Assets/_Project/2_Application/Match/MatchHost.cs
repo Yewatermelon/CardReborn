@@ -98,9 +98,28 @@ namespace Card.Application.Match
 
         private void ProcessCommand(LoopbackEndpoint endpoint, JsonValue json)
         {
-            // 读取命令
-            IGameCommand command = ReadCommand(json);
+            // M13-T2 信封级校验 ①：载荷可解析——畸形命令产出结构化拒绝，不抛异常打死宿主
+            if (!TryReadCommand(json, out IGameCommand? command, out string? readError))
+            {
+                Reject(CommandError.UnknownCommand, readError!);
+                return;
+            }
 
+            // M13-T2 信封级校验 ②：座位归属——命令归属玩家必须与端点绑定座位一致
+            int seat = _seats[endpoint];
+            if (command!.PlayerId != seat)
+            {
+                Reject(CommandError.NotYourTurn,
+                    "命令归属玩家 " + command.PlayerId + " 与端点座位 " + seat + " 不匹配。");
+                return;
+            }
+
+            SubmitAndBroadcast(command);
+        }
+
+        /// <summary>提交命令给权威并广播 step（增量 + 事件 / 拒绝原因）。</summary>
+        private void SubmitAndBroadcast(IGameCommand command)
+        {
             // before 副本 = 序列化往返（进程内模拟不追性能，M4-T10 已有此设计）
             MatchState before = MatchStateSerializer.Deserialize(
                 MatchStateSerializer.Serialize(_controller.State));
@@ -110,7 +129,6 @@ namespace Card.Application.Match
 
             CommandResult result = _controller.Submit(command);
             bool accepted = result.IsValid;
-            CommandError error = result.Error;
             bool finished = _controller.IsFinished;
 
             IReadOnlyList<StateChange> changes;
@@ -120,14 +138,7 @@ namespace Card.Application.Match
             {
                 _stateVersion++;
                 changes = MatchStateDiffer.Diff(before, _controller.State);
-                int eventEnd = _controller.Events.Count;
-                List<GameEvent> roundEvents = new List<GameEvent>(eventEnd - eventStart);
-                for (int i = eventStart; i < eventEnd; i++)
-                {
-                    roundEvents.Add(_controller.Events[i]);
-                }
-
-                events = roundEvents;
+                events = CollectNewEvents(eventStart);
             }
             else
             {
@@ -135,7 +146,32 @@ namespace Card.Application.Match
                 events = Array.Empty<GameEvent>();
             }
 
-            Broadcast(WriteStep(accepted, error, finished, changes, events));
+            Broadcast(WriteStep(accepted, result.Error, result.Detail, finished, changes, events));
+        }
+
+        /// <summary>按事件起点截取本轮新增事件（EventLog 只追加）。</summary>
+        private List<GameEvent> CollectNewEvents(int eventStart)
+        {
+            int eventEnd = _controller.Events.Count;
+            List<GameEvent> roundEvents = new List<GameEvent>(eventEnd - eventStart);
+            for (int i = eventStart; i < eventEnd; i++)
+            {
+                roundEvents.Add(_controller.Events[i]);
+            }
+
+            return roundEvents;
+        }
+
+        /// <summary>广播一条结构化拒绝 step（M13-T2）：状态零变更，拒绝原因可观测。</summary>
+        private void Reject(CommandError error, string detail)
+        {
+            Broadcast(WriteStep(
+                accepted: false,
+                error,
+                detail,
+                finished: _controller.IsFinished,
+                Array.Empty<StateChange>(),
+                Array.Empty<GameEvent>()));
         }
 
         // -----------------------------------------------------------------
@@ -152,14 +188,37 @@ namespace Card.Application.Match
             throw new FormatException("上行消息缺少 kind 字段。");
         }
 
-        private static IGameCommand ReadCommand(JsonValue json)
+        /// <summary>
+        /// 读取 command 消息载荷（M13-T2）：缺 payload / 非法 JSON / 未知类型 / 缺成员
+        /// 一律返回 false 并携带可读原因，由调用方产出结构化拒绝。
+        /// </summary>
+        private static bool TryReadCommand(JsonValue json, out IGameCommand? command, out string? error)
         {
             if (!json.TryGetMember("payload", out JsonValue payload))
             {
-                throw new FormatException("command 消息缺少 payload 字段。");
+                command = null;
+                error = "command 消息缺少 payload 字段。";
+                return false;
             }
 
-            return CommandSerializer.Deserialize(payload.ToJson());
+            try
+            {
+                command = CommandSerializer.Deserialize(payload.ToJson());
+                error = null;
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                command = null;
+                error = "命令载荷非法：" + ex.Message;
+                return false;
+            }
+            catch (FormatException ex)
+            {
+                command = null;
+                error = "命令载荷不是合法 JSON：" + ex.Message;
+                return false;
+            }
         }
 
         private static JsonValue WriteSnapshot(MatchState state)
@@ -172,6 +231,7 @@ namespace Card.Application.Match
         private JsonValue WriteStep(
             bool accepted,
             CommandError error,
+            string detail,
             bool finished,
             IReadOnlyList<StateChange> changes,
             IReadOnlyList<GameEvent> events)
@@ -181,6 +241,7 @@ namespace Card.Application.Match
                 .Add("version", JsonValue.From((int)_stateVersion))
                 .Add("accepted", JsonValue.From(accepted))
                 .Add("error", JsonValue.From(error.ToString()))
+                .Add("detail", JsonValue.From(detail))
                 .Add("finished", JsonValue.From(finished))
                 .Add("changes", StateChangeSerializer.WriteList(changes))
                 .Add("events", JsonValue.Array(SerializeEvents(events)));
