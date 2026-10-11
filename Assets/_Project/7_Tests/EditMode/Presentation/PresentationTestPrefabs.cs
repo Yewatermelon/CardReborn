@@ -9,7 +9,8 @@ namespace Card.Tests.EditMode.Presentation
     {
         public static CardView CreateCardViewPrefab()
         {
-            var go = new GameObject("CardViewPrefab");
+            // M14-T2：带 RectTransform，使 CardMotionView（anchoredPosition 插值）可在测试中真实工作。
+            var go = new GameObject("CardViewPrefab", typeof(RectTransform));
             CardView view = go.AddComponent<CardView>();
             view._nameText = AddText(go.transform, "Name");
             view._descriptionText = AddText(go.transform, "Desc");

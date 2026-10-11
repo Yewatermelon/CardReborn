@@ -25,6 +25,7 @@ namespace Card.Bootstrap.Battle
             go.GetComponent<Image>().color = CardBackColor;
 
             var view = go.AddComponent<CardView>();
+            go.AddComponent<CardMotionView>(); // M14-T2：位置插值 + 进场动画
             // M6-T4（B1）：费用独立底板占据左上角；名字右移避让，不再与费用重叠。
             view._costPanel = CreatePanel(go.transform, "CostPanel", new Vector2(-44f, 62f), new Vector2(30f, 28f));
             view._costText = CreateText(view._costPanel.transform, Vector2.zero, 16);

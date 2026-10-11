@@ -12,9 +12,14 @@ namespace Card.Presentation.Battle
     /// 卡牌只读视图（FR-8.1）：渲染名称/费用/攻/血/描述/美术键。
     /// 无任何规则判断；数据变化时由外部（HandView 等）调用 <see cref="SetData"/> 刷新。
     /// 高亮三态（M5-T6；FR-8.6）由 <see cref="CardHighlight"/> 旗标驱动，只切显隐。
+    /// M14-T2（Docs/05 §5.5）：同实例攻/血更新走 <see cref="NumberTween"/> 数值补间；
+    /// 复用换实例或首次赋值立即 Snap（复用即全量复位契约）。
     /// </summary>
     public sealed class CardView : MonoBehaviour
     {
+        private readonly NumberTween _attackTween = new(NumberTween.DefaultDuration);
+        private readonly NumberTween _healthTween = new(NumberTween.DefaultDuration);
+
         [SerializeField] internal TMP_Text _nameText = null!;
         [SerializeField] internal TMP_Text _descriptionText = null!;
         [SerializeField] internal TMP_Text _costText = null!;
@@ -80,6 +85,9 @@ namespace Card.Presentation.Battle
         {
             Guard.NotNull(data, nameof(data));
 
+            int? previousId = InstanceId;
+            bool sameInstance = previousId.HasValue && Nullable.Equals(previousId, data.InstanceId);
+
             _nameText.text = data.Name;
             _descriptionText.text = data.Description;
             _costText.text = data.Cost.ToString();
@@ -90,8 +98,18 @@ namespace Card.Presentation.Battle
             _healthPanel.SetActive(isMinion);
             if (isMinion)
             {
-                _attackText.text = data.Attack.ToString();
-                _healthText.text = data.Health.ToString();
+                if (sameInstance)
+                {
+                    _attackTween.To(data.Attack);
+                    _healthTween.To(data.Health);
+                }
+                else
+                {
+                    _attackTween.Snap(data.Attack);
+                    _healthTween.Snap(data.Health);
+                }
+
+                RefreshCombatText();
             }
 
             // 复用场景（池化 + 卡数不变时 SetCards 直接覆盖 SetData）：
@@ -102,10 +120,16 @@ namespace Card.Presentation.Battle
                 fade.Stop();
             }
 
-            // 待确认视觉（M14-T1）同属可视副作用：复用前必须复位 alpha/位置。
+            // 待确认视觉（M14-T1）与入场/滑位（M14-T2）同属可视副作用：
+            // 复用前必须复位 alpha/位置/缩放（复用即全量复位契约）。
             if (TryGetComponent(out CardPendingView pending))
             {
                 pending.Stop();
+            }
+
+            if (TryGetComponent(out CardMotionView motion))
+            {
+                motion.Stop();
             }
 
             if (TryGetComponent(out CanvasGroup group))
@@ -120,6 +144,30 @@ namespace Card.Presentation.Battle
             _playableHighlight.SetActive((highlight & CardHighlight.Playable) != 0);
             _attackableHighlight.SetActive((highlight & CardHighlight.Attackable) != 0);
             _tauntHighlight.SetActive((highlight & CardHighlight.Taunt) != 0);
+        }
+
+        private void Update()
+        {
+            Tick(Time.deltaTime);
+        }
+
+        /// <summary>推进攻/血补间并刷新文本（EditMode 测试直接驱动）。</summary>
+        internal void Tick(float dt)
+        {
+            if (!_attackTween.IsPlaying && !_healthTween.IsPlaying)
+            {
+                return;
+            }
+
+            _attackTween.Tick(dt);
+            _healthTween.Tick(dt);
+            RefreshCombatText();
+        }
+
+        private void RefreshCombatText()
+        {
+            _attackText.text = _attackTween.Current.ToString();
+            _healthText.text = _healthTween.Current.ToString();
         }
     }
 }

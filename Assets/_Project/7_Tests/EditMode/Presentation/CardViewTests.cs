@@ -23,7 +23,7 @@ namespace Card.Tests.EditMode.Presentation
         [SetUp]
         public void SetUp()
         {
-            _root = new GameObject("CardView_Test");
+            _root = new GameObject("CardView_Test", typeof(RectTransform));
             _nameText = CreateText("Name");
             _descriptionText = CreateText("Desc");
             _costText = CreateText("Cost");
@@ -127,6 +127,52 @@ namespace Card.Tests.EditMode.Presentation
             // 期望：淡出已中止、alpha 复位为 1（卡牌可见，不会被旧淡出拖到不可见）。
             Assert.That(fade.IsPlaying, Is.False, "SetData 应中止死亡淡出，避免复用卡不可见。");
             Assert.That(group.alpha, Is.EqualTo(1f), "SetData 应复位 alpha 为 1。");
+        }
+
+        /// <summary>M14-T2（Docs/05 §5.5）：同实例攻血更新走数值 Tween，不瞬时跳变。</summary>
+        [Test]
+        public void SetData_SameInstance_TweensCombatNumbers()
+        {
+            var first = new CardViewData("Pango", "A penguin.", 2, 2, 3, "art_card_001", CardType.Minion, 7);
+            var damaged = new CardViewData("Pango", "A penguin.", 2, 1, 1, "art_card_001", CardType.Minion, 7);
+
+            _view.SetData(first);
+            _view.SetData(damaged);
+
+            Assert.That(_attackText.text, Is.EqualTo("2"), "同实例攻血补间不得瞬时跳变");
+            _view.Tick(1f);
+            Assert.That(_attackText.text, Is.EqualTo("1"));
+            Assert.That(_healthText.text, Is.EqualTo("1"));
+        }
+
+        /// <summary>M14-T2：复用换实例（InstanceId 变化）必须立即 Snap（复用即全量复位契约）。</summary>
+        [Test]
+        public void SetData_DifferentInstance_SnapsImmediately()
+        {
+            var first = new CardViewData("Pango", "A penguin.", 2, 2, 3, "art_card_001", CardType.Minion, 7);
+            var other = new CardViewData("Grizz", "A bear.", 5, 8, 9, "art_card_002", CardType.Minion, 8);
+
+            _view.SetData(first);
+            _view.SetData(other);
+
+            Assert.That(_attackText.text, Is.EqualTo("8"), "复用换实例必须立即到位");
+            Assert.That(_healthText.text, Is.EqualTo("9"));
+        }
+
+        /// <summary>M14-T2：SetData 复位路径纳入 CardMotionView（M6-T5 复用即全量复位契约）。</summary>
+        [Test]
+        public void SetData_StopsMotionAndResetsScale()
+        {
+            CardMotionView motion = _root.AddComponent<CardMotionView>();
+            var first = new CardViewData("A", "d", 1, 1, 1, "art", CardType.Minion, 1);
+            var second = new CardViewData("B", "d", 1, 2, 2, "art", CardType.Minion, 2);
+
+            _view.SetData(first);
+            motion.BeginEntry(new Vector2(10f, 0f));
+            _view.SetData(second);
+
+            Assert.That(motion.IsPlaying, Is.False, "SetData 应中止入场/滑位补间");
+            Assert.That(_root.transform.localScale, Is.EqualTo(Vector3.one), "SetData 应复位缩放");
         }
     }
 }

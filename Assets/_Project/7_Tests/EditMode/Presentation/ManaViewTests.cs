@@ -46,14 +46,17 @@ namespace Card.Tests.EditMode.Presentation
             Assert.That(_maxText.text, Is.EqualTo("5"));
         }
 
+        /// <summary>M14-T2（Docs/05 §5.5）：当前法力数值 Tween；上限立即刷新。</summary>
         [Test]
-        public void SetData_CalledTwice_OverwritesPreviousData()
+        public void SetData_CalledTwice_TweensCurrentThenOverwrites()
         {
             _view.SetData(3, 5);
             _view.SetData(1, 7);
 
+            Assert.That(_currentText.text, Is.EqualTo("3"), "当前法力补间不得瞬时跳变");
+            _view.Tick(1f);
             Assert.That(_currentText.text, Is.EqualTo("1"));
-            Assert.That(_maxText.text, Is.EqualTo("7"));
+            Assert.That(_maxText.text, Is.EqualTo("7"), "上限不受补间影响，立即刷新");
         }
 
         [Test]

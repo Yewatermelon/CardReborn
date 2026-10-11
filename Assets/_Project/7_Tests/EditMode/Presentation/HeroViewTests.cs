@@ -71,14 +71,17 @@ namespace Card.Tests.EditMode.Presentation
             Assert.That(_armorPanel.activeSelf, Is.False);
         }
 
+        /// <summary>M14-T2（Docs/05 §5.5）：生命数值 Tween，二次 SetData 不得瞬时跳变，Tick 后到达目标。</summary>
         [Test]
-        public void SetData_CalledTwice_OverwritesPreviousData()
+        public void SetData_CalledTwice_TweensThenOverwrites()
         {
             _view.SetData(25, 30, 4);
             _view.SetData(12, 30, 1);
 
+            Assert.That(_healthText.text, Is.EqualTo("25"), "数值 Tween 下不得瞬时跳变");
+            _view.Tick(1f);
             Assert.That(_healthText.text, Is.EqualTo("12"));
-            Assert.That(_armorText.text, Is.EqualTo("1"));
+            Assert.That(_armorText.text, Is.EqualTo("1"), "护甲不受补间影响，立即刷新");
             Assert.That(_armorPanel.activeSelf, Is.True);
         }
 

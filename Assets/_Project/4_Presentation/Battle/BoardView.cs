@@ -48,27 +48,32 @@ namespace Card.Presentation.Battle
             Guard.NotNull(cards, nameof(cards));
 
             CardViewPool pool = EnsurePool();
-            while (_children.Count > cards.Count)
-            {
-                int last = _children.Count - 1;
-                _children[last].UnbindClick();
-                pool.Return(_children[last]);
-                _children.RemoveAt(last);
-            }
-
-            while (_children.Count < cards.Count)
-            {
-                CardView added = pool.Rent(transform);
-                added.BindClick(() => RaiseCardClicked(added));
-                _children.Add(added);
-            }
+            CardZoneSync.Refresh(
+                _children,
+                cards,
+                () => RentCard(pool),
+                view => RecycleCard(pool, view),
+                out HashSet<CardView>? entering);
 
             for (int i = 0; i < cards.Count; i++)
             {
                 _children[i].SetData(cards[i]);
             }
 
-            CardListLayout.Layout(_children, _spacing);
+            CardListLayout.Layout(_children, _spacing, entering);
+        }
+
+        private CardView RentCard(CardViewPool pool)
+        {
+            CardView added = pool.Rent(transform);
+            added.BindClick(() => RaiseCardClicked(added));
+            return added;
+        }
+
+        private void RecycleCard(CardViewPool pool, CardView view)
+        {
+            view.UnbindClick();
+            pool.Return(view);
         }
 
         private void RaiseCardClicked(CardView view)

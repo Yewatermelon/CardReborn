@@ -53,7 +53,7 @@ namespace Card.Presentation.Battle
             return view;
         }
 
-        /// <summary>归还/出厂复位（03 §5.8 第 2 条）：高亮清零、停止淡出、alpha 归 1。</summary>
+        /// <summary>归还/出厂复位（03 §5.8 第 2 条）：高亮清零、停止淡出/运动、alpha 归 1。</summary>
         private static void ResetView(CardView view)
         {
             view.SetHighlight(CardHighlight.None);
@@ -62,6 +62,12 @@ namespace Card.Presentation.Battle
             if (fade != null)
             {
                 fade.Stop();
+            }
+
+            CardMotionView motion = view.GetComponent<CardMotionView>();
+            if (motion != null)
+            {
+                motion.Stop();
             }
 
             CanvasGroup group = view.GetComponent<CanvasGroup>();
