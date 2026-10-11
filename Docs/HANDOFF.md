@@ -34,10 +34,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 项目 | `Card`：炉石式回合制卡牌游戏（Unity 2022.3 LTS），仓库 `E:\Unity\Project\CardReborn`（GitHub: `https://github.com/Yewatermelon/CardReborn.git`） |
-| 当前阶段 | **阶段一（PVE）已完成 M0–M7（M7 AI 难度分级通过 2026-10-10，三档难度胜率单调验证）；下一步 M8/M9/M12 可并行（M11 联网已提前启动）** |
+| 当前阶段 | **阶段一（PVE）M0–M7 已完成；阶段二（联网）M11/M12/M13 已完成（M13 复盘已归档 2026-10-12）——权威宿主 + 状态同步的本机双进程联网全链路就绪；下一步 M14 双人验证与体验打磨（7 任务），M8/M9/M10 未开始** |
 | 交付方式 | 每个任务一张任务卡（`Docs/tasks/`）+ 先写测试 + 双环境验证 + 提交里带证据 |
-| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环**、**可游玩的 Battle 场景（主菜单开局 / 点击出牌与攻击指向 / 英雄技能 / 双人热座视角切换 / 胜负结算与再来一局 / 中文卡面文本）**、**PVE 人机对战（分帧驱动 AI 回合 + 三档难度 Easy/Normal/Hard）**、命令录制重放、状态快照/增量、进程内回环、PlayMode 端到端冒烟；**AiVsAiSimulator（批量 500 局门禁 + 胜率统计 + 难度单调性验证）**；测试 **kernel 848 例 / Unity EditMode 1058 + PlayMode 4**、静态门禁、无 Unity 覆盖率工具链 |
-| 下一步第一件事 | 读 `Docs/02` 的 M8/M9 任务表 → 确定是做 M8 元游戏还是 M9 内容打磨；或按阶段二 M11 准备联网 |
+| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环**、**可游玩的 Battle 场景（主菜单开局 / 点击出牌与攻击指向 / 英雄技能 / 双人热座视角切换 / 胜负结算与再来一局 / 中文卡面文本）**、**PVE 人机对战（分帧驱动 AI 回合 + 三档难度 Easy/Normal/Hard）**、命令录制重放、状态快照/增量、PlayMode 端到端冒烟；**AiVsAiSimulator（批量 500 局门禁 + 胜率统计 + 难度单调性验证）**；**联网（M11–M13）：MatchHost 权威共享库、座位化广播、BCL TCP 直连传输、握手/心跳、命令 seq 幂等、StateDelta 增量下行 + 客户端版本裁决、快照回退重连、每座位视野裁剪、掉线判负/回合超时/MatchEnd 终态编排、消息异常注入防御**；测试 **kernel 958 / Unity EditMode 1178**、静态门禁、无 Unity 覆盖率工具链 |
+| 下一步第一件事 | 读 `Docs/02` 的 **M14 任务表**（§M14，346 行起）→ 写 M14-T1 任务卡（表现先行：本地即时反馈 + 权威落位 + 拒绝回退提示） |
 
 ## 2. 你的第一步（建议按顺序做）
 
@@ -47,23 +47,24 @@
    - `Tools/check.ps1`（静态门禁）
    - `Tools/check.ps1 -SelfTest`（门禁自身是否有效）
    - `Tools/coverage.ps1`（无 Unity 跑内核测试 + 覆盖率）
-4. 读 `Docs/02` 的 **M7 任务表**，写第一张任务卡，再动手。
+4. 读 `Docs/02` 的 **M14 任务表**，写第一张任务卡，再动手。
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-10（M7 收官 + M11-T2 MatchHost 落地）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-12（M13 收官 + 里程碑复盘归档）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 领先 `origin/main`（按用户要求未推送，推送需用户明确要求），工作区干净（HEAD 以 `git log -1` 为准） |
-| 里程碑 | M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10（`checkpoint/m3-complete`）、M4 ✅ 10/10（`checkpoint/m4-complete` 已推送远端）、M5 ✅ 8/8、M6 ✅ 5/5、**M7 ✅ 5/5 + 1 项再平衡**（2026-10-10 收官，含 M7-B1 英雄技能再平衡标定） |
-| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（1058 用例实跑验证）；无 Unity kernel 工程 0 warning |
-| 测试 | **Unity EditMode 1058 passed / 0 failed + PlayMode 4 passed / 0 failed**；无 Unity 工具链 **848 passed / 0 failed**（排除 Infrastructure 20 例） |
-| 覆盖率 | `0_Core 96.52%`、`Domain + Application 92.85%`（门禁 90% / 80%） |
-| 静态门禁 | `Tools/check.ps1` PASS（329 文件；R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef） |
+| 分支 / 提交 | `main` 已推送 `origin/main`（2026-10-12 用户要求推送，HEAD `ac63c9d` 后同步）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
+| 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9（2026-10-12 收官，[复盘](./reviews/M13-权威状态同步与裁剪-评审与复盘.md) 已归档）**；M8/M9/M10 ⬜ 未开始；M14 ⬜ 0/7（下一里程碑） |
+| 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**（1178 用例实跑验证）；无 Unity kernel 工程 0 warning |
+| 测试 | **Unity EditMode 1178 passed / 0 failed**；无 Unity 工具链 **kernel 958 passed / 0 failed**（每任务留证链：M13-T1～T9 为 1131→1139→1148→1156→1159→1162→1166→1172→1178） |
+| 覆盖率 | `0_Core 91.96%`、`Domain + Application 93.14%`（门禁 90% / 80%） |
+| 静态门禁 | `Tools/check.ps1` PASS（R1 内核解耦 / R2 编辑器 API / R3 隐式查找 / R4 日志 / R5 行数 / R6 asmdef；PeerSession.cs 281 行 / MatchHost 283+partial 合规铁律 10） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |
 | AI 能力 | `GreedyAiAgent`（贪心 + 可选难度 Profile）+ `AiVsAiSimulator`（批量 500 局门禁 + 胜率统计）+ 三档难度 Easy（劣化排序）/ Normal（贪心）/ Hard（评估函数 + 斩杀意识），同英雄镜像 200 局：Normal vs Easy 68.5%、Hard vs Normal 54.5% |
-| 未关闭项 | 无 P0/P1；P3：M7-T5-L1（SearchDepth ≥ 1 前瞻未实现）、M7-T5-L2（MistakeRate / RandomTarget 未真正实现）、M7-T5-L3（MainMenu 难度选择 UI 未做）、M7-T5-L4（FR-10.2 关卡配置化未做）、M9（4 英雄 / 60 卡 / 职业差异化） |
+| 联网能力 | 权威宿主 `MatchHost`（共享库）+ `PeerHost`（本机双进程 BCL TCP）+ 座位化广播/视野裁剪 + seq 幂等 + StateDelta/快照回退 + 终态编排（掉线判负/回合超时/MatchEnd）+ 异常注入防御；协议"只加不删"演进 |
+| 未关闭项 | 无 P0/P1；P3 登记见 [M13 复盘 §8](./reviews/M13-权威状态同步与裁剪-评审与复盘.md)（防刷/令牌/双方掉线作废/主机迁移/事件裁剪细化 → 阶段三；投降 UI/Error 帧 → M14-T6；M7-T5-L1～L4、M9 内容扩充沿用） |
 
 ## 4. 验证环境与命令（关键：两种跑法）
 
