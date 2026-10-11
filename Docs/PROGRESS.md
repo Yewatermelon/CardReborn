@@ -213,7 +213,7 @@
 
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
-| M13-T1 MatchHost 接线 | ✅ | 任务卡 [tasks/M13-T1-MatchHost接线.md](./tasks/M13-T1-MatchHost接线.md)；代码：`MatchHost.Attach(endpoint, seat)` 座位化 + `AttachedSeats`（hello 快照按端点座位投影）+ 新文件 `2_Network/HostBridge.cs`（Command 帧上行注入、snapshot/step 下行帧化为 MatchSnapshot/StateDelta，畸形载荷丢弃记日志不断摆）+ `PeerSession` 桥接装配与 `MatchStarted` 门控（开局前 Command 丢弃）+ `HandleReady` 触发开局快照 + `PeerHost` 本地座位 0 回环 / AcceptPeer 建桥 / `RunNetworkTick` 编排（会话泵→权威推进→桥接下行）；测试 9 例（MatchHostSeatTests 2 + HostBridgeTests 5 + PeerHostTickTests 2，后者真实 TCP 回环全链路）；kernel **911 passed / 0 failed**（基线 902 + 9），覆盖率 `0_Core 91.96%` / `Domain + App 93.02%`（≥ 门禁），`check.ps1` PASS；**待 Unity EditMode 实跑留证**（新增测试套件首提环境覆盖门禁） |
+| M13-T1 MatchHost 接线 | ✅ | 任务卡 [tasks/M13-T1-MatchHost接线.md](./tasks/M13-T1-MatchHost接线.md)；代码：`MatchHost.Attach(endpoint, seat)` 座位化 + `AttachedSeats`（hello 快照按端点座位投影）+ 新文件 `2_Network/HostBridge.cs`（Command 帧上行注入、snapshot/step 下行帧化为 MatchSnapshot/StateDelta，畸形载荷丢弃记日志不断摆）+ `PeerSession` 桥接装配与 `MatchStarted` 门控（开局前 Command 丢弃）+ `HandleReady` 触发开局快照 + `PeerHost` 本地座位 0 回环 / AcceptPeer 建桥 / `RunNetworkTick` 编排（会话泵→权威推进→桥接下行）；测试 9 例（MatchHostSeatTests 2 + HostBridgeTests 5 + PeerHostTickTests 2，后者真实 TCP 回环全链路）；kernel **911 passed / 0 failed**（基线 902 + 9），覆盖率 `0_Core 91.96%` / `Domain + App 93.02%`（≥ 门禁），`check.ps1` PASS；**Unity EditMode 实跑留证 1131 passed / 0 failed**（2026-10-11，新测试套件首提环境覆盖门禁通过；M12 网络测试经 M12-B1 修复后首次进入 Unity 编译并通过） |
 
 ---
 

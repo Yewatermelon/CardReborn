@@ -114,7 +114,7 @@ public void RunNetworkTick();         // 组合泵：session.Pump + bridge 双�
 
 ### 遗留与登记
 
-- 🔵 **待 Unity EditMode 实跑留证**（新测试套件首提环境覆盖门禁）——等用户 Test Runner 回报数字后关闭。
+- ✅ **Unity EditMode 实跑留证**：**1131 passed / 0 failed**（2026-10-11，用户 Test Runner 回报）——新测试套件首提环境覆盖门禁通过；M12 网络测试（此前被 M12-B1 静默排除）亦首次进入 Unity 编译并通过。
 - 🔵 **M13-OBS-1（P3）**：PeerHost.cs 298 行贴近 300 上限——T2 改造时把 PeerSession 拆分为独立文件。
 - 开局前 Command 帧当前仅丢弃 + 记日志；正式的拒绝语义（错误码回传客户端）归 T2/T9 范围。
 - ✅ **M12-B1（本卡验证期间发现并关闭）**：Unity 报 `PeerHostTickTests.cs(33,57) CS0246 PeerHost not found`。排查链：EditMode 测试 asmdef 引用正常 → Card.Network.asmdef 引用正常 → 源码 dotnet 编译 0 错 → 二进制检索 `Library/ScriptAssemblies/Card.Network.dll` 发现缺 `PeerHost`/`BclTcpTransport` 类型 → 定位 M12 批次手工生成 5 个 `.meta` 的 GUID 为 33/34 位（合法 32 位），Unity 拒绝导入并静默排除 `PeerHost.cs`/`BclTcpTransport.cs`/3 个网络测试文件。已重写 5 个 meta 为合法随机 GUID（全仓 462 个 meta 复扫 0 非 32 位、0 重复），登记 PROGRESS 未关闭问题表 M12-B1（已关闭）+ HANDOFF 已知坑 #12。
