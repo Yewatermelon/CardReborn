@@ -18,6 +18,9 @@ namespace Card.Network
         private readonly MatchHost _matchHost;
         private readonly BclTcpHostListener _listener;
         private readonly IClock _clock;
+        private readonly LoopbackEndpoint _localClientEndpoint;
+        private PeerSession? _session;
+        private HostBridge? _bridge;
         private bool _disposed;
 
         /// <summary>心跳间隔（权威 tick，10 Hz — 30 tick ≈ 3 秒）。</summary>
@@ -35,13 +38,22 @@ namespace Card.Network
         /// <summary>房主状态：Ready 后等待对手 Ready，双方 Ready 后自动开局。</summary>
         public bool HostReady { get; private set; }
 
+        /// <summary>房主本地客户端端点（座位 0）：房主 UI 发命令/收快照走此回环（M13-T1）。</summary>
+        public LoopbackEndpoint LocalClientEndpoint => _localClientEndpoint;
+
+        /// <summary>当前对手桥接器（AcceptPeer 后存在；M13-T1）。</summary>
+        public HostBridge? ActiveBridge => _bridge;
+
         /// <summary>
-        /// 创建房主宿主：监听指定端口（0 = OS 分配），内部持有 <see cref="MatchHost"/>。
+        /// 创建房主宿主：监听指定端口（0 = OS 分配），内部持有 <see cref="MatchHost"/>；
+        /// 同时把房主本地座位 0 的回环端点挂到权威。
         /// </summary>
         public PeerHost(MatchHost matchHost, IClock clock, int listenPort = 0)
         {
             _matchHost = matchHost;
             _clock = clock;
+            LoopbackLink.CreatePair(out LoopbackEndpoint hostKernelEp, out _localClientEndpoint);
+            matchHost.Attach(hostKernelEp, HostSeat);
             _listener = BclTcpTransport.Listen(listenPort);
         }
 
@@ -51,12 +63,31 @@ namespace Card.Network
             HostReady = true;
         }
 
-        /// <summary>房主侧 Accept 一条对手连接（阻塞）。返回 PeerSession 处理握手和对局通信。</summary>
+        /// <summary>
+        /// 房主侧 Accept 一条对手连接（阻塞）。返回 PeerSession；同时建立座位 1 的
+        /// 桥接器（网络帧 ↔ 权威上行/下行，M13-T1）。
+        /// </summary>
         public PeerSession? AcceptPeer()
         {
             ITransport? transport = _listener.Accept();
             if (transport == null) return null;
-            return new PeerSession(_matchHost, transport, _clock, peerSeat: 1);
+
+            LoopbackLink.CreatePair(out LoopbackEndpoint peerKernelEp, out LoopbackEndpoint peerBridgeEp);
+            _matchHost.Attach(peerKernelEp, 1);
+            _bridge = new HostBridge(peerBridgeEp, transport, seat: 1);
+            _session = new PeerSession(_matchHost, transport, _clock, peerSeat: 1, bridge: _bridge);
+            return _session;
+        }
+
+        /// <summary>
+        /// 网络权威 tick（M13-T1）：会话泵（握手/心跳/命令转发）→ 权威推进 → 桥接下行。
+        /// 由宿主侧按固定节奏驱动（Docs/05 §4.3）。
+        /// </summary>
+        public void RunNetworkTick()
+        {
+            _session?.Pump();
+            _matchHost.Pump();
+            _bridge?.PumpKernelToNetwork();
         }
 
         public void Dispose()
@@ -81,18 +112,21 @@ namespace Card.Network
         private readonly ITransport _transport;
         private readonly IClock _clock;
         private readonly int _peerSeat;
+        private readonly HostBridge? _bridge;
         private readonly NetworkDiagnostics? _diag;
         private bool _handshook;
         private bool _peerReady;
         private int _lastActivityTick;
         private bool _timedOut;
 
-        public PeerSession(MatchHost matchHost, ITransport transport, IClock clock, int peerSeat, NetworkDiagnostics? diag = null)
+        public PeerSession(MatchHost matchHost, ITransport transport, IClock clock, int peerSeat,
+            HostBridge? bridge = null, NetworkDiagnostics? diag = null)
         {
             _matchHost = matchHost;
             _transport = transport;
             _clock = clock;
             _peerSeat = peerSeat;
+            _bridge = bridge;
             _diag = diag;
             _lastActivityTick = clock.CurrentTick;
         }
@@ -102,6 +136,9 @@ namespace Card.Network
 
         /// <summary>握手是否完成（Hello ↔ HelloAck 已交换）。</summary>
         public bool Handshook => _handshook;
+
+        /// <summary>对局是否已开始（握手完成且对手 Ready；M13-T1 起 Command 帧仅在此后转发）。</summary>
+        public bool MatchStarted => _handshook && _peerReady;
 
         /// <summary>是否因超时判定断开。</summary>
         public bool TimedOut => _timedOut;
@@ -155,8 +192,12 @@ namespace Card.Network
                         HandlePong();
                         _diag?.Record(NetworkEventType.PongReceived);
                         break;
+                    case NetworkMessageType.Command:
+                        HandleCommand(msg);
+                        break;
                     default:
-                        // Command 等对局消息——暂不处理，M13 接入 MatchHost 上行
+                        // 未知上行类型——记录并忽略（T9 完善异常注入矩阵）
+                        NetworkLogger.Warn($"PeerSession 收到未知消息类型 {msg.Type}：peerSeat={_peerSeat}");
                         break;
                 }
             }
@@ -213,7 +254,20 @@ namespace Card.Network
                 .Add("peerSeat", JsonValue.From(_peerSeat));
             _transport.Send(MessageCodec.Frame(NetworkMessageType.MatchStart, MessageCodec.CurrentProtocolVersion, start.ToJson()));
             _diag?.Record(NetworkEventType.MatchStartSent);
+            // M13-T1：开局快照——桥接器向权威注入 hello，权威 Pump 后回按座位投影的快照
+            _bridge?.NotifyMatchStarted();
             NetworkLogger.Info($"PeerSession 对局开始：peerSeat={_peerSeat}");
+        }
+
+        private void HandleCommand(RawMessage msg)
+        {
+            if (!MatchStarted || _bridge == null)
+            {
+                NetworkLogger.Warn($"PeerSession 丢弃开局前 Command 帧：peerSeat={_peerSeat}");
+                return;
+            }
+
+            _bridge.ForwardCommand(msg);
         }
 
         private void HandlePing(RawMessage msg)

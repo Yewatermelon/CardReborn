@@ -15,6 +15,8 @@ namespace Card.Application.Match
     {
         private readonly MatchController _controller;
         private readonly List<LoopbackEndpoint> _endpoints = new List<LoopbackEndpoint>();
+        private readonly Dictionary<LoopbackEndpoint, int> _seats = new Dictionary<LoopbackEndpoint, int>();
+        private readonly List<int> _attachedSeats = new List<int>();
         private ulong _stateVersion;
 
         public MatchHost(MatchController controller)
@@ -28,11 +30,22 @@ namespace Card.Application.Match
         /// <summary>对局是否已结束（代理 MatchController.IsFinished）。</summary>
         public bool IsFinished => _controller.IsFinished;
 
-        /// <summary>挂载一个客户端端点（宿主侧）。</summary>
+        /// <summary>已挂载端点的座位列表（M13-T1：快照按座位投影）。</summary>
+        public IReadOnlyList<int> AttachedSeats => _attachedSeats;
+
+        /// <summary>挂载一个客户端端点（宿主侧），默认座位 0（M11 兼容）。</summary>
         public void Attach(LoopbackEndpoint endpoint)
+        {
+            Attach(endpoint, 0);
+        }
+
+        /// <summary>挂载一个客户端端点并绑定座位 Id（M13-T1：投影与裁剪按座位）。</summary>
+        public void Attach(LoopbackEndpoint endpoint, int seatPlayerId)
         {
             Guard.NotNull(endpoint, nameof(endpoint));
             _endpoints.Add(endpoint);
+            _seats[endpoint] = seatPlayerId;
+            _attachedSeats.Add(seatPlayerId);
         }
 
         /// <summary>处理全部端点的待收上行消息；返回处理条数。</summary>
@@ -78,8 +91,8 @@ namespace Card.Application.Match
 
         private void ProcessHello(LoopbackEndpoint endpoint)
         {
-            // M11 identity：PlayerViewProjector 不裁，直接返回全量
-            MatchState viewState = PlayerViewProjector.Project(_controller.State, observerPlayerId: 0);
+            // M13-T1：按端点座位投影（M11 identity 实现，M13-T6 落地真实裁剪）
+            MatchState viewState = PlayerViewProjector.Project(_controller.State, _seats[endpoint]);
             Send(endpoint, WriteSnapshot(viewState));
         }
 
