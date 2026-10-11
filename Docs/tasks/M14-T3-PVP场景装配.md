@@ -192,12 +192,17 @@ internal sealed class PvpLobbyFlow
 
 ### 11.2 验证证据
 
-- 先红：NetworkMatchClientTests CS0246 → 后绿 kernel **985 passed / 0 failed**（基线 967 + 15）；覆盖率 `0_Core 91.96% / Domain + App 93.23%` 达标，coverage.ps1 PASS。
+- 先红：NetworkMatchClientTests CS0246 → 后绿 kernel **982 passed / 0 failed**（基线 967 + 15）；覆盖率 `0_Core 91.96% / Domain + App 93.23%` 达标，coverage.ps1 PASS。（勘误：本节原记"985"为笔误，967+15=982，2026-10-12 修复轮实测校准）
 - 静态门禁：check.ps1 PASS（391 文件，0 违规）；全仓 **503** meta GUID 全唯一、恰 32 位十六进制。
 - 本地预编译拦截（新增手段：临时 csproj 引引擎 dll 全量编译 0_Core→5_Bootstrap + 全部 EditMode 测试，0 警告 0 错误）：**首轮拦下 6 个真问题**——tracker.Clear 重复定义（CS0111）、NetMatchLink/PvpLobbyFlow/NetMatchDriver/partial 缺 using、PvpLobbyUi 事件外部不可 Invoke（event→Action 属性）——Presentation/Bootstrap 测试"本地拦不住"缺陷的工程化闭环。
 - 测试矩阵：kernel NetworkMatchClientTests 15（握手/版本门/Ready/快照增量分发/命令信封/Ping-Pong/畸形帧/未知帧/断链/Dispose）；Unity-only PvpNetFlowTests 6（**真实 TCP 回环端到端**：双向座位快照+版本一致 / Ready-M12 语义 / 命令交替推进 / 拒绝不推版本 / Forfeit 终局 / sink 在途裁决）+ PvpLobbyFlowTests 8（fake 链路状态机）+ PvpCommandSinkTests 6（seq/信封/登记/卡视觉）+ PvpLobbyUiTests 5（标注文案/阶段/状态色/地址/事件路由）。
 - **待用户实跑**：Unity EditMode Test Runner 预期 **1270 passed / 0 failed**（基线 1230 + kernel 15 + Unity-only 25）。
 - Unity 侧编译警告修复（2026-10-12）：`BindNetFeedback`/`BindNetInput` 补 `_ui` 非空 guard（CS8602×2，跨方法调用后字段可空收窄失效）+ `HostNetLink.MatchEnded` 占位事件 pragma 压制（CS0067，接口统一性有意不触发——房主终局经 step 路径，见 §11.3 决策 4）；临时 csproj 全量预编译复验 **0 警告 0 错误**。
+- **Unity EditMode 复跑 1264 passed / 6 failed 归因与修复**（2026-10-12，三提交链后）：
+  - **缺陷 M14-T3-B1**（[BclTcpTransport.cs](Assets/_Project/2_Network/BclTcpTransport.cs)）：对端 RST（"远程主机强迫关闭"）时本端 `_connected` 仍为 true → M12-B2 的 `catch (…) when (!_connected)` 过滤器失效 → IOException 逃逸接收线程顶层 → Unity 记 Exception 日志判 `EndToEnd_Forfeit` 失败（M12-B2 修复不完整，kernel 不暴露同款）。修复：三类 IO 异常在接收循环语境一律静默断链（finally Dispose → Disconnected 事件）；kernel +1 防回归用例 `PeerReset_NoExceptionEscapes_ServerDetectsDisconnect`（LingerOption(true,0) 制造 RST，断言静默断链；"无逃逸日志"断言仅 Unity 口径可判）。
+  - **缺陷 M14-T3-B2**（[PvpLobbyFlow.cs](Assets/_Project/5_Bootstrap/Battle/Net/PvpLobbyFlow.cs)）：① fake 工厂路径不写 `ListenAddress`（真实路径才有）→ `CreateAsHost_Success` 断言 null 失败——修复：CreateAsHost 成功后统一 `ListenAddress ??= 127.0.0.1:{port}`（状态文本同样依赖）；② Ready 动作无角色 guard，同一 `_link` 被两个动作重复发送 → `ReadyActions_ForwardToLink` 暴露——修复：MarkHostReady 仅房主角色 / SendJoinerReady 仅加入方角色生效；测试同步拆双 flow 验证互不串扰。
+  - **测试修正 ×2**（非实现缺陷）：`Buttons_RouteToEvents` 按钮路径漏 `ChooseGroup` 层级；`PumpUntil` 纯忙循环饿死 `BclTcpTransport.ReceiveLoop` 后台线程 → 真实 TCP 的快照/回执迟到（`EndToEnd_Handshake`/`EndToEnd_CommandSink` 失败）——补 `Thread.Sleep(1)` 让渡（kernel 无此问题：Bootstrap 测试不进 kernel，M14-T3 前仅编译验证过）。
+  - 复验：kernel **983 passed / 0 failed**（982 + 1 防回归），临时 csproj 全量预编译 0 警告 0 错误，check.ps1 PASS；Unity 复跑预期 **1271 passed / 0 failed**（1264 + 6 修复 + 1 新用例）。
 
 ### 11.3 设计决策（装配期裁定）
 
