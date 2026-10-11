@@ -66,11 +66,19 @@ namespace Card.Network
         /// <summary>
         /// 房主侧 Accept 一条对手连接（阻塞）。返回 PeerSession；同时建立座位 1 的
         /// 桥接器（网络帧 ↔ 权威上行/下行，M13-T1）。
+        /// 重连接管（M13-T7）：已有旧会话时先从权威摘除旧桥接端点（旧连接不再收广播），
+        /// 同一座位以新会话重建——重连恢复由握手后的 RequestSnapshot 驱动。
         /// </summary>
         public PeerSession? AcceptPeer()
         {
             ITransport? transport = _listener.Accept();
             if (transport == null) return null;
+
+            if (_bridge != null)
+            {
+                _matchHost.Detach(_bridge.KernelEndpoint);
+                NetworkLogger.Info($"PeerHost 重连接管：旧座位 {_bridge.Seat} 端点已摘除");
+            }
 
             LoopbackLink.CreatePair(out LoopbackEndpoint peerKernelEp, out LoopbackEndpoint peerBridgeEp);
             _matchHost.Attach(peerKernelEp, 1);

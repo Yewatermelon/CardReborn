@@ -20,6 +20,7 @@ namespace Card.Network
         private readonly NetworkDiagnostics? _diag;
         private bool _handshook;
         private bool _peerReady;
+        private bool _matchActive;
         private int _lastActivityTick;
         private bool _timedOut;
 
@@ -41,8 +42,8 @@ namespace Card.Network
         /// <summary>握手是否完成（Hello ↔ HelloAck 已交换）。</summary>
         public bool Handshook => _handshook;
 
-        /// <summary>对局是否已开始（握手完成且对手 Ready；M13-T1 起 Command 帧仅在此后转发）。</summary>
-        public bool MatchStarted => _handshook && _peerReady;
+        /// <summary>对局是否已开始（首次握手对手 Ready；或重连快照恢复后激活，M13-T7）。</summary>
+        public bool MatchStarted => _handshook && (_peerReady || _matchActive);
 
         /// <summary>是否因超时判定断开。</summary>
         public bool TimedOut => _timedOut;
@@ -98,6 +99,9 @@ namespace Card.Network
                         break;
                     case NetworkMessageType.Command:
                         HandleCommand(msg);
+                        break;
+                    case NetworkMessageType.RequestSnapshot:
+                        HandleRequestSnapshot(msg);
                         break;
                     default:
                         // 未知上行类型——记录并忽略（T9 完善异常注入矩阵）
@@ -171,7 +175,24 @@ namespace Card.Network
                 return;
             }
 
-            _bridge.ForwardCommand(msg);
+            _bridge.ForwardUplink(msg);
+        }
+
+        /// <summary>
+        /// 快照请求（M13-T7）：握手后有效——重连恢复与版本冲突共用，载荷直达权威
+        /// （kind=snapshot_request），权威回按座位裁剪的当前版本快照。未握手丢弃记日志。
+        /// </summary>
+        private void HandleRequestSnapshot(RawMessage msg)
+        {
+            if (!_handshook || _bridge == null)
+            {
+                NetworkLogger.Warn($"PeerSession 丢弃握手前 RequestSnapshot：peerSeat={_peerSeat}");
+                return;
+            }
+
+            _matchActive = true; // 重连恢复即对局激活（无 Ready 二次握手），后续 Command 放行
+            _diag?.Record(NetworkEventType.SnapshotRequestReceived, $"peerSeat={_peerSeat}");
+            _bridge.ForwardUplink(msg);
         }
 
         private void HandlePing(RawMessage msg)

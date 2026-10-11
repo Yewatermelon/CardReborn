@@ -159,6 +159,50 @@ namespace Card.Tests.EditMode.Match
         }
 
         // -----------------------------------------------------------------
+        // M13-T7 AC-3: Detach——摘除端点后广播不再送达（重连清理）
+        // -----------------------------------------------------------------
+
+        [Test]
+        public void Detach_RemovedEndpoint_StopsReceivingBroadcasts()
+        {
+            MatchController controller = NewController();
+            MatchHost host = new MatchHost(controller);
+
+            LoopbackLink.CreatePair(out LoopbackEndpoint s0, out LoopbackEndpoint c0);
+            LoopbackLink.CreatePair(out LoopbackEndpoint s1, out LoopbackEndpoint c1);
+            host.Attach(s0, 0);
+            host.Attach(s1, 1);
+            c0.Send("{\"kind\":\"hello\"}");
+            c1.Send("{\"kind\":\"hello\"}");
+            host.Pump();
+            Assert.That(c0.TryReceive(out _), Is.True);
+            Assert.That(c1.TryReceive(out _), Is.True);
+
+            // 模拟重连：座位 0 旧端点摘除，新端点挂入
+            host.Detach(s0);
+            Assert.That(host.AttachedSeats, Is.EqualTo(new[] { 1 }), "座位映射应同步移除");
+            LoopbackLink.CreatePair(out LoopbackEndpoint s0New, out LoopbackEndpoint c0New);
+            host.Attach(s0New, 0);
+            c0New.Send("{\"kind\":\"hello\"}");
+            host.Pump();
+            Assert.That(c0New.TryReceive(out _), Is.True, "新端点应收到快照");
+
+            void EndTurnFrom(int seat, LoopbackEndpoint actorEp)
+            {
+                SendCommand(actorEp, new EndTurnCommand(seat));
+                host.Pump();
+                actorEp.TryReceive(out _);
+                c1.TryReceive(out _);
+                c0New.TryReceive(out _);
+                Assert.That(c0.TryReceive(out _), Is.False, "已摘除端点不应再收到任何广播");
+            }
+
+            int first = controller.State.ActivePlayerId;
+            EndTurnFrom(first, first == 0 ? c0New : c1);
+            EndTurnFrom(1 - first, (1 - first) == 0 ? c0New : c1);
+        }
+
+        // -----------------------------------------------------------------
         // 辅助
         // -----------------------------------------------------------------
 

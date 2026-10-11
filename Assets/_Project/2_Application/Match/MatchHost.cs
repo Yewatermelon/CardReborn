@@ -51,6 +51,21 @@ namespace Card.Application.Match
             _attachedSeats.Add(seatPlayerId);
         }
 
+        /// <summary>
+        /// 摘除端点（M13-T7 重连清理）：此后广播不再送达该端点；座位映射与 AttachedSeats 同步移除。
+        /// 未挂载的端点为无操作。
+        /// </summary>
+        public void Detach(LoopbackEndpoint endpoint)
+        {
+            Guard.NotNull(endpoint, nameof(endpoint));
+            if (_seats.TryGetValue(endpoint, out int seat))
+            {
+                _seats.Remove(endpoint);
+                _endpoints.Remove(endpoint);
+                _attachedSeats.Remove(seat);
+            }
+        }
+
         /// <summary>处理全部端点的待收上行消息；返回处理条数。</summary>
         public int Pump()
         {
@@ -121,7 +136,7 @@ namespace Card.Application.Match
             }
 
             // M13-T3 信封级校验 ③：seq 缺省 = 无序号模式（兼容 M11/T2 客户端）；非法值按信封畸形拒绝
-            if (!TryReadSeq(json, out int? seq))
+            if (!MatchHostProtocol.TryReadSeq(json, out int? seq))
             {
                 Reject(CommandError.UnknownCommand, "command 信封 seq 字段非法（应为 ≥1 的整数）。");
                 return;
@@ -148,7 +163,7 @@ namespace Card.Application.Match
                 return false;
             }
 
-            if (seq == inbox.LastSeq && inbox.MatchesLastPayload(ExtractPayloadJson(json)))
+            if (seq == inbox.LastSeq && inbox.MatchesLastPayload(MatchHostProtocol.ExtractPayloadJson(json)))
             {
                 endpoint.Send(inbox.LastStepJson);   // 幂等回执：不执行、不推进版本
                 return true;
@@ -197,7 +212,7 @@ namespace Card.Application.Match
 
             if (inbox != null && seq.HasValue)
             {
-                inbox.Record(seq.Value, ExtractPayloadJson(envelope), steps[command.PlayerId]);
+                inbox.Record(seq.Value, MatchHostProtocol.ExtractPayloadJson(envelope), steps[command.PlayerId]);
             }
         }
 
@@ -238,35 +253,8 @@ namespace Card.Application.Match
         }
 
         // -----------------------------------------------------------------
-        // 私有：信封 seq 与收件箱（M13-T3）
+        // 私有：端点收发
         // -----------------------------------------------------------------
-
-        /// <summary>读取信封 seq：缺省 = 无序号模式（true + null）；存在但非 ≥1 整数 = false。</summary>
-        private static bool TryReadSeq(JsonValue json, out int? seq)
-        {
-            if (!json.TryGetMember("seq", out JsonValue value))
-            {
-                seq = null;
-                return true;
-            }
-
-            if (value.Kind == JsonKind.Number && value.IntValue >= 1)
-            {
-                seq = value.IntValue;
-                return true;
-            }
-
-            seq = null;
-            return false;
-        }
-
-        /// <summary>提取 payload 原文（幂等比对键：载荷逐字节一致才算重复包）。</summary>
-        private static string ExtractPayloadJson(JsonValue envelope)
-        {
-            return envelope.TryGetMember("payload", out JsonValue payload)
-                ? payload.ToJson()
-                : string.Empty;
-        }
 
         private SeatCommandInbox GetInbox(int seat)
         {
@@ -278,10 +266,6 @@ namespace Card.Application.Match
 
             return inbox;
         }
-
-        // -----------------------------------------------------------------
-        // 私有：端点收发
-        // -----------------------------------------------------------------
 
         private void Send(LoopbackEndpoint endpoint, JsonValue message)
         {

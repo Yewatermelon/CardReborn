@@ -110,5 +110,36 @@ namespace Card.Application.Match
 
             return items;
         }
+
+        // -----------------------------------------------------------------
+        // 命令信封辅助（M13-T3，自 MatchHost 挪入保单文件 ≤300 行）
+        // -----------------------------------------------------------------
+
+        /// <summary>读取信封 seq：缺省 = 无序号模式（true + null）；存在但非 ≥1 整数 = false。</summary>
+        public static bool TryReadSeq(JsonValue json, out int? seq)
+        {
+            if (!json.TryGetMember("seq", out JsonValue value))
+            {
+                seq = null;
+                return true;
+            }
+
+            if (value.Kind == JsonKind.Number && value.IntValue >= 1)
+            {
+                seq = value.IntValue;
+                return true;
+            }
+
+            seq = null;
+            return false;
+        }
+
+        /// <summary>提取 payload 原文（幂等比对键：载荷逐字节一致才算重复包）。</summary>
+        public static string ExtractPayloadJson(JsonValue envelope)
+        {
+            return envelope.TryGetMember("payload", out JsonValue payload)
+                ? payload.ToJson()
+                : string.Empty;
+        }
     }
 }

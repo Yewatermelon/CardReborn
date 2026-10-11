@@ -20,6 +20,7 @@ namespace Card.Network
         Command = 10,        // C→S：GameCommand（序号+回合+内容）
         StateDelta = 11,     // S→C：版本 + 增量 + 事件
         MatchSnapshot = 12,  // S→C：全量快照（重连/版本冲突）
+        RequestSnapshot = 23, // C→S：本地版本号（重连恢复 / 版本冲突，M13-T7 帧化接线）
 
         // 结束/错误
         MatchEnd = 20,       // S→C：胜负 + 结束原因

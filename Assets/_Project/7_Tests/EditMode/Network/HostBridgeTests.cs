@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Card.Application.Match;
 using Card.Core;
 using Card.Domain.Config;
@@ -91,7 +91,7 @@ namespace Card.Tests.EditMode.Network
             StartMatch();
             int activeId = _controller.State.ActivePlayerId;
 
-            _bridge.ForwardCommand(new RawMessage(
+            _bridge.ForwardUplink(new RawMessage(
                 NetworkMessageType.Command,
                 MessageCodec.CurrentProtocolVersion,
                 WriteUplink(new EndTurnCommand(activeId))));
@@ -116,7 +116,7 @@ namespace Card.Tests.EditMode.Network
             StartMatch();
             int otherId = 1 - _controller.State.ActivePlayerId;
 
-            _bridge.ForwardCommand(new RawMessage(
+            _bridge.ForwardUplink(new RawMessage(
                 NetworkMessageType.Command,
                 MessageCodec.CurrentProtocolVersion,
                 WriteUplink(new EndTurnCommand(otherId))));
@@ -139,7 +139,7 @@ namespace Card.Tests.EditMode.Network
         {
             StartMatch();
 
-            Assert.DoesNotThrow(() => _bridge.ForwardCommand(new RawMessage(
+            Assert.DoesNotThrow(() => _bridge.ForwardUplink(new RawMessage(
                 NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, "{not valid json")));
             Assert.DoesNotThrow(() => _host.Pump());
             Assert.That(_bridge.PumpKernelToNetwork(), Is.EqualTo(0));
@@ -155,7 +155,7 @@ namespace Card.Tests.EditMode.Network
         {
             StartMatch();
 
-            Assert.DoesNotThrow(() => _bridge.ForwardCommand(new RawMessage(
+            Assert.DoesNotThrow(() => _bridge.ForwardUplink(new RawMessage(
                 NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, "{\"kind\":\"bogus\"}")));
             Assert.DoesNotThrow(() => _host.Pump());
             Assert.That(_bridge.PumpKernelToNetwork(), Is.EqualTo(0));
@@ -171,7 +171,7 @@ namespace Card.Tests.EditMode.Network
         {
             StartMatch();
 
-            Assert.DoesNotThrow(() => _bridge.ForwardCommand(new RawMessage(
+            Assert.DoesNotThrow(() => _bridge.ForwardUplink(new RawMessage(
                 NetworkMessageType.Command, MessageCodec.CurrentProtocolVersion, "{\"kind\":\"command\"}")));
             Assert.DoesNotThrow(() => _host.Pump());
             _bridge.PumpKernelToNetwork();

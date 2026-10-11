@@ -23,6 +23,7 @@ namespace Card.Network
         ProtocolVersionMismatch,
         SendError,
         ReceiveFrame,
+        SnapshotRequestReceived,
         SendFrame
     }
 

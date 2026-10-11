@@ -27,6 +27,12 @@ namespace Card.Network
             _diag = diag;
         }
 
+        /// <summary>本桥接器服务的座位。</summary>
+        public int Seat => _seat;
+
+        /// <summary>权威侧回环端点（M13-T7：PeerHost 重连接管时据此从权威 Detach 旧端点）。</summary>
+        public LoopbackEndpoint KernelEndpoint => _kernelEndpoint;
+
         /// <summary>
         /// 对局开始通知：向权威注入 hello 上行，权威下一次 Pump 会回一条按座位投影的开局快照。
         /// </summary>
@@ -36,13 +42,14 @@ namespace Card.Network
         }
 
         /// <summary>
-        /// 转发已解帧的 Command 消息到权威上行。载荷非法（畸形 JSON / 未知 kind）时丢弃并记日志。
+        /// 转发已解帧的上行消息到权威（M13-T7：command 与 snapshot_request 两种 kind）。
+        /// 载荷非法（畸形 JSON / 未知 kind）时丢弃并记日志。
         /// </summary>
-        public void ForwardCommand(RawMessage message)
+        public void ForwardUplink(RawMessage message)
         {
             if (!TryValidateUplink(message.PayloadJson, out string reason))
             {
-                NetworkLogger.Warn($"HostBridge 丢弃非法 Command 帧：seat={_seat}，原因：{reason}");
+                NetworkLogger.Warn($"HostBridge 丢弃非法上行帧：seat={_seat}，原因：{reason}");
                 return;
             }
 
@@ -95,7 +102,7 @@ namespace Card.Network
                 return false;
             }
 
-            if (kind.StringValue != "command")
+            if (kind.StringValue != "command" && kind.StringValue != "snapshot_request")
             {
                 reason = "未知 kind：\"" + kind.StringValue + "\"。";
                 return false;
