@@ -25,6 +25,7 @@ namespace Card.Tests.EditMode.Bootstrap
             GameLog.ResetForTests();
             BootLogging.ResetForTests();
             _directory = Path.Combine(Path.GetTempPath(), "CardBootLoggingTests-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_directory);
         }
 
         [TearDown]
@@ -72,8 +73,19 @@ namespace Card.Tests.EditMode.Bootstrap
             Assert.That(Directory.Exists(_directory), Is.True);
             string[] logs = Directory.GetFiles(_directory, "*.log");
             Assert.That(logs, Has.Length.EqualTo(1));
-            string content = File.ReadAllText(logs[0]);
+            string content = ReadAllTextShared(logs[0]);
             Assert.That(content, Does.Contain("[Info][Boot] 日志落盘已启用"));
+        }
+
+        /// <summary>共享读：BootLogging 的 StreamWriter 持有写入句柄（FileShare.Read），
+        /// File.ReadAllText 的 FileShare.Read 与既有写句柄冲突（Sharing violation），须放宽共享。</summary>
+        private static string ReadAllTextShared(string path)
+        {
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         [Test]

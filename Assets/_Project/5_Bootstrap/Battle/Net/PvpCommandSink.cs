@@ -49,9 +49,15 @@ namespace Card.Bootstrap.Battle.Net
             return CommandResult.Valid();
         }
 
-        /// <summary>预检需要目标的无目标命令；命中返回 TargetRequired，否则 null 放行。</summary>
+        /// <summary>预检需要目标的无目标命令；命中返回 TargetRequired，否则 null 放行。
+        /// 快照未就绪时本地视图不可用，无法判定目标需求 → 放行交权威裁决（不抛，不猜）。</summary>
         private CommandError? Preflight(IGameCommand command)
         {
+            if (!_driver.HasSnapshot)
+            {
+                return null;
+            }
+
             if (command is PlayCardCommand play && play.Target.IsNone
                 && FindHandCard(play.PlayerId, play.CardInstanceId) is CardInstance card
                 && _database.RequireCard(card.CardKey).TargetRule != TargetRule.None)
