@@ -53,6 +53,7 @@ namespace Card.Bootstrap.Battle
 
         private void Start()
         {
+            BootLogging.ConfigureOnce();
             string mode = PlayerPrefs.GetString(GameModePrefKey, PvpMode);
             if (mode == PvpNetMode)
             {

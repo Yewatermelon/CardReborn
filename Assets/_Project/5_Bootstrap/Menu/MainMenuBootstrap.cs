@@ -18,6 +18,7 @@ namespace Card.Bootstrap.Menu
 
         private void Start()
         {
+            BootLogging.ConfigureOnce();
             Battle.SceneCamera.Ensure();
             Battle.UiEventSystem.Ensure();
 

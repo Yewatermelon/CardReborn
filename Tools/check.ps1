@@ -114,6 +114,13 @@ $LogPatterns = @(
     @{ Name = 'Debug.Log'; Regex = '\bDebug\.(Log|LogWarning|LogError|LogFormat|LogException)\b' }
 )
 
+# R4 allowlist: the GameLog sink backend (console bridge) must call Debug.Log* to
+# emit level-split console output; R4 targets business logging, not the sink itself.
+# Exact relative-path match only.
+$LogAllowlist = @(
+    '5_Bootstrap\BootLogging.cs'
+)
+
 # ------------------------------------------------------------- helper funcs --
 
 function Get-RelativePath {
@@ -301,7 +308,11 @@ function Get-GateViolations {
     Test-Patterns -List $violations -Files $kernelFiles -Patterns $KernelPatterns -RuleId 'R1' -ProjectPath $ProjectPath
     Test-Patterns -List $violations -Files $runtimeFiles -Patterns $EditorPatterns -RuleId 'R2' -ProjectPath $ProjectPath
     Test-Patterns -List $violations -Files $runtimeFiles -Patterns $LookupPatterns -RuleId 'R3' -ProjectPath $ProjectPath
-    Test-Patterns -List $violations -Files $allFiles -Patterns $LogPatterns -RuleId 'R4' -ProjectPath $ProjectPath
+    $logFiles = @($allFiles | Where-Object {
+        $relative = Get-RelativePath -FullPath $_.FullName -RootPath $ProjectPath
+        -not ($LogAllowlist -contains $relative)
+    })
+    Test-Patterns -List $violations -Files $logFiles -Patterns $LogPatterns -RuleId 'R4' -ProjectPath $ProjectPath
 
     foreach ($file in $allFiles) {
         $count = (Get-TextLines -Path $file.FullName).Count
