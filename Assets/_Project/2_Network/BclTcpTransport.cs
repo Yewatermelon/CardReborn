@@ -164,6 +164,7 @@ namespace Card.Network
             }
             catch (IOException) when (!_connected) { }
             catch (SocketException) when (!_connected) { }
+            catch (ObjectDisposedException) when (!_connected) { }
             finally
             {
                 Dispose();
