@@ -26,9 +26,9 @@
 
 | 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
 | --- | --- | --- | --- | --- |
-| M11 权威运行时与状态序列化 | ⬜ 未开始 | 0/8 | — | 阶段二硬门槛：无 Unity 可跑完整对局 |
-| M12 本机双进程与直连传输 | ⬜ 未开始 | 0/9 | — | BCL TCP，零新依赖 |
-| M13 权威状态同步与裁剪 | ⬜ 未开始 | 0/9 | — | 状态同步核心 |
+| M11 权威运行时与状态序列化 | ✅ 完成（2026-10-10 补记） | 8/8 | 无 Unity 跑完整对局（kernel 门禁实证） | 提交 a501425…953b4f5 |
+| M12 本机双进程与直连传输 | ✅ 完成（2026-10-10 补记） | 9/9 | 双进程握手全流程 + 心跳超时 + 角色切换 | BCL TCP 零依赖；提交 61751b4…1e4c248 |
+| M13 权威状态同步与裁剪 | 🔶 进行中 | 1/9 | — | T1 完成 |
 | M14 双人验证与体验打磨 | ⬜ 未开始 | 0/7 | — | — |
 
 > **阶段三（未来，暂不做）**：专用服务器、公网对战、匹配服务、NAT 穿透与中继、反作弊加固、客户端预测与和解、主机迁移。
@@ -183,12 +183,47 @@
 
 ---
 
+## M11 任务级状态（已完成 8/8，2026-10-10 补记）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M11-T1 内核解耦审计 | ✅ | `check.ps1` R1/R6 扫描 0 违规；快照补 `NextInstanceId`（FormatVersion 2，提交 a501425，关闭 M4-OBS-2 隐患） |
+| M11-T2 MatchHost 权威运行时（共享库） | ✅ | 提交 a9e800d：`2_Application/Match/MatchHost.cs`（IMatchHost + Loopback 端点 + step 广播）+ PlayerViewProjector 框架 + 12 例 kernel 测试 |
+| M11-T3 环境抽象接线 | ✅ | M1 已交付 `GameLog`/`IClock`/`IRandomProvider` 注入点；AiVsAiSimulator 实证无 Unity 复用 |
+| M11-T4 状态序列化 | ✅ | M3-T9 `MatchStateSerializer` 往返一致（FormatVersion 2，M11-T2 接入快照下行） |
+| M11-T5 状态增量 | ✅ | M3-T10 `MatchStateDiffer` + `StateChangeSerializer`（M11-T2 接入 step 增量下发） |
+| M11-T6 命令与事件序列化 | ✅ | 提交 953b4f5：`EventSerializer` 12 种 GameEvent 编解码 + `CommandSerializer`（M4-T9）接入 MatchHost |
+| M11-T7 对局录制 | ✅ | M4-T9 `MatchRecording`/`MatchReplayer` |
+| M11-T8 权威侧测试 | ✅ | kernel 全套无 Unity 测试（`coverage.ps1` 门禁持续全绿） |
+
+## M12 任务级状态（已完成 9/9，2026-10-10 补记）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M12-T1 宿主抽象 | ✅ | `IMatchHost` + LocalHost（M6 进程内）/ PeerHost / DedicatedHost 接口占位 |
+| M12-T2 ITransport + InMemoryTransport | ✅ | 提交 61751b4（FIFO 配对、断开后可 drain；kernel 编译范围扩展） |
+| M12-T3 BclTcpTransport | ✅ | 提交 cf140d8（`System.Net.Sockets` + List 缓冲拆帧，一次 Read 多帧/半帧修复） |
+| M12-T4 消息协议与编解码 | ✅ | 提交 55cca16：4B LE 长度 + 1B 类型 + 4B 协议版本 + UTF-8 JSON；版本不匹配明确拒绝 |
+| M12-T5+T6 PeerHost 直连会话 | ✅ | 提交 169adf1：Hello→HelloAck→Ready→MatchStart 握手 + 房主内 Loopback 双角色 |
+| M12-T7 心跳与超时 | ✅ | 提交 e4d1cd8：30 tick 发 Ping / 60 tick 超时断开（IClock 驱动） |
+| M12-T8 角色切换入口 | ✅ | 提交 1e4c248：`CommandLineRoleParser`（-host / -join / 默认 HotSeat） |
+| M12-T9 网络日志与诊断 | ✅ | 提交 c511be7：`NetworkDiagnostics` 256 槽环形缓冲 + 关键路径打点 |
+
+## M13 任务级状态（进行中 1/9）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M13-T1 MatchHost 接线 | ✅ | 任务卡 [tasks/M13-T1-MatchHost接线.md](./tasks/M13-T1-MatchHost接线.md)；代码：`MatchHost.Attach(endpoint, seat)` 座位化 + `AttachedSeats`（hello 快照按端点座位投影）+ 新文件 `2_Network/HostBridge.cs`（Command 帧上行注入、snapshot/step 下行帧化为 MatchSnapshot/StateDelta，畸形载荷丢弃记日志不断摆）+ `PeerSession` 桥接装配与 `MatchStarted` 门控（开局前 Command 丢弃）+ `HandleReady` 触发开局快照 + `PeerHost` 本地座位 0 回环 / AcceptPeer 建桥 / `RunNetworkTick` 编排（会话泵→权威推进→桥接下行）；测试 9 例（MatchHostSeatTests 2 + HostBridgeTests 5 + PeerHostTickTests 2，后者真实 TCP 回环全链路）；kernel **911 passed / 0 failed**（基线 902 + 9），覆盖率 `0_Core 91.96%` / `Domain + App 93.02%`（≥ 门禁），`check.ps1` PASS；**待 Unity EditMode 实跑留证**（新增测试套件首提环境覆盖门禁） |
+
+---
+
 ## 未关闭问题（P0 / P1）
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | M3-B1 | P2（已解除 2026-10-06） | M3-T3～T10 | Unity 批处理 EditMode 验证在 TRAE 环境失效：沙箱拦截 `bee\trash`/`upm.log` 等，`EditorApplication.isUpdating` 恒真、主循环 `update` 不执行，`-runTests` 被静默跳过（exit 0、无结果文件）。T3 起各任务以无 Unity 工具链（588/588）为验收口径；**2026-10-06 用户在编辑器 Test Runner（EditMode）手动补验 608 passed / 0 failed，.meta 导入与程序集编译实跑无误，阻塞解除** | AI | ✅ 已解除 |
 | M4-OBS-1 | P3（观察项） | M4-T10 | phase 等枚举存在两套线上编码：快照写枚举名、增量写整数；StateChangeApplier 已兼容两种。阶段二正式传输协议（M11/M13）必须统一编码并补跨组件契约测试 | AI | 🔵 待阶段二处理 |
+| M13-OBS-1 | P3（观察项） | M13-T1 | `PeerHost.cs` 298 行贴近 300 行上限（PeerHost + PeerSession 同文件）——T2 改造时把 PeerSession 拆分为独立文件 | AI | 🔵 待 M13-T2 处理 |
 | M4-OBS-2 | P3（观察项） | M3-T9/M4-T10 | `MatchStateSerializer` 快照不含 `NextInstanceId`；纯视图客户端不分配 Id 故当前无影响。阶段二断线重连快照前必须补字段并加往返测试 | AI | 🔵 待阶段二处理 |
 | M6-B1 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌费用数字与卡名文本位置重叠，小尺寸手牌上看不清。属 BattleUiFactory 卡牌布局缺陷（_costText 与 _nameText 锚点冲突） | AI | ✅ 已修复（M6-T4：BattleUiPrefabs 费用独立底板 + 名字右移） |
 | M6-B2 | P2（已修复 2026-10-08） | M6-T3 实机验收 | 卡牌名称/描述只显示本地化 Key（如 `CARD_001_NAME`/`CARD_001_DESC`），无中文文本；项目尚无本地化系统。CardViewData 透传 DescKey/NameKey，需补本地化表 + 解析（简易方案可先在配置侧直填中文） | AI | ✅ 已修复（M6-T4：最小本地化表 Localization.csv + ITextResolver + CsvTextResolver；M8 由正式本地化系统替换） |
