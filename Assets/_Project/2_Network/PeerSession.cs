@@ -61,47 +61,90 @@ namespace Card.Network
 
             // 先处理积压消息（任何有效消息都重置活动时间）——超时判定必须在消息处理之后，
             // 否则"消息已到达但 ReceiveLoop 线程尚未入队完成"会被误判为心跳超时（M13-T8 修复）。
+            if (!PumpReceivedFrames(now))
+            {
+                return false;
+            }
+
+            return RunHeartbeat(now);
+        }
+
+        /// <summary>处理积压上行帧：解帧（畸形即断链）→ 版本门 → 分发。返回 false 表示会话已断链。</summary>
+        private bool PumpReceivedFrames(int now)
+        {
             while (_transport.TryReceive(out byte[]? frame))
             {
-                RawMessage msg = MessageCodec.TryUnframe(frame, 0, frame.Length, out _)
-                    ?? throw new ProtocolException("PeerSession 收到畸形帧。");
+                // 畸形帧（M13-T9）：framing 已坏 = 字节流无法恢复同步，唯一正确终态是断链
+                // （掉线判负编排接管）；异常绝不能穿透 Pump 打死宿主。
+                RawMessage msg;
+                try
+                {
+                    msg = MessageCodec.TryUnframe(frame, 0, frame.Length, out _)
+                        ?? throw new ProtocolException("PeerSession 收到畸形帧。");
+                }
+                catch (ProtocolException ex)
+                {
+                    NetworkLogger.Error($"PeerSession 畸形帧断链：peerSeat={_peerSeat}，原因：{ex.Message}");
+                    _diag?.Record(NetworkEventType.ProtocolViolation, ex.Message);
+                    _transport.Dispose();
+                    return false;
+                }
 
                 _lastActivityTick = now;
 
-                switch (msg.Type)
+                // 版本门（M13-T9）：Hello 自带版本协商，其余上行帧版本不匹配一律丢弃（可恢复违规，不断链）
+                if (msg.Type != NetworkMessageType.Hello &&
+                    msg.ProtocolVersion != MessageCodec.CurrentProtocolVersion)
                 {
-                    case NetworkMessageType.Hello:
-                        HandleHello(msg);
-                        break;
-                    case NetworkMessageType.Ready:
-                        HandleReady();
-                        break;
-                    case NetworkMessageType.Leave:
-                        NetworkLogger.Info($"PeerSession 对手主动离开：peerSeat={_peerSeat}");
-                        _diag?.Record(NetworkEventType.Disconnected, "peer sent Leave");
-                        _transport.Dispose();
-                        break;
-                    case NetworkMessageType.Ping:
-                        HandlePing(msg);
-                        break;
-                    case NetworkMessageType.Pong:
-                        HandlePong();
-                        _diag?.Record(NetworkEventType.PongReceived);
-                        break;
-                    case NetworkMessageType.Command:
-                        HandleCommand(msg);
-                        break;
-                    case NetworkMessageType.RequestSnapshot:
-                        HandleRequestSnapshot(msg);
-                        break;
-                    default:
-                        // 未知上行类型——记录并忽略（T9 完善异常注入矩阵）
-                        NetworkLogger.Warn($"PeerSession 收到未知消息类型 {msg.Type}：peerSeat={_peerSeat}");
-                        break;
+                    NetworkLogger.Warn($"PeerSession 丢弃版本不匹配帧：type={msg.Type}，peer={msg.ProtocolVersion}，peerSeat={_peerSeat}");
+                    _diag?.Record(NetworkEventType.ProtocolVersionMismatch, $"type={msg.Type}, peer={msg.ProtocolVersion}");
+                    continue;
                 }
+
+                DispatchMessage(msg);
             }
 
-            // 心跳超时检测（消息处理之后：以"60 tick 无任何已到达消息"为准）
+            return true;
+        }
+
+        /// <summary>按消息类型分发（未知/S→C 专属类型一律记录并忽略——M13-T9 注入矩阵固化）。</summary>
+        private void DispatchMessage(RawMessage msg)
+        {
+            switch (msg.Type)
+            {
+                case NetworkMessageType.Hello:
+                    HandleHello(msg);
+                    break;
+                case NetworkMessageType.Ready:
+                    HandleReady();
+                    break;
+                case NetworkMessageType.Leave:
+                    NetworkLogger.Info($"PeerSession 对手主动离开：peerSeat={_peerSeat}");
+                    _diag?.Record(NetworkEventType.Disconnected, "peer sent Leave");
+                    _transport.Dispose();
+                    break;
+                case NetworkMessageType.Ping:
+                    HandlePing(msg);
+                    break;
+                case NetworkMessageType.Pong:
+                    HandlePong();
+                    _diag?.Record(NetworkEventType.PongReceived);
+                    break;
+                case NetworkMessageType.Command:
+                    HandleCommand(msg);
+                    break;
+                case NetworkMessageType.RequestSnapshot:
+                    HandleRequestSnapshot(msg);
+                    break;
+                default:
+                    NetworkLogger.Warn($"PeerSession 忽略未知或方向非法的消息类型 {msg.Type}：peerSeat={_peerSeat}");
+                    break;
+            }
+        }
+
+        /// <summary>心跳与超时：60 tick 无任何已到达消息 → 断链；30 tick → 发 Ping。</summary>
+        private bool RunHeartbeat(int now)
+        {
             int idleTicks = now - _lastActivityTick;
             if (idleTicks >= PeerHost.TimeoutTicks)
             {
@@ -112,7 +155,6 @@ namespace Card.Network
                 return false;
             }
 
-            // 发心跳 Ping
             if (idleTicks >= PeerHost.HeartbeatIntervalTicks && _handshook)
             {
                 JsonValue ping = JsonValue.Object()
@@ -129,6 +171,13 @@ namespace Card.Network
 
         private void HandleHello(RawMessage msg)
         {
+            // 重复握手幂等（M13-T9）：已握手再次 Hello 不重发 HelloAck、不重复副作用
+            if (_handshook)
+            {
+                NetworkLogger.Warn($"PeerSession 忽略重复 Hello：peerSeat={_peerSeat}");
+                return;
+            }
+
             int peerVersion = msg.ProtocolVersion;
             _diag?.Record(NetworkEventType.HelloReceived, $"peerVersion={peerVersion}");
 
@@ -155,6 +204,13 @@ namespace Card.Network
 
         private void HandleReady()
         {
+            // 握手门（M13-T9）：未握手的 Ready 会造成假开局，必须丢弃
+            if (!_handshook)
+            {
+                NetworkLogger.Warn($"PeerSession 丢弃握手前 Ready：peerSeat={_peerSeat}");
+                return;
+            }
+
             _peerReady = true;
             _diag?.Record(NetworkEventType.ReadyReceived);
             // 双方 Ready——发 MatchStart（M13 接入对局正式开局）

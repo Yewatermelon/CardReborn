@@ -24,7 +24,8 @@ namespace Card.Network
         SendError,
         ReceiveFrame,
         SnapshotRequestReceived,
-        SendFrame
+        SendFrame,
+        ProtocolViolation
     }
 
     /// <summary>
