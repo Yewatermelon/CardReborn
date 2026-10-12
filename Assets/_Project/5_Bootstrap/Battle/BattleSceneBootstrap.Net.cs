@@ -38,6 +38,7 @@ namespace Card.Bootstrap.Battle
         private CardDatabase? _netDatabase;
         private ITextResolver? _netTexts;
         private bool _netEndShown;
+        private bool _netEndButtonsBound;
         private bool _netAssembled;
         private HostPeerWatch? _netPeerWatch;
 
@@ -263,32 +264,5 @@ namespace Card.Bootstrap.Battle
             _ui.EndTurnButton.onClick.AddListener(OnEndTurnClicked);
             _ui.HeroPowerButton.onClick.AddListener(OnHeroPowerClicked);
         }
-
-        /// <summary>联机终局：胜负面板显示胜者与原因；"再来一局"重载场景回大厅。</summary>
-        private void ShowNetEnd(string? overrideText = null)
-        {
-            if (_ui == null || _netDriver == null) { return; }
-            _netEndShown = true;
-            if (_ui.VictoryLabel != null)
-            {
-                _ui.VictoryLabel.text = overrideText ?? DescribeNetEnd(_netDriver.WinnerId, _netDriver.EndReason);
-            }
-
-            _ui.VictoryPanel?.gameObject.SetActive(true);
-            if (_ui.VictoryButton != null) { _ui.VictoryButton.onClick.AddListener(OnNetPlayAgain); }
-        }
-
-        private static string DescribeNetEnd(int? winnerId, string? reason)
-        {
-            string prefix = winnerId switch { 0 => "玩家 1 获胜！", 1 => "玩家 2 获胜！", _ => "对局作废。" };
-            return reason switch
-            {
-                PeerHost.EndReasonHostQuit => prefix + "\n（房主已退出）",
-                PeerHost.EndReasonDisconnect => prefix + "\n（对手掉线）",
-                null or "" => prefix,
-                _ => prefix + "\n（" + reason + "）",
-            };
-        }
-        private void OnNetPlayAgain() => SceneManager.LoadScene("Battle");
     }
 }

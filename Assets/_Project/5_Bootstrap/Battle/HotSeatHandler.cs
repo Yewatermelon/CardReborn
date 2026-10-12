@@ -61,13 +61,15 @@ namespace Card.Bootstrap.Battle
         }
 
         /// <summary>
-        /// 仅绑定胜负面板"再来一局"（PVE 用：无交棒屏）。
-        /// 实机冒烟修复：PVE 此前跳过 BindOverlays 导致胜利按钮无监听、点击无反应。
+        /// 仅绑定胜负面板按钮（PVE 用：无交棒屏）。
+        /// M14-T6：加"返回主菜单"按钮（副按钮）。
         /// </summary>
         public void BindVictoryOverlay()
         {
             if (_ui.VictoryButton != null)
                 _ui.VictoryButton.onClick.AddListener(OnPlayAgainClicked);
+            if (_ui.VictorySecondaryButton != null)
+                _ui.VictorySecondaryButton.onClick.AddListener(OnReturnToMainClicked);
         }
 
         /// <summary>检查终局；如果已终局，pump 完事件并显示胜负面板。</summary>
@@ -159,6 +161,11 @@ namespace Card.Bootstrap.Battle
         private void OnPlayAgainClicked()
         {
             SceneManager.LoadScene("Battle");
+        }
+
+        private void OnReturnToMainClicked()
+        {
+            SceneManager.LoadScene(MainMenuBootstrap.MainMenuSceneName);
         }
     }
 }

@@ -251,15 +251,21 @@ namespace Card.Bootstrap.Battle
 
         private static void BuildVictoryPanel(BattleUi ui, RectTransform root)
         {
-            RectTransform panel = CreateBox("VictoryPanel", root, Vector2.zero, new Vector2(600f, 300f));
+            RectTransform panel = CreateBox("VictoryPanel", root, Vector2.zero, new Vector2(600f, 360f));
             panel.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.05f, 0.15f, 0.95f);
             TMP_Text label = Text(panel, string.Empty, 40);
             ui.VictoryPanel = panel.gameObject.AddComponent<CanvasGroup>();
             ui.VictoryLabel = label;
 
-            RectTransform btn = CreateBox("PlayAgainButton", panel, new Vector2(0f, -80f), new Vector2(220f, 60f));
+            RectTransform btn = CreateBox("PlayAgainButton", panel, new Vector2(-130f, -80f), new Vector2(220f, 60f));
             ui.VictoryButton = Button(btn, out _);
             Text(btn, "再来一局", 22);
+
+            // M14-T6：返回主菜单（第二按钮，热座/PVE/联机通用）
+            RectTransform btn2 = CreateBox("ReturnToMenuButton", panel, new Vector2(130f, -80f), new Vector2(220f, 60f));
+            ui.VictorySecondaryButton = Button(btn2, out _);
+            Text(btn2, "返回主菜单", 22);
+
             panel.gameObject.SetActive(false);
         }
 

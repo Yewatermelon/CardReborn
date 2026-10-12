@@ -16,6 +16,7 @@ namespace Card.Bootstrap.Menu
     public sealed class MainMenuBootstrap : MonoBehaviour
     {
         public const string BattleSceneName = "Battle";
+        public const string MainMenuSceneName = "MainMenu";
 
         private void Start()
         {
