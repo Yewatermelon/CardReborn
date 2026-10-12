@@ -218,6 +218,7 @@ internal sealed class PvpLobbyFlow
   - **③ 英雄技能按钮可用性改状态驱动**：[BattleViewSynchronizer.Push](Assets/_Project/5_Bootstrap/Battle/BattleViewSynchronizer.cs) 按 `ActivePlayerId == localSeat && !PowerUsedThisTurn` 设置 `interactable`（重连重建视图/热座/联机统一，按钮不再残留"已释放"视觉；表现层状态渲染非规则判断，铁律 4）。
   - 测试先红后绿（kernel 983+2 红 → **985 全绿**）：`MatchHostTests.Detach_RejoinSeat_SequenceBaselineResets`（同座位重连后 seq=1 重新可执行）+ `HotSeatSynchronizerTests.Push_DrivesHeroPowerButton_ByTurnAndPowerUsed`（按钮随回合与技能状态翻转）。复验：全量预编译 0/0、check PASS（BattleSceneBootstrap.Net.cs 压回 300 行内）。Unity 实跑预期 **1281 passed / 0 failed**（1279 + 2）。
   - **① 的补丁 · 接管路径摘错端点**（2026-10-12 用户复测发现重连后仍 StaleSequence——"序号大于某个数后才恢复操作"，`f23aacf`）：前轮修复只改了 MatchHost.Detach 本身，但真实接管路径 [PeerHost.TakeOverPeer](Assets/_Project/2_Network/PeerHost.cs) 以 `HostBridge.KernelEndpoint` 摘旧端点——该属性实持 `CreatePair` 的**桥侧**端点（权威挂载的是另一侧），`Detach` 查无此端点成**无操作**，收件箱从未移除。症状完全吻合：基线 K 残留 → 重连客户端 seq=1 起全部被拒（同载荷命中幂等回执状态不推进、异载荷 StaleSequence），点击烧序号直到超过 K 才恢复。修复：PeerHost 自持 `_peerKernelEndpoint`（权威侧挂载端点）并据它 Detach；[HostBridge.cs](Assets/_Project/2_Network/HostBridge.cs) `KernelEndpoint` 更名 `PeerEndpoint` 并修正注释（原名称与文档误导，系缺陷源头）。回归缺口：M13-T7 重连用例断线前从未消费过座位 seq（`HostEndTurn` 无序号），掩盖基线残留——补真实接管路径回归 `PeerHostReconnectTests.Reconnect_TakeoverResetsInboxBaseline_NewClientSeq1Executable`（先红：幂等回执拦截状态停留 version 3 → 后绿）。复验：kernel **986/0**（985+1）、全量预编译 0/0、check PASS。Unity 实跑预期 **1282 passed / 0 failed**（1281 + 1）。
+  - **留证（2026-10-12）**：用户双开实测确认重连链路三症状全部消失——重连后首条命令即可正常操作（不再需要烧序号）、断线前后手牌/技能/回合均正常、房主侧掉线提示正常。B5 轮（含补丁）收官。
 
 ### 11.3 设计决策（装配期裁定）
 
