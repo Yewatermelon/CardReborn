@@ -1,3 +1,4 @@
+using Card.Bootstrap.Menu;
 using Card.Core;
 using Card.Network;
 using UnityEngine.SceneManagement;
@@ -8,7 +9,7 @@ namespace Card.Bootstrap.Battle
     /// M14-T6 联机终局异常体验：DescribeNetEnd 原因翻译 + ShowNetEnd 胜负面板 +
     /// OnNetReturnToMain 清理网络后返回主菜单。
     /// </summary>
-    internal partial class BattleSceneBootstrap
+    public sealed partial class BattleSceneBootstrap
     {
         /// <summary>联机终局：胜负面板显示胜者与原因；"再来一局" + "返回主菜单"。</summary>
         private void ShowNetEnd(string? overrideText = null)

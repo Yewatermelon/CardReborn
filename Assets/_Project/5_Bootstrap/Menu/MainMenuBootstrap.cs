@@ -18,6 +18,14 @@ namespace Card.Bootstrap.Menu
         public const string BattleSceneName = "Battle";
         public const string MainMenuSceneName = "MainMenu";
 
+        /// <summary>
+        /// 进程内守卫：启动参数自动跳转 Battle 只做一次（M14-T6）。
+        /// 双开脚本启动时 MainMenuBootstrap 先被实例化，检测到 -host/-join 后跳 Battle；
+        /// 游戏结束"返回主菜单"时 MainMenuBootstrap 再次实例化，但此时已经自动连过一次，
+        /// 不应再自动跳 Battle——否则会陷入"返回主菜单→又跳 Battle→又返回"的死循环。
+        /// </summary>
+        private static bool _autoJumpConsumed;
+
         private void Start()
         {
             BootLogging.ConfigureOnce();
@@ -27,14 +35,18 @@ namespace Card.Bootstrap.Menu
             Battle.UiEventSystem.Ensure();
 
             // M14-T4：启动参数指定联机角色（-host / -join）时直接进入联机大厅，免点击双开。
-            NetLaunchAction launch = NetLaunch.Resolve(Battle.BattleSceneBootstrap.PvpNetDefaultPort);
-            if (launch.Kind != NetLaunchKind.None)
+            if (!_autoJumpConsumed)
             {
-                PlayerPrefs.SetString(Battle.BattleSceneBootstrap.GameModePrefKey,
-                    Battle.BattleSceneBootstrap.PvpNetMode);
-                GameLog.Info(LogChannel.Boot, $"启动参数：进入联机大厅（{launch}）。");
-                SceneManager.LoadScene(BattleSceneName);
-                return;
+                NetLaunchAction launch = NetLaunch.Resolve(Battle.BattleSceneBootstrap.PvpNetDefaultPort);
+                if (launch.Kind != NetLaunchKind.None)
+                {
+                    _autoJumpConsumed = true;
+                    PlayerPrefs.SetString(Battle.BattleSceneBootstrap.GameModePrefKey,
+                        Battle.BattleSceneBootstrap.PvpNetMode);
+                    GameLog.Info(LogChannel.Boot, $"启动参数：进入联机大厅（{launch}）。");
+                    SceneManager.LoadScene(BattleSceneName);
+                    return;
+                }
             }
 
             var canvasGo = new GameObject("MenuCanvas",

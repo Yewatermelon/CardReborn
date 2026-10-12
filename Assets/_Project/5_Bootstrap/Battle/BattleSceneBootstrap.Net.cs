@@ -98,7 +98,7 @@ namespace Card.Bootstrap.Battle
             _netLobby?.Dispose();
             _netDriver?.Dispose();
             _netPeerWatch = null;
-            SceneManager.LoadScene(MainMenuBootstrap.BattleSceneName);
+            SceneManager.LoadScene(MainMenuBootstrap.MainMenuSceneName);
         }
 
         private void OnNetStatus(string text)
