@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Card.Application.Launch;
 using Card.Application.Match;
 using Card.Bootstrap.Battle.Net;
 using Card.Bootstrap.Menu;
@@ -25,6 +26,9 @@ namespace Card.Bootstrap.Battle
     public sealed partial class BattleSceneBootstrap
     {
         public const string PvpNetMode = "PVPNet";
+
+        /// <summary>联机默认端口（M14-T4：与 PvpLobbyFlow.DefaultListenPort 同值，一致性有测试锁定）。</summary>
+        public const int PvpNetDefaultPort = 7777;
 
         private PvpLobbyFlow? _netLobby;
         private PvpLobbyUi? _netLobbyUi;
@@ -55,16 +59,8 @@ namespace Card.Bootstrap.Battle
             _netDatabase = database;
             _netTexts = LoadTextResolver(configDir);
 
-            var flow = new PvpLobbyFlow(database, PvpLobbyFlow.DefaultListenPort, new UnityTickClock());
-            _netLobby = flow;
-            _netLobbyUi = PvpLobbyUiFactory.Create(ui.CanvasRoot);
-            _netLobbyUi.HostClicked += flow.CreateAsHost;
-            _netLobbyUi.JoinClicked += OnNetJoinClicked;
-            _netLobbyUi.ReadyClicked += OnNetReadyClicked;
-            _netLobbyUi.BackClicked += OnNetBackToMenu;
-            flow.StatusChanged += text => OnNetStatus(text);
-            _netLobbyUi.SetStatus("选择身份：创建对局（房主）或加入对方房间。");
-            _netLobbyUi.SetPhase(PvpLobbyPhase.Choose);
+            (PvpLobbyFlow flow, NetLaunchAction launch) = CreateNetLobby(database, ui);
+            ApplyNetLaunchAction(flow, launch);
         }
 
         private void OnNetJoinClicked()

@@ -1,3 +1,4 @@
+using Card.Application.Launch;
 using Card.Core;
 using TMPro;
 using UnityEngine;
@@ -23,6 +24,17 @@ namespace Card.Bootstrap.Menu
             UnityEngine.Application.runInBackground = true;
             Battle.SceneCamera.Ensure();
             Battle.UiEventSystem.Ensure();
+
+            // M14-T4：启动参数指定联机角色（-host / -join）时直接进入联机大厅，免点击双开。
+            NetLaunchAction launch = NetLaunch.Resolve(Battle.BattleSceneBootstrap.PvpNetDefaultPort);
+            if (launch.Kind != NetLaunchKind.None)
+            {
+                PlayerPrefs.SetString(Battle.BattleSceneBootstrap.GameModePrefKey,
+                    Battle.BattleSceneBootstrap.PvpNetMode);
+                GameLog.Info(LogChannel.Boot, $"启动参数：进入联机大厅（{launch}）。");
+                SceneManager.LoadScene(BattleSceneName);
+                return;
+            }
 
             var canvasGo = new GameObject("MenuCanvas",
                 typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
