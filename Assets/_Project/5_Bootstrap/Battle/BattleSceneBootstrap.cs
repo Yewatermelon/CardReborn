@@ -50,6 +50,7 @@ namespace Card.Bootstrap.Battle
         private HotSeatHandler? _hotSeat;
         private AiTurnRunner? _aiRunner;
         private bool _isPve;
+        private bool _recordSaved;
 
         private void Start()
         {
@@ -186,6 +187,8 @@ namespace Card.Bootstrap.Battle
 
         private void Update()
         {
+            PersistMatchRecordIfNeeded();
+
             if (_netLobby != null || _netDriver != null)
             {
                 UpdateNet(); // M14-T3：联机模式独立泵路径
@@ -218,6 +221,17 @@ namespace Card.Bootstrap.Battle
         private void OnDestroy()
         {
             OnDestroyNet();
+        }
+
+        /// <summary>M14-T5：对局终局时持久化 MatchRecord 到磁盘；未终局或已保存过则跳过。</summary>
+        private void PersistMatchRecordIfNeeded()
+        {
+            if (_recordSaved || _controller == null || _controller.LastRecord == null)
+                return;
+
+            // 联机房主侧带上网络结束原因（正常终局为 null/EndReasonNormal）
+            string? endReasonNet = _netLobby?.HostPeer?.LastMatchEndReason;
+            MatchRecordPersister.TrySave(_controller, ref _recordSaved, endReasonNet);
         }
 
         private static ITextResolver LoadTextResolver(string configDir)

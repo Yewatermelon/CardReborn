@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Card.Application.Match.Effects;
 using Card.Core;
 using Card.Domain.Config;
@@ -26,10 +27,18 @@ namespace Card.Application.Match
         private readonly TriggerDispatcher _dispatcher = new TriggerDispatcher();
         private readonly DeathProcessor _deaths = new DeathProcessor();
 
-        public MatchController(MatchState state, CardDatabase database)
+        // M14-T5：对局元数据（构造时生成/记录）
+        private readonly string _matchId;
+        private readonly int _startTick;
+        private readonly IClock? _clock;
+
+        public MatchController(MatchState state, CardDatabase database, IClock? clock = null)
         {
             _state = Guard.NotNull(state, nameof(state));
             _database = Guard.NotNull(database, nameof(database));
+            _clock = clock;
+            _startTick = clock?.CurrentTick ?? 0;
+            _matchId = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
             _phases = new TurnStateMachine(state);
             RegisterSettler(new EndTurnSettler());
             RegisterSettler(new PlayCardSettler());
@@ -37,6 +46,9 @@ namespace Card.Application.Match
             RegisterSettler(new HeroPowerSettler());
             RegisterSettler(new ForfeitSettler());
         }
+
+        /// <summary>对局唯一标识（guid 字符串）。</summary>
+        public string MatchId => _matchId;
 
         /// <summary>当前权威对局状态。</summary>
         public MatchState State => _state;
@@ -58,6 +70,9 @@ namespace Card.Application.Match
 
         /// <summary>终局结果；未终局为 null。</summary>
         public MatchOutcome? LastOutcome { get; private set; }
+
+        /// <summary>终局完整记录（含命令流水与玩家标识）；未终局为 null。</summary>
+        public MatchRecord? LastRecord { get; private set; }
 
         /// <summary>命令处理台账（含被拒命令），按处理顺序。</summary>
         public IReadOnlyList<MatchStepRecord> History => _history;
@@ -132,12 +147,33 @@ namespace Card.Application.Match
 
         private void FinishIfDecided(IGameCommand command)
         {
-            MatchOutcome outcome = MatchEvaluator.Evaluate(_state);
-            bool finished = outcome.Result != MatchResult.Ongoing;
+            MatchOutcome evaluatorOutcome = MatchEvaluator.Evaluate(_state);
+            bool finished = evaluatorOutcome.Result != MatchResult.Ongoing;
             if (finished)
             {
                 _state.IsFinished = true;
-                LastOutcome = outcome;
+                int endTick = _clock?.CurrentTick ?? _startTick;
+
+                // 用完整数据重新构造 MatchOutcome（替换 evaluator 的 dummy id/tick）
+                LastOutcome = new MatchOutcome(
+                    _matchId,
+                    evaluatorOutcome.Result,
+                    evaluatorOutcome.WinnerId,
+                    evaluatorOutcome.TurnNumber,
+                    evaluatorOutcome.Reason,
+                    _startTick,
+                    endTick);
+
+                // 组装 MatchRecord（M14-T5）
+                string[] playerNames =
+                {
+                    "座" + _state.GetPlayer(0).Id.ToString(CultureInfo.InvariantCulture)
+                        + "-" + _state.GetPlayer(0).Hero.HeroKey,
+                    "座" + _state.GetPlayer(1).Id.ToString(CultureInfo.InvariantCulture)
+                        + "-" + _state.GetPlayer(1).Hero.HeroKey,
+                };
+                LastRecord = new MatchRecord(LastOutcome, _history.ToArray(), playerNames, null);
+
                 Result endResult = _phases.EndMatch();
                 if (endResult.IsFailure)
                 {
@@ -146,7 +182,7 @@ namespace Card.Application.Match
                 }
 
                 _events.Emit(new MatchEndedEvent(
-                    outcome.Result, outcome.WinnerId, outcome.TurnNumber, outcome.Reason));
+                    LastOutcome.Result, LastOutcome.WinnerId, LastOutcome.TurnNumber, LastOutcome.Reason));
             }
 
             Record(command, CommandResult.Valid(), finished);
