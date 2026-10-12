@@ -22,6 +22,7 @@ namespace Card.Network
         private readonly LoopbackEndpoint _localClientEndpoint;
         private PeerSession? _session;
         private HostBridge? _bridge;
+        private LoopbackEndpoint? _peerKernelEndpoint;
         private bool _disposed;
 
         // 终态编排状态（M13-T8）
@@ -128,14 +129,18 @@ namespace Card.Network
         /// <summary>以新传输接管座位 1：旧会话端点摘除（重连接管）→ 建桥接器与新会话。</summary>
         private PeerSession TakeOverPeer(ITransport transport)
         {
-            if (_bridge != null)
+            if (_peerKernelEndpoint != null)
             {
-                _matchHost.Detach(_bridge.KernelEndpoint);
-                NetworkLogger.Info($"PeerHost 重连接管：旧座位 {_bridge.Seat} 端点已摘除");
+                // M14-T3-B5：必须摘除权威实际挂载的那一侧端点——会话终结即座位序号基线作废
+                //（重连客户端是新进程，seq 从 1 重新计数；不重置则重连后全部 StaleSequence）。
+                // 注意 HostBridge.PeerEndpoint 持有的是桥侧端点（对的另一侧），不能用它 Detach。
+                _matchHost.Detach(_peerKernelEndpoint);
+                NetworkLogger.Info($"PeerHost 重连接管：旧座位 {_bridge?.Seat} 权威端点已摘除");
             }
 
             LoopbackLink.CreatePair(out LoopbackEndpoint peerKernelEp, out LoopbackEndpoint peerBridgeEp);
             _matchHost.Attach(peerKernelEp, 1);
+            _peerKernelEndpoint = peerKernelEp;
             _bridge = new HostBridge(peerBridgeEp, transport, seat: 1);
             _session = new PeerSession(_matchHost, transport, _clock, peerSeat: 1, bridge: _bridge);
             _disconnectStartTick = null; // 重连即取消掉线判负计时（M13-T8）

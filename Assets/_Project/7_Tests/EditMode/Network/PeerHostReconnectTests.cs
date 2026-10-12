@@ -208,5 +208,45 @@ namespace Card.Tests.EditMode.Network
             ClientStateSync sync = RequestSnapshotAndRecover(_client, 0UL);
             Assert.That(sync.LocalVersion, Is.EqualTo(0UL));
         }
+
+        // -----------------------------------------------------------------
+        // M14-T3-B5: 重连接管必须重置座位序号基线——走真实接管路径（PeerHost.AcceptPeer）。
+        // 断线前座位 1 已消费 seq=1；重连客户端（新进程）seq 从 1 重新计数，必须重新可执行。
+        // 修复前缺陷：TakeOverPeer 以 HostBridge.KernelEndpoint 摘除旧端点，而该属性实持
+        // 桥侧端点（权威挂载的是另一侧）→ Detach 查无此端点成无操作 → 基线残留 →
+        // 同 seq 同载荷被幂等重放拦截（状态不推进），异载荷全部 StaleSequence。
+        // -----------------------------------------------------------------
+
+        [Test]
+        public void Reconnect_TakeoverResetsInboxBaseline_NewClientSeq1Executable()
+        {
+            StartMatch();
+            HostEndTurn(); // version 1，轮座位 1
+            Assert.That(ReceiveFrameAfterTick(_client).Type, Is.EqualTo(NetworkMessageType.StateDelta));
+
+            // 断线前座位 1 消费 seq=1（合法 EndTurn，被接受 → version 2，轮回座位 0）
+            SendEndTurnFrame(_client, seat: 1, seq: 1);
+            Assert.That(ReceiveFrameAfterTick(_client).Type, Is.EqualTo(NetworkMessageType.StateDelta));
+            Assert.That(_matchHost.StateVersion, Is.EqualTo(2UL));
+
+            _client.Dispose();
+            _client = BclTcpTransport.Connect("127.0.0.1", _peerHost.ListenPort);
+            Assert.That(_peerHost.AcceptPeer(), Is.Not.Null, "同座位新连接应被接受（重连接管）");
+            ReconnectHandshake(_client);
+            RequestSnapshotAndRecover(_client, 2UL);
+
+            // 座位 0 结束回合 → 轮回座位 1（version 3）
+            HostEndTurn();
+            Assert.That(ReceiveFrameAfterTick(_client).Type, Is.EqualTo(NetworkMessageType.StateDelta));
+
+            // 重连客户端 seq=1 必须重新可执行：接受且权威版本推进到 4
+            //（修复前：基线残留 seq=1 同载荷命中幂等回执，状态停留 version 3）
+            SendEndTurnFrame(_client, seat: 1, seq: 1);
+            RawMessage delta = ReceiveFrameAfterTick(_client);
+            JsonValue step = JsonValue.Parse(delta.PayloadJson);
+            Assert.That(step.TryGetMember("accepted", out JsonValue accepted) && accepted.BoolValue,
+                Is.True, "重连后同座位 seq=1 应重新可执行（收件箱基线已随接管重置）");
+            Assert.That(_matchHost.StateVersion, Is.EqualTo(4UL), "重连后命令应真实执行（版本推进）");
+        }
     }
 }

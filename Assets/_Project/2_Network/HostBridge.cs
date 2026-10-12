@@ -14,14 +14,14 @@ namespace Card.Network
     /// </summary>
     public sealed class HostBridge
     {
-        private readonly LoopbackEndpoint _kernelEndpoint;
+        private readonly LoopbackEndpoint _peerEndpoint;
         private readonly ITransport _transport;
         private readonly int _seat;
         private readonly NetworkDiagnostics? _diag;
 
-        public HostBridge(LoopbackEndpoint kernelEndpoint, ITransport transport, int seat, NetworkDiagnostics? diag = null)
+        public HostBridge(LoopbackEndpoint peerEndpoint, ITransport transport, int seat, NetworkDiagnostics? diag = null)
         {
-            _kernelEndpoint = Guard.NotNull(kernelEndpoint, nameof(kernelEndpoint));
+            _peerEndpoint = Guard.NotNull(peerEndpoint, nameof(peerEndpoint));
             _transport = Guard.NotNull(transport, nameof(transport));
             _seat = seat;
             _diag = diag;
@@ -30,15 +30,19 @@ namespace Card.Network
         /// <summary>本桥接器服务的座位。</summary>
         public int Seat => _seat;
 
-        /// <summary>权威侧回环端点（M13-T7：PeerHost 重连接管时据此从权威 Detach 旧端点）。</summary>
-        public LoopbackEndpoint KernelEndpoint => _kernelEndpoint;
+        /// <summary>
+        /// 桥侧回环端点（M14-T3-B5 更名澄清）：CreatePair 两端中<strong>未挂载到权威</strong>的那一侧——
+        /// 上行经它 Send 进权威的接收队列，下行经它 TryReceive 读权威广播。
+        /// 不能据它做权威 Detach（权威挂载的是另一侧；PeerHost 自持 <c>_peerKernelEndpoint</c>）。
+        /// </summary>
+        public LoopbackEndpoint PeerEndpoint => _peerEndpoint;
 
         /// <summary>
         /// 对局开始通知：向权威注入 hello 上行，权威下一次 Pump 会回一条按座位投影的开局快照。
         /// </summary>
         public void NotifyMatchStarted()
         {
-            _kernelEndpoint.Send("{\"kind\":\"hello\"}");
+            _peerEndpoint.Send("{\"kind\":\"hello\"}");
         }
 
         /// <summary>
@@ -53,7 +57,7 @@ namespace Card.Network
                 return;
             }
 
-            _kernelEndpoint.Send(message.PayloadJson);
+            _peerEndpoint.Send(message.PayloadJson);
         }
 
         /// <summary>
@@ -82,7 +86,7 @@ namespace Card.Network
         public int PumpKernelToNetwork()
         {
             int sent = 0;
-            while (_kernelEndpoint.TryReceive(out string raw))
+            while (_peerEndpoint.TryReceive(out string raw))
             {
                 if (!_transport.Connected)
                 {
