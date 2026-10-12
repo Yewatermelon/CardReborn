@@ -212,6 +212,12 @@ internal sealed class PvpLobbyFlow
 - **Unity EditMode 实跑 1274 passed / 4 failed 归因与修复**（2026-10-12，B3/B4 首轮）：4 例全在新增测试面，**1 例实现守卫 + 3 例测试错误**：① `Submit_PlayCardCommand_ShowsPendingVisualOnCard`（既有 M14-T3 用例）——B4 预检直接读 `_driver.Sync.State`，快照未载入抛 InvalidOperationException——修复：Preflight 加 `!_driver.HasSnapshot → 放行`守卫（快照未就绪本地视图不可用，无法判定目标需求，交权威裁决不猜；生产 Submit 仅发生在 MatchReady 后，行为不变）；②③ `Write_WritesLineWithLevelChannelAndMessage` / `Write_BridgesErrorToUnityConsole`——直连 sink 用例未建目录（DirectoryNotFoundException）——修复：SetUp `Directory.CreateDirectory`；④ `Configure_CreatesDirectory_WritesBootLine_AndSetsFlag`——`File.ReadAllText`（FileShare.Read）与 StreamWriter 既有写句柄（FileAccess.Write + FileShare.Read）冲突 Sharing violation——修复：测试改 `FileShare.ReadWrite` 共享读。复验：全量预编译 0/0 + check PASS；Unity 复跑预期 **1278 passed / 0 failed**（总数不变）。
 - **Unity EditMode 实跑 1276 passed / 2 failed 归因与修复**（2026-10-12，B4 守卫二次修正）：两个预检用例（定向法术 / 英雄技能）反而失效——首轮守卫判 `_driver.HasSnapshot`，而测试**直调 `_driver.Sync.ApplySnapshot`** 绕过驱动层 `_hasSnapshot` 标志 → 守卫恒放行（暴露判据放错层：驱动层标志只在其帧处理路径置位）。修正：[ClientStateSync.cs](Assets/_Project/2_Application/Match/ClientStateSync.cs) 新增 `HasSnapshot`（本地视图是否就绪的真正判据，`ApplySnapshot` 即置位，driver 帧路径同样生效）；[PvpCommandSink.cs](Assets/_Project/5_Bootstrap/Battle/Net/PvpCommandSink.cs) 预检改判 `Sync.HasSnapshot`；[ClientStateSyncTests.cs](Assets/_Project/7_Tests/EditMode/Match/ClientStateSyncTests.cs) +1 例守卫归零验证。复验：kernel **984 passed / 0 failed**（983+1）、全量预编译 0/0、check PASS；Unity 复跑预期 **1279 passed / 0 failed**（1278 + 1 kernel 侧新例）。注：控制台 `[Error][Rule] boom` 为 `Write_BridgesErrorToUnityConsole` 用例的预期 LogError 输出（LogAssert.Expect 已消费断言，控制台栈迹属正常显示非失败）。
 
+- **缺陷修复轮 B5 · 重连链路三项修复**（2026-10-12，用户重连实测三症状定案，`5abeb74`）：
+  - **① 重连后所有命令"命令序号已过期"**（新抽手牌打不出、回合无法推进；"技能一直显示已释放"同源——EndTurn 被过期拒绝 → 权威回合不推进 → `PowerUsedThisTurn` 停留 true 被规则持续拒绝）：重连接管 [PeerHost.TakeOverPeer](Assets/_Project/2_Network/PeerHost.cs) 只摘旧端点不重置收件箱，[SeatCommandInbox.LastSeq](Assets/_Project/2_Application/Match/SeatCommandInbox.cs) 跨会话残留，而重连客户端（新进程）seq 从 1 重新计数 → 全部 StaleSequence。修复：[MatchHost.Detach](Assets/_Project/2_Application/Match/MatchHost.cs) 同步移除座位收件箱（会话终结即序号基线作废，两端对称从 1 重新计数；快照重置基线下客户端不会自动重发在途命令，无双执行风险）。
+  - **② 房主侧对手掉线无提示**（权威判负机制本就存在：6s 心跳超时 + 30s 重连窗口 + Forfeit 代发，缺的只是 UI 提示）：新文件 [HostPeerWatch.cs](Assets/_Project/5_Bootstrap/Battle/Net/HostPeerWatch.cs) 每帧监视会话状态（`MatchLive && LastMatchEndReason == null` 门内），掉线/重连在战斗日志各提示一次；[PvpLobbyFlow.cs](Assets/_Project/5_Bootstrap/Battle/Net/PvpLobbyFlow.cs) 暴露 `HostPeer`；[BattleLogView.cs](Assets/_Project/4_Presentation/Battle/Log/BattleLogView.cs) 增 `AppendText` 自由文本入口。
+  - **③ 英雄技能按钮可用性改状态驱动**：[BattleViewSynchronizer.Push](Assets/_Project/5_Bootstrap/Battle/BattleViewSynchronizer.cs) 按 `ActivePlayerId == localSeat && !PowerUsedThisTurn` 设置 `interactable`（重连重建视图/热座/联机统一，按钮不再残留"已释放"视觉；表现层状态渲染非规则判断，铁律 4）。
+  - 测试先红后绿（kernel 983+2 红 → **985 全绿**）：`MatchHostTests.Detach_RejoinSeat_SequenceBaselineResets`（同座位重连后 seq=1 重新可执行）+ `HotSeatSynchronizerTests.Push_DrivesHeroPowerButton_ByTurnAndPowerUsed`（按钮随回合与技能状态翻转）。复验：全量预编译 0/0、check PASS（BattleSceneBootstrap.Net.cs 压回 300 行内）。Unity 实跑预期 **1281 passed / 0 failed**（1279 + 2）。
+
 ### 11.3 设计决策（装配期裁定）
 
 1. M14-T1-L1 处置：输入**不禁点**（M13 seq 收件箱支持多在途）；pending 视觉 + 权威回执回退提示（既有 M14-T1 路径）。M14-T2-L1 处置：不干预插值（CardView.SetData 复位路径既有）。
@@ -228,7 +234,8 @@ internal sealed class PvpLobbyFlow
 | M14-T3-O1 | P3（观察项） | 先手为加入方且极快出牌的竞争窗口（M12 Ready 语义），本机并排验证可接受 | 75s 回合超时兜底；体验优化属 M14-T6 |
 | M14-T3-B3 | ✅ 修复 | 构建版日志盲区 → BootLogging 落盘 + 控制台桥接（check.ps1 R4 文件级白名单唯一例外） | 2026-10-12 交付 |
 | M14-T3-B4 | ✅ 修复 | PvpCommandSink 无目标预检——需目标命令不再上行白耗 seq（StaleSequence 根因） | 2026-10-12 交付 |
-| M14-T3-B5 | ⏳ 待定案 | 双开实测剩余 3 症状：B 无法任何操作 / A 编辑器疑似死循环 / B 视图时有时无 | **待用户重建 exe 后按 B3 日志复现一局回报**（两实例日志在 `persistentDataPath/Logs/`），凭日志定案后归因修复 |
+| M14-T3-B5 | ✅ 修复 | 重连链路三症状：重连后命令序号全部过期（Detach 不清收件箱，seq 基线跨会话残留）/ 房主侧无掉线提示 / 英雄技能按钮残留"已释放"（旧 B5 行的 3 症状已由 B6 定案修复，本行改记重连轮，详见 11.2） | 2026-10-12 交付（`5abeb74`）：Detach 移除座位收件箱重置基线 + HostPeerWatch 掉线监视 + 技能按钮状态驱动 |
 | M14-T3-B6 | ✅ 修复 | 联机 Update 重复装配：_netLobby 分支 return 致 AssembleNetBattle 每帧重建 PvpCommandSink → _nextSeq 恒为 1 → StaleSequence"命令序号1已过期" + 事件/视图不同步（回合不切换、房主仍可操作、成员无法行动） | 2026-10-12 交付（`6cd774a`）：加 _netAssembled 守卫 + 装配后 _netLobby=null 退出大厅分支 |
 | M14-T3-T1 | ✅ 留证 | Unity EditMode 实跑 **1271 passed / 0 failed**（2026-10-12，与预期一致） | 用户实跑 |
+| M14-T3-B7 | ⏳ 搁置 | exe 作为房主时成员连接中断（编辑器房主路径正常；用户明确"之后再解决"） | 待后续排查：复现后取双实例日志（`persistentDataPath/Logs/`）归因 |
 
