@@ -35,6 +35,7 @@ namespace Card.Bootstrap.Battle.Net
             // 目标流程预检：需要目标的无目标命令交回表现层开指向（不消费 seq）
             if (Preflight(command) is CommandError required)
             {
+                GameLog.Info(LogChannel.Network, "PvpCommandSink 预检拒绝：" + required + "（命令类型 " + command.GetType().Name + "）");
                 return CommandResult.Invalid(required, "该指令需要目标。");
             }
 
@@ -46,6 +47,8 @@ namespace Card.Bootstrap.Battle.Net
                 .Add("seq", JsonValue.From(seq));
             _driver.SendCommand(envelope.ToJson());
             _feedback.NotifySubmitted(seq, TryGetCardInstanceId(command));
+            GameLog.Info(LogChannel.Network, "PvpCommandSink 上行命令 seq=" + seq + " type=" + command.GetType().Name
+                + " player=" + command.PlayerId);
             return CommandResult.Valid();
         }
 

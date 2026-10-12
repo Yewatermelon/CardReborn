@@ -141,6 +141,18 @@ namespace Card.Bootstrap.Battle
                 return;
             }
 
+            // 断线检测（装配后 _netLobby=null，PvpLobbyFlow 的断线检查不再走）
+            if (!_netDriver.LinkAlive)
+            {
+                if (!_netEndShown)
+                {
+                    _netEndShown = true;
+                    GameLog.Warn(LogChannel.Network, "联机对局断线（LinkAlive=false）。");
+                    ShowNetEnd("连接已断开，对局无法继续。");
+                }
+                return;
+            }
+
             int applied = _netDriver.Pump();
             bool eventsHandled = _netPump.Pump() > 0;
             if (applied > 0 || eventsHandled)
@@ -249,7 +261,7 @@ namespace Card.Bootstrap.Battle
         }
 
         /// <summary>联机终局：胜负面板显示胜者与原因；"再来一局"重载场景回大厅。</summary>
-        private void ShowNetEnd()
+        private void ShowNetEnd(string? overrideText = null)
         {
             if (_ui == null || _netDriver == null)
             {
@@ -259,7 +271,7 @@ namespace Card.Bootstrap.Battle
             _netEndShown = true;
             if (_ui.VictoryLabel != null)
             {
-                _ui.VictoryLabel.text = DescribeNetEnd(_netDriver.WinnerId, _netDriver.EndReason);
+                _ui.VictoryLabel.text = overrideText ?? DescribeNetEnd(_netDriver.WinnerId, _netDriver.EndReason);
             }
 
             _ui.VictoryPanel?.gameObject.SetActive(true);
@@ -271,27 +283,16 @@ namespace Card.Bootstrap.Battle
 
         private static string DescribeNetEnd(int? winnerId, string? reason)
         {
-            string prefix = winnerId switch
-            {
-                0 => "玩家 1 获胜！",
-                1 => "玩家 2 获胜！",
-                _ => "对局作废。",
-            };
-
+            string prefix = winnerId switch { 0 => "玩家 1 获胜！", 1 => "玩家 2 获胜！", _ => "对局作废。" };
             return reason switch
             {
                 PeerHost.EndReasonHostQuit => prefix + "\n（房主已退出）",
                 PeerHost.EndReasonDisconnect => prefix + "\n（对手掉线）",
-                PeerHost.EndReasonNormal => prefix,
-                null => prefix,
-                "" => prefix,
+                null or "" => prefix,
                 _ => prefix + "\n（" + reason + "）",
             };
         }
 
-        private void OnNetPlayAgain()
-        {
-            SceneManager.LoadScene("Battle"); // GameMode 仍为 PVPNet → 重载回联机大厅
-        }
+        private void OnNetPlayAgain() => SceneManager.LoadScene("Battle"); // GameMode 仍为 PVPNet → 重载回联机大厅
     }
 }

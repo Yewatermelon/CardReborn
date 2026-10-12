@@ -132,6 +132,8 @@ namespace Card.Bootstrap.Battle.Net
             _finished |= _sync.State.IsFinished;
             _appliedCount++;
             PendingCleared?.Invoke(); // 基线重置（开局或 VersionGap 恢复）→ 表现层清在途
+            GameLog.Info(LogChannel.Network, "NetMatchDriver 收到快照 version=" + _sync.LocalVersion
+                + " activePlayer=" + _sync.State.ActivePlayerId + " turn=" + _sync.State.TurnNumber);
         }
 
         private void ApplyStep(JsonValue message)
@@ -142,12 +144,19 @@ namespace Card.Bootstrap.Battle.Net
             {
                 AppendEvents(outcome.Events);
                 _appliedCount++;
+                GameLog.Info(LogChannel.Network, "NetMatchDriver 应用 step version=" + _sync.LocalVersion
+                    + " activePlayer=" + _sync.State.ActivePlayerId + " turn=" + _sync.State.TurnNumber
+                    + " accepted=" + outcome.Accepted);
             }
             else if (outcome.Status == StepApplyStatus.VersionGap)
             {
                 // 版本空洞（M13-T5）：请求按座位裁剪的当前版本快照重置基线
-                NetworkLogger.Warn($"NetMatchDriver 版本空洞：local={_sync.LocalVersion}，请求快照恢复。");
+                GameLog.Warn(LogChannel.Network, "NetMatchDriver 版本空洞：local=" + _sync.LocalVersion + "，请求快照恢复。");
                 _link.SendUplink(ClientStateSync.BuildSnapshotRequest(_sync.LocalVersion));
+            }
+            else
+            {
+                GameLog.Info(LogChannel.Network, "NetMatchDriver 丢弃 step status=" + outcome.Status);
             }
 
             TrackFinished(message);
