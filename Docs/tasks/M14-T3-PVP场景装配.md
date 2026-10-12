@@ -229,5 +229,6 @@ internal sealed class PvpLobbyFlow
 | M14-T3-B3 | ✅ 修复 | 构建版日志盲区 → BootLogging 落盘 + 控制台桥接（check.ps1 R4 文件级白名单唯一例外） | 2026-10-12 交付 |
 | M14-T3-B4 | ✅ 修复 | PvpCommandSink 无目标预检——需目标命令不再上行白耗 seq（StaleSequence 根因） | 2026-10-12 交付 |
 | M14-T3-B5 | ⏳ 待定案 | 双开实测剩余 3 症状：B 无法任何操作 / A 编辑器疑似死循环 / B 视图时有时无 | **待用户重建 exe 后按 B3 日志复现一局回报**（两实例日志在 `persistentDataPath/Logs/`），凭日志定案后归因修复 |
+| M14-T3-B6 | ✅ 修复 | 联机 Update 重复装配：_netLobby 分支 return 致 AssembleNetBattle 每帧重建 PvpCommandSink → _nextSeq 恒为 1 → StaleSequence"命令序号1已过期" + 事件/视图不同步（回合不切换、房主仍可操作、成员无法行动） | 2026-10-12 交付（`6cd774a`）：加 _netAssembled 守卫 + 装配后 _netLobby=null 退出大厅分支 |
 | M14-T3-T1 | ✅ 留证 | Unity EditMode 实跑 **1271 passed / 0 failed**（2026-10-12，与预期一致） | 用户实跑 |
 
