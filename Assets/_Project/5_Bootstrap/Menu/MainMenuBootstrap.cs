@@ -19,6 +19,8 @@ namespace Card.Bootstrap.Menu
         private void Start()
         {
             BootLogging.ConfigureOnce();
+            // 联机双开验证必须：窗口不在前台时仍跑 Update（否则权威 tick 停止 + 心跳超时断线）
+            UnityEngine.Application.runInBackground = true;
             Battle.SceneCamera.Ensure();
             Battle.UiEventSystem.Ensure();
 
