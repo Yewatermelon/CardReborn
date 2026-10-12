@@ -34,6 +34,7 @@ namespace Card.Bootstrap.Battle
         private CardDatabase? _netDatabase;
         private ITextResolver? _netTexts;
         private bool _netEndShown;
+        private bool _netAssembled;
 
         private void StartNetMode()
         {
@@ -97,6 +98,7 @@ namespace Card.Bootstrap.Battle
         private void OnNetBackToMenu()
         {
             _netLobby?.Dispose();
+            _netDriver?.Dispose();
             SceneManager.LoadScene(MainMenuBootstrap.BattleSceneName);
         }
 
@@ -121,12 +123,16 @@ namespace Card.Bootstrap.Battle
         {
             if (_netLobby != null)
             {
-                _netLobby.Pump();
-                if (_netLobby.MatchReady)
+                if (!_netAssembled && _netLobby.MatchReady)
                 {
                     AssembleNetBattle();
+                    _netAssembled = true;
+                    // 装配完成 → 退出大厅分支，后续走战斗阶段 Pump（事件/视图同步/终局）
+                    _netLobby = null;
+                    return;
                 }
 
+                _netLobby.Pump();
                 return;
             }
 
