@@ -215,6 +215,11 @@ namespace Card.Bootstrap.Battle
             _textPool?.ReclaimFinished();
         }
 
+        private void OnDestroy()
+        {
+            OnDestroyNet();
+        }
+
         private static ITextResolver LoadTextResolver(string configDir)
         {
             string path = Path.Combine(configDir, LocalizationFile);

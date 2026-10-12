@@ -118,6 +118,9 @@ namespace Card.Bootstrap.Battle
             }
         }
 
+        /// <summary>联机清理：Dispose 网络资源 → 对端收 FIN 触发断线检测。</summary>
+        private void OnDestroyNet() { _netLobby?.Dispose(); _netDriver?.Dispose(); }
+
         /// <summary>联机 Update：大厅阶段泵大厅；开局后装配战斗；战斗阶段泵对局驱动。</summary>
         private void UpdateNet()
         {
@@ -292,7 +295,6 @@ namespace Card.Bootstrap.Battle
                 _ => prefix + "\n（" + reason + "）",
             };
         }
-
-        private void OnNetPlayAgain() => SceneManager.LoadScene("Battle"); // GameMode 仍为 PVPNet → 重载回联机大厅
+        private void OnNetPlayAgain() => SceneManager.LoadScene("Battle");
     }
 }
