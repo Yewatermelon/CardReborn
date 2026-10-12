@@ -29,7 +29,7 @@
 | M11 权威运行时与状态序列化 | ✅ 完成（2026-10-10 补记） | 8/8 | 无 Unity 跑完整对局（kernel 门禁实证） | 提交 a501425…953b4f5 |
 | M12 本机双进程与直连传输 | ✅ 完成（2026-10-10 补记） | 9/9 | 双进程握手全流程 + 心跳超时 + 角色切换 | BCL TCP 零依赖；提交 61751b4…1e4c248 |
 | M13 权威状态同步与裁剪 | ✅ 完成 | 9/9 | kernel 958/0；0_Core 91.96% / Domain+App 93.14% | T1～T9 完成 |
-| M14 双人验证与体验打磨 | 🟡 进行中 | 5/7 | kernel 1003/0；0_Core 95.82% / Domain+App 93.33% | 2026-10-12：M14-T3 PVP 场景装配完成 + 缺陷修复轮 B3–B5（日志落盘/目标预检/重复装配/重连 seq 基线/掉线提示/技能按钮）；同日 M14-T4 双开工具与文档完成（启动参数接线 NetLaunch + BuildMenu 出包 + dual-launch.ps1 一键双开 + HANDOFF §4.3 指南）；M14-T5 对局结果与记录完成（MatchOutcome 扩展 MatchId/时长 tick + MatchRecord 聚合命令流水 + MatchRecordPersister 持久化 persistentDataPath/MatchRecords/；Unity EditMode 实跑与持久化 AC-4～AC-6 待用户留证） |
+| M14 双人验证与体验打磨 | 🟡 进行中 | 5/7 | kernel 1003/0；Unity EditMode 1300/0；0_Core 95.82% / Domain+App 93.33% | 2026-10-12：M14-T3 PVP 场景装配完成 + 缺陷修复轮 B3–B5；同日 M14-T4 双开工具与文档完成；M14-T5 对局结果与记录完成（MatchOutcome 扩展 + MatchRecord 持久化 persistentDataPath/MatchRecords/；Unity EditMode 1300/0 实跑留证 + PVE/PVP 持久化 AC-4～6 ✅） |
 
 > **阶段三（未来，暂不做）**：专用服务器、公网对战、匹配服务、NAT 穿透与中继、反作弊加固、客户端预测与和解、主机迁移。
 
