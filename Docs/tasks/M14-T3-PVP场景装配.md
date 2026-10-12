@@ -239,5 +239,5 @@ internal sealed class PvpLobbyFlow
 | M14-T3-B5 | ✅ 修复 | 重连链路三症状：重连后命令序号全部过期（接管路径摘错端点致 Detach 无操作，seq 基线跨会话残留）/ 房主侧无掉线提示 / 英雄技能按钮残留"已释放"（旧 B5 行的 3 症状已由 B6 定案修复，本行改记重连轮，详见 11.2） | 2026-10-12 交付（`5abeb74` + 补丁 `f23aacf`）：TakeOverPeer 据权威侧挂载端点 Detach + HostPeerWatch 掉线监视 + 技能按钮状态驱动 |
 | M14-T3-B6 | ✅ 修复 | 联机 Update 重复装配：_netLobby 分支 return 致 AssembleNetBattle 每帧重建 PvpCommandSink → _nextSeq 恒为 1 → StaleSequence"命令序号1已过期" + 事件/视图不同步（回合不切换、房主仍可操作、成员无法行动） | 2026-10-12 交付（`6cd774a`）：加 _netAssembled 守卫 + 装配后 _netLobby=null 退出大厅分支 |
 | M14-T3-T1 | ✅ 留证 | Unity EditMode 实跑 **1271 passed / 0 failed**（2026-10-12，与预期一致） | 用户实跑 |
-| M14-T3-B7 | ⏳ 搁置 | exe 作为房主时成员连接中断（编辑器房主路径正常；用户明确"之后再解决"） | 待后续排查：复现后取双实例日志（`persistentDataPath/Logs/`）归因 |
+| M14-T3-B7 | ✅ 解决 | exe 作为房主时成员连接中断（重连修复链 B5/B6 覆盖：Detach 端点对齐 + 心跳超时判定位置修正后一并消除） | 2026-10-12 用户确认已解决 |
 

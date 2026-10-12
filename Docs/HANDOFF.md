@@ -144,7 +144,7 @@ powershell -ExecutionPolicy Bypass -File Tools/dual-launch.ps1 -Port 9090 # 自�
 | 窗口切到后台后不动 | 已由 `runInBackground=true` 处理（M14-T3 修复）；若仍复现，保持至少一个窗口前台 |
 | 构建报"场景未在 Build Settings" | `BuildMenu` 显式用 MainMenu + Battle 两场景，与 ProjectSettings 一致；新增场景需同步脚本 |
 
-**已知限制**：本阶段仅本机/局域网直连（无 NAT 穿透与匹配服务，阶段三范围）；exe 作为房主时成员连接中断问题登记为 M14-T3-B7（搁置中）。
+**已知限制**：本阶段仅本机/局域网直连（无 NAT 穿透与匹配服务，阶段三范围）。
 
 ## 5. 开发流程约定（本仓库的"做事方式"）
 
