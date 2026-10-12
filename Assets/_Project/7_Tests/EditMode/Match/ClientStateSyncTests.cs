@@ -236,5 +236,17 @@ namespace Card.Tests.EditMode.Match
             Assert.That(MatchStateSerializer.Serialize(lateSync.State), Is.EqualTo(
                 MatchStateSerializer.Serialize(PlayerViewProjector.Project(controller.State, 1))));
         }
+
+        [Test]
+        public void HasSnapshot_FalseBeforeSnapshot_TrueAfter()
+        {
+            ClientStateSync sync = new ClientStateSync();
+            Assert.That(sync.HasSnapshot, Is.False, "未载入快照时视图不可用");
+
+            sync.ApplySnapshot(JsonValue.Parse(
+                "{\"version\":0,\"state\":" + MatchStateSerializer.Serialize(NewController().State) + "}"));
+
+            Assert.That(sync.HasSnapshot, Is.True);
+        }
     }
 }

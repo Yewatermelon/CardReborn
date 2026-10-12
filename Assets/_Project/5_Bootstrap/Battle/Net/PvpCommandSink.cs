@@ -53,7 +53,7 @@ namespace Card.Bootstrap.Battle.Net
         /// 快照未就绪时本地视图不可用，无法判定目标需求 → 放行交权威裁决（不抛，不猜）。</summary>
         private CommandError? Preflight(IGameCommand command)
         {
-            if (!_driver.HasSnapshot)
+            if (!_driver.Sync.HasSnapshot)
             {
                 return null;
             }

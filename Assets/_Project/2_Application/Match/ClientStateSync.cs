@@ -72,6 +72,9 @@ namespace Card.Application.Match
         /// <summary>本地已应用到的权威版本（快照版本或最后应用的 step 版本）。</summary>
         public ulong LocalVersion => _version;
 
+        /// <summary>本地视图是否就绪（快照基线已载入；未就绪时读取 <see cref="State"/> 会抛）。</summary>
+        public bool HasSnapshot => _state is not null;
+
         /// <summary>本地视图状态（须先 ApplySnapshot）。</summary>
         public MatchState State => _state
             ?? throw new InvalidOperationException("ClientStateSync 尚未载入快照，须先 ApplySnapshot。");
