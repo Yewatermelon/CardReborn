@@ -44,6 +44,10 @@ namespace Card.Bootstrap.Battle
             _ui.TurnLabel.text = "回合 " + state.TurnNumber.ToString();
             PushPlayer(state.GetPlayer(_localSeat), isLocal: true);
             PushPlayer(state.GetPlayer(_enemySeat), isLocal: false);
+            // 英雄技能可用性是状态渲染（等同渲染数值，非规则判断）：己方回合且本回合未用
+            // 技能才可点（M14-T3-B5：重连重建视图后按钮状态不再残留"已释放"）。
+            _ui.HeroPowerButton.interactable = state.ActivePlayerId == _localSeat
+                && !state.GetPlayer(_localSeat).Hero.PowerUsedThisTurn;
         }
 
         /// <summary>热座切换（M6-T3）：交换本地/对手座位，下次 Push 时手牌卡面/牌背互换。</summary>

@@ -73,6 +73,27 @@ namespace Card.Tests.EditMode.Bootstrap
             Assert.That(_ui.EnemyBoard.ChildCount, Is.EqualTo(1), "切换后 EnemyBoard 应显示座 0 的 1 张");
         }
 
+        [Test]
+        public void Push_DrivesHeroPowerButton_ByTurnAndPowerUsed()
+        {
+            CardDatabase db = RuleEngineTestHelpers.BuildDatabase();
+            MatchState state = RuleEngineTestHelpers.BuildState();
+            state.ActivePlayerId = 0;
+            var sync = new BattleViewSynchronizer(_ui, db, KeyPassthroughTextResolver.Instance, 0, 1);
+
+            state.GetPlayer(0).Hero.PowerUsedThisTurn = true;
+            sync.Push(state);
+            Assert.That(_ui.HeroPowerButton.interactable, Is.False, "己方回合但技能已用 → 不可用");
+
+            state.GetPlayer(0).Hero.PowerUsedThisTurn = false;
+            sync.Push(state);
+            Assert.That(_ui.HeroPowerButton.interactable, Is.True, "己方回合技能未用 → 可用");
+
+            state.ActivePlayerId = 1;
+            sync.Push(state);
+            Assert.That(_ui.HeroPowerButton.interactable, Is.False, "对手回合 → 不可用");
+        }
+
         private static BattleUi BuildMinimalBattleUi(GameObject root, CardView cardPrefab)
         {
             var ui = new BattleUi

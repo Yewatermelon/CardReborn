@@ -46,6 +46,12 @@ namespace Card.Presentation.Battle.Log
             AppendLine(BattleLogFormatter.Format(e));
         }
 
+        /// <summary>追加一条自由文本（联机提示用：掉线/重连等非事件消息，M14-T3-B5）。</summary>
+        public void AppendText(string line)
+        {
+            AppendLine(Guard.NotNullOrWhiteSpace(line, nameof(line)));
+        }
+
         /// <summary>全部条目归还池。</summary>
         public void Clear()
         {

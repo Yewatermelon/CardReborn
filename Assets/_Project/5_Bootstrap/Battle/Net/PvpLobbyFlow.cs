@@ -30,6 +30,7 @@ namespace Card.Bootstrap.Battle.Net
 
         private INetMatchLink? _link;
         private NetMatchDriver? _driver;
+        private PeerHost? _hostPeer;
         private bool _isHosting;
         private bool _disconnectReported;
 
@@ -59,6 +60,9 @@ namespace Card.Bootstrap.Battle.Net
 
         /// <summary>已交付的驱动（创建/连接成功后存在；失败为 null）。</summary>
         public NetMatchDriver? Driver => _driver;
+
+        /// <summary>房主宿主（仅房主流程非 null；战斗阶段掉线监视用，M14-T3-B5）。</summary>
+        public PeerHost? HostPeer => _hostPeer;
 
         /// <summary>对局是否就绪可装配战斗（开局 + 快照基线）。</summary>
         public bool MatchReady => _driver is { MatchStarted: true, HasSnapshot: true };
@@ -177,6 +181,7 @@ namespace Card.Bootstrap.Battle.Net
                 _database, BattleComposition.BuildDeckKeys(_database));
             var matchHost = new MatchHost(controller);
             var peerHost = new PeerHost(matchHost, _clock, _listenPort);
+            _hostPeer = peerHost;
             ListenAddress = HostAddressPrefix + peerHost.ListenPort.ToString(CultureInfo.InvariantCulture);
             return new HostNetLink(matchHost, peerHost);
         }

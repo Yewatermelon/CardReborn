@@ -203,6 +203,56 @@ namespace Card.Tests.EditMode.Match
         }
 
         // -----------------------------------------------------------------
+        // M14-T3-B5: 重连接管重置座位序号基线（Detach 移除收件箱）——
+        // 否则重连客户端（新进程，seq 从 1 重新计数）所有命令都被 StaleSequence 拒绝
+        // -----------------------------------------------------------------
+
+        [Test]
+        public void Detach_RejoinSeat_SequenceBaselineResets()
+        {
+            MatchController controller = NewController();
+            MatchHost host = new MatchHost(controller);
+
+            LoopbackLink.CreatePair(out LoopbackEndpoint s0, out LoopbackEndpoint c0);
+            LoopbackLink.CreatePair(out LoopbackEndpoint s1, out LoopbackEndpoint c1);
+            host.Attach(s0, 0);
+            host.Attach(s1, 1);
+            c0.Send("{\"kind\":\"hello\"}");
+            c1.Send("{\"kind\":\"hello\"}");
+            host.Pump();
+            Drain(c0, c1);
+
+            int first = controller.State.ActivePlayerId;
+            int second = 1 - first;
+
+            // 断线前：座位 second 发过一条被规则拒绝的命令（序号仍被消费，LastSeq=1）
+            SendSequencedCommand(second == 0 ? c0 : c1, new EndTurnCommand(second), 1);
+            host.Pump();
+            Drain(c0, c1);
+            Assert.That(controller.State.ActivePlayerId, Is.EqualTo(first), "非行动方命令应被规则拒绝");
+
+            // 行动方正常流转一轮 → 轮到 second
+            SendCommand(first == 0 ? c0 : c1, new EndTurnCommand(first));
+            host.Pump();
+            Drain(c0, c1);
+            Assert.That(controller.State.ActivePlayerId, Is.EqualTo(second));
+
+            // 模拟重连：座位 second 换新端点（客户端进程重启后 seq 从 1 重新计数）
+            host.Detach(second == 0 ? s0 : s1);
+            LoopbackLink.CreatePair(out LoopbackEndpoint sNew, out LoopbackEndpoint cNew);
+            host.Attach(sNew, second);
+            cNew.Send("{\"kind\":\"hello\"}");
+            host.Pump();
+            Assert.That(cNew.TryReceive(out _), Is.True, "重连端点应收到快照");
+
+            // 修复目标：重连后同座位 seq=1 重新可执行（修复前 StaleSequence 拒绝导致对局卡死）
+            SendSequencedCommand(cNew, new EndTurnCommand(second), 1);
+            host.Pump();
+            Drain(c0, c1, cNew);
+            Assert.That(controller.State.ActivePlayerId, Is.EqualTo(first), "重连后同座位 seq=1 应重新可执行");
+        }
+
+        // -----------------------------------------------------------------
         // 辅助
         // -----------------------------------------------------------------
 
@@ -221,6 +271,26 @@ namespace Card.Tests.EditMode.Match
                 .Add("kind", JsonValue.From("command"))
                 .Add("payload", payload);
             endpoint.Send(msg.ToJson());
+        }
+
+        private static void SendSequencedCommand(LoopbackEndpoint endpoint, IGameCommand command, int seq)
+        {
+            JsonValue payload = JsonValue.Parse(CommandSerializer.Serialize(command));
+            JsonValue msg = JsonValue.Object()
+                .Add("kind", JsonValue.From("command"))
+                .Add("payload", payload)
+                .Add("seq", JsonValue.From(seq));
+            endpoint.Send(msg.ToJson());
+        }
+
+        private static void Drain(params LoopbackEndpoint[] endpoints)
+        {
+            for (int i = 0; i < endpoints.Length; i++)
+            {
+                while (endpoints[i].TryReceive(out _))
+                {
+                }
+            }
         }
     }
 }

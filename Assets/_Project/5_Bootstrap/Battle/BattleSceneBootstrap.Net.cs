@@ -35,6 +35,7 @@ namespace Card.Bootstrap.Battle
         private ITextResolver? _netTexts;
         private bool _netEndShown;
         private bool _netAssembled;
+        private HostPeerWatch? _netPeerWatch;
 
         private void StartNetMode()
         {
@@ -99,6 +100,7 @@ namespace Card.Bootstrap.Battle
         {
             _netLobby?.Dispose();
             _netDriver?.Dispose();
+            _netPeerWatch = null;
             SceneManager.LoadScene(MainMenuBootstrap.BattleSceneName);
         }
 
@@ -156,6 +158,8 @@ namespace Card.Bootstrap.Battle
                 return;
             }
 
+            _netPeerWatch?.Pump();
+
             int applied = _netDriver.Pump();
             bool eventsHandled = _netPump.Pump() > 0;
             if (applied > 0 || eventsHandled)
@@ -185,6 +189,7 @@ namespace Card.Bootstrap.Battle
             _netDriver = _netLobby.Driver!;
             int localSeat = _netDriver.LocalSeat;
             int enemySeat = 1 - localSeat;
+            _netPeerWatch = HostPeerWatch.TryCreate(_netLobby.HostPeer, _ui);
 
             _netLobbyUi?.SetPhase(PvpLobbyPhase.Hidden);
 
@@ -266,11 +271,7 @@ namespace Card.Bootstrap.Battle
         /// <summary>联机终局：胜负面板显示胜者与原因；"再来一局"重载场景回大厅。</summary>
         private void ShowNetEnd(string? overrideText = null)
         {
-            if (_ui == null || _netDriver == null)
-            {
-                return;
-            }
-
+            if (_ui == null || _netDriver == null) { return; }
             _netEndShown = true;
             if (_ui.VictoryLabel != null)
             {
@@ -278,10 +279,7 @@ namespace Card.Bootstrap.Battle
             }
 
             _ui.VictoryPanel?.gameObject.SetActive(true);
-            if (_ui.VictoryButton != null)
-            {
-                _ui.VictoryButton.onClick.AddListener(OnNetPlayAgain);
-            }
+            if (_ui.VictoryButton != null) { _ui.VictoryButton.onClick.AddListener(OnNetPlayAgain); }
         }
 
         private static string DescribeNetEnd(int? winnerId, string? reason)

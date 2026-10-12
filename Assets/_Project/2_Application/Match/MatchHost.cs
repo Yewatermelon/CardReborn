@@ -63,6 +63,9 @@ namespace Card.Application.Match
                 _seats.Remove(endpoint);
                 _endpoints.Remove(endpoint);
                 _attachedSeats.Remove(seat);
+                // M14-T3-B5：会话终结即座位序号基线作废——重连客户端（新进程）seq 从 1
+                // 重新计数，与权威重新对齐；不重置则重连后所有命令被 StaleSequence 拒绝。
+                _inboxes.Remove(seat);
             }
         }
 
