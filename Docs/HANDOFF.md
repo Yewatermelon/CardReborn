@@ -107,6 +107,45 @@ robocopy 'E:\Unity\Project\CardReborn' $dst /MIR /XD Library Temp Logs UserSetti
 3. 批处理或工具生成的**新资源**不会自动产生 `.meta`：需要让 Unity 再跑一次纯导入（`-batchmode -quit` 不加 `-runTests`），然后把 `.meta` 拷回仓库；拷完检查 GUID 不重复。
 4. 用户通常不在电脑前：**批准弹窗需要用户操作**（GUI 聚焦、联网、写 `.git`）。能用无界面方案就别抢焦点（见第 6 节第 9 条）。
 
+### 4.3 双开验证（M14-T4：两个进程跑双人联机）
+
+> 原理见 [05 §15.3](./05-联网对战_状态同步_设计文档.md)：同一工程不能双开编辑器，用"构建 + 构建"（最接近真实）或"编辑器 + 构建"（调试方便）。
+
+**第 1 步 · 出一次构建**（产物已存在则跳过，约 2 分钟）：
+
+- 编辑器菜单 `Card/Build/Windows x64`，或无界面：
+  ```powershell
+  & 'E:\Unity\2022.3.54f1c1\Editor\Unity.exe' -batchmode -quit -projectPath 'E:\Unity\Project\CardReborn' `
+    -executeMethod Card.Editor.BuildMenu.BuildWindowsForAutomation -logFile 'E:\Unity\Project\CardReborn\build.log'
+  ```
+- 产物：`Builds/Windows/CardReborn.exe`（`.gitignore` 已忽略，不入库）。
+
+**第 2 步 · 一键双开**：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Tools/dual-launch.ps1            # 默认端口 7777
+powershell -ExecutionPolicy Bypass -File Tools/dual-launch.ps1 -Port 9090 # 自定义端口
+```
+
+脚本行为：实例 A 以 `-host 7777` 启动（自动创建对局并监听），2 秒后实例 B 以 `-join=127.0.0.1:7777` 启动（自动连接）。两个实例**都跳过主菜单与"选择身份"**（启动参数接线 `NetLaunch`，M14-T4）；连上后两边各点一次"准备"即可开局。
+
+**手动方式**（不用脚本）：直接运行两次 `CardReborn.exe`，第一次传 `-host 7777`，第二次传 `-join=127.0.0.1:7777`（也支持 `-join 127.0.0.1 7777` / `-host=7777`；无参数 = 普通启动）。
+
+**编辑器 + 构建**（调试时看两边日志）：编辑器里 Play 主菜单 → 点"联机对战" → 手动"创建对局（房主）"；再运行构建 exe 传 `-join=127.0.0.1:7777`。编辑器侧没有启动参数，身份手动选。
+
+**日志定位**（双开排障）：`%USERPROFILE%\AppData\LocalLow\DefaultCompany\CardReborn\Logs\`，每实例一个文件 `log-<时间>-pid<进程Id>.log`——**用 pid 区分两实例**；启动角色也会写进日志（"启动参数：房主自动创建对局…"）。
+
+**常见问题**：
+
+| 症状 | 原因与处理 |
+| --- | --- |
+| 房主窗口显示"创建对局失败：…" | 端口被上局残留进程占用：`netstat -ano | findstr 7777` 找到 pid 结束，或换 `-Port` |
+| 加入方显示"连接失败" | 房主未先启动 / 端口不一致；先起房主（脚本已内置 2 秒间隔），或核对 `-join` 地址 |
+| 窗口切到后台后不动 | 已由 `runInBackground=true` 处理（M14-T3 修复）；若仍复现，保持至少一个窗口前台 |
+| 构建报"场景未在 Build Settings" | `BuildMenu` 显式用 MainMenu + Battle 两场景，与 ProjectSettings 一致；新增场景需同步脚本 |
+
+**已知限制**：本阶段仅本机/局域网直连（无 NAT 穿透与匹配服务，阶段三范围）；exe 作为房主时成员连接中断问题登记为 M14-T3-B7（搁置中）。
+
 ## 5. 开发流程约定（本仓库的"做事方式"）
 
 1. **先读后写**：`AGENTS.md` §3 的固定工作流 —— 读文档 → 写任务卡 → **先测试**（规则类必须）→ 实现 → 自检 → 评审 → 更新文档。
