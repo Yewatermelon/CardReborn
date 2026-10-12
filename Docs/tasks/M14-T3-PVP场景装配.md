@@ -217,6 +217,7 @@ internal sealed class PvpLobbyFlow
   - **② 房主侧对手掉线无提示**（权威判负机制本就存在：6s 心跳超时 + 30s 重连窗口 + Forfeit 代发，缺的只是 UI 提示）：新文件 [HostPeerWatch.cs](Assets/_Project/5_Bootstrap/Battle/Net/HostPeerWatch.cs) 每帧监视会话状态（`MatchLive && LastMatchEndReason == null` 门内），掉线/重连在战斗日志各提示一次；[PvpLobbyFlow.cs](Assets/_Project/5_Bootstrap/Battle/Net/PvpLobbyFlow.cs) 暴露 `HostPeer`；[BattleLogView.cs](Assets/_Project/4_Presentation/Battle/Log/BattleLogView.cs) 增 `AppendText` 自由文本入口。
   - **③ 英雄技能按钮可用性改状态驱动**：[BattleViewSynchronizer.Push](Assets/_Project/5_Bootstrap/Battle/BattleViewSynchronizer.cs) 按 `ActivePlayerId == localSeat && !PowerUsedThisTurn` 设置 `interactable`（重连重建视图/热座/联机统一，按钮不再残留"已释放"视觉；表现层状态渲染非规则判断，铁律 4）。
   - 测试先红后绿（kernel 983+2 红 → **985 全绿**）：`MatchHostTests.Detach_RejoinSeat_SequenceBaselineResets`（同座位重连后 seq=1 重新可执行）+ `HotSeatSynchronizerTests.Push_DrivesHeroPowerButton_ByTurnAndPowerUsed`（按钮随回合与技能状态翻转）。复验：全量预编译 0/0、check PASS（BattleSceneBootstrap.Net.cs 压回 300 行内）。Unity 实跑预期 **1281 passed / 0 failed**（1279 + 2）。
+  - **① 的补丁 · 接管路径摘错端点**（2026-10-12 用户复测发现重连后仍 StaleSequence——"序号大于某个数后才恢复操作"，`f23aacf`）：前轮修复只改了 MatchHost.Detach 本身，但真实接管路径 [PeerHost.TakeOverPeer](Assets/_Project/2_Network/PeerHost.cs) 以 `HostBridge.KernelEndpoint` 摘旧端点——该属性实持 `CreatePair` 的**桥侧**端点（权威挂载的是另一侧），`Detach` 查无此端点成**无操作**，收件箱从未移除。症状完全吻合：基线 K 残留 → 重连客户端 seq=1 起全部被拒（同载荷命中幂等回执状态不推进、异载荷 StaleSequence），点击烧序号直到超过 K 才恢复。修复：PeerHost 自持 `_peerKernelEndpoint`（权威侧挂载端点）并据它 Detach；[HostBridge.cs](Assets/_Project/2_Network/HostBridge.cs) `KernelEndpoint` 更名 `PeerEndpoint` 并修正注释（原名称与文档误导，系缺陷源头）。回归缺口：M13-T7 重连用例断线前从未消费过座位 seq（`HostEndTurn` 无序号），掩盖基线残留——补真实接管路径回归 `PeerHostReconnectTests.Reconnect_TakeoverResetsInboxBaseline_NewClientSeq1Executable`（先红：幂等回执拦截状态停留 version 3 → 后绿）。复验：kernel **986/0**（985+1）、全量预编译 0/0、check PASS。Unity 实跑预期 **1282 passed / 0 failed**（1281 + 1）。
 
 ### 11.3 设计决策（装配期裁定）
 
@@ -234,7 +235,7 @@ internal sealed class PvpLobbyFlow
 | M14-T3-O1 | P3（观察项） | 先手为加入方且极快出牌的竞争窗口（M12 Ready 语义），本机并排验证可接受 | 75s 回合超时兜底；体验优化属 M14-T6 |
 | M14-T3-B3 | ✅ 修复 | 构建版日志盲区 → BootLogging 落盘 + 控制台桥接（check.ps1 R4 文件级白名单唯一例外） | 2026-10-12 交付 |
 | M14-T3-B4 | ✅ 修复 | PvpCommandSink 无目标预检——需目标命令不再上行白耗 seq（StaleSequence 根因） | 2026-10-12 交付 |
-| M14-T3-B5 | ✅ 修复 | 重连链路三症状：重连后命令序号全部过期（Detach 不清收件箱，seq 基线跨会话残留）/ 房主侧无掉线提示 / 英雄技能按钮残留"已释放"（旧 B5 行的 3 症状已由 B6 定案修复，本行改记重连轮，详见 11.2） | 2026-10-12 交付（`5abeb74`）：Detach 移除座位收件箱重置基线 + HostPeerWatch 掉线监视 + 技能按钮状态驱动 |
+| M14-T3-B5 | ✅ 修复 | 重连链路三症状：重连后命令序号全部过期（接管路径摘错端点致 Detach 无操作，seq 基线跨会话残留）/ 房主侧无掉线提示 / 英雄技能按钮残留"已释放"（旧 B5 行的 3 症状已由 B6 定案修复，本行改记重连轮，详见 11.2） | 2026-10-12 交付（`5abeb74` + 补丁 `f23aacf`）：TakeOverPeer 据权威侧挂载端点 Detach + HostPeerWatch 掉线监视 + 技能按钮状态驱动 |
 | M14-T3-B6 | ✅ 修复 | 联机 Update 重复装配：_netLobby 分支 return 致 AssembleNetBattle 每帧重建 PvpCommandSink → _nextSeq 恒为 1 → StaleSequence"命令序号1已过期" + 事件/视图不同步（回合不切换、房主仍可操作、成员无法行动） | 2026-10-12 交付（`6cd774a`）：加 _netAssembled 守卫 + 装配后 _netLobby=null 退出大厅分支 |
 | M14-T3-T1 | ✅ 留证 | Unity EditMode 实跑 **1271 passed / 0 failed**（2026-10-12，与预期一致） | 用户实跑 |
 | M14-T3-B7 | ⏳ 搁置 | exe 作为房主时成员连接中断（编辑器房主路径正常；用户明确"之后再解决"） | 待后续排查：复现后取双实例日志（`persistentDataPath/Logs/`）归因 |
