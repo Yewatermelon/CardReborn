@@ -34,10 +34,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 项目 | `Card`：炉石式回合制卡牌游戏（Unity 2022.3 LTS），仓库 `E:\Unity\Project\CardReborn`（GitHub: `https://github.com/Yewatermelon/CardReborn.git`） |
-| 当前阶段 | **阶段一（PVE）M0–M7 已完成；阶段二（联网）M11/M12/M13 已完成（M13 复盘已归档 2026-10-12）；M14 T1–T6 已完成（含 2026-10-12 收尾 Bug 修复），T7 20 局回归 Soak 待做** |
+| 当前阶段 | **阶段一（PVE）M0–M7 已完成；阶段二（联网）M11/M12/M13 已完成（M13 复盘已归档 2026-10-12）；**M14 T1–T7 全部收官（2026-10-13 Soak 30 局门禁 + 跨机器 LAN 双开验证通过）** |
 | 交付方式 | 每个任务一张任务卡（`Docs/tasks/`）+ 先写测试 + 双环境验证 + 提交里带证据 |
-| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环**、**可游玩的 Battle 场景（主菜单开局 / 点击出牌与攻击指向 / 英雄技能 / 双人热座视角切换 / 胜负结算与再来一局 / 中文卡面文本）**、**PVE 人机对战（分帧驱动 AI 回合 + 三档难度 Easy/Normal/Hard）**、命令录制重放、状态快照/增量、PlayMode 端到端冒烟；**AiVsAiSimulator（批量 500 局门禁 + 胜率统计 + 难度单调性验证）**；**联网（M11–M13）：MatchHost 权威共享库、座位化广播、BCL TCP 直连传输、握手/心跳、命令 seq 幂等、StateDelta 增量下行 + 客户端版本裁决、快照回退重连、每座位视野裁剪、掉线判负/回合超时/MatchEnd 终态编排、消息异常注入防御**；M14 新增：表现先行（在途命令反馈）、状态插值（Tween + 布局平滑）、PVP 场景装配、双开工具与一键脚本、对局结果持久化（MatchRecord JSON 写盘）、异常体验打磨（胜负面板双按钮 + 房主退出/对手掉线原因翻译 + 防重复绑定）；测试 **kernel 1007 / Unity EditMode 1300**、静态门禁、无 Unity 覆盖率工具链 |
-| 下一步第一件事 | **M14-T7 20 局回归与 Soak**（用户说之后有空闲再做）→ 或 M8 元游戏 / M9 内容打磨（用户定方向） |
+| 已具备的能力 | 规则内核（Core）、配置管线、**完整对局规则闭环**、**可游玩的 Battle 场景（主菜单开局 / 点击出牌与攻击指向 / 英雄技能 / 双人热座视角切换 / 胜负结算与再来一局 / 中文卡面文本）**、**PVE 人机对战（分帧驱动 AI 回合 + 三档难度 Easy/Normal/Hard）**、命令录制重放、状态快照/增量、PlayMode 端到端冒烟；**AiVsAiSimulator（批量 500 局门禁 + 胜率统计 + 难度单调性验证）**；**联网（M11–M13 + M14-T7）：MatchHost 权威共享库、座位化广播、BCL TCP 直连传输（监听 0.0.0.0 支持跨机器 LAN）、握手/心跳、命令 seq 幂等（回执按座位归属）、StateDelta 增量下行 + 客户端版本裁决、快照回退重连、每座位视野裁剪、掉线判负/回合超时/MatchEnd 终态编排、消息异常注入防御、Soak 30 局真实 TCP 回环回归 + ManualClock 挂机模拟、跨机器 LAN 双开验证通过（PeerHost.ListenAddress 自动发现本机 WiFi IP，排除 APIPA 169.254/隧道/回环）**；测试 **kernel 1016 / Unity EditMode 1309**、静态门禁、无 Unity 覆盖率工具链 |
+| 下一步第一件事 | M8 元游戏 / M9 内容打磨 / M10 发布验收 / 阶段三（专用服务器/NAT/反作弊）——由用户定方向 |
 
 ## 2. 你的第一步（建议按顺序做）
 
@@ -55,7 +55,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 领先 `origin/main` 3 个提交（2026-10-13 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7`，**未推送**）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
+| 分支 / 提交 | `main` 领先 `origin/main` 10 个提交（2026-10-13 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7` + Unity 复验 docs `48f62a1` + LAN 跨机器 feat `16ffc54` + APIPA 修复 `315c2ed`，**未推送**）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
 | 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 ✅ 7/7（2026-10-13 T7 Soak 收官）**；M8/M9/M10 ⬜ 未开始 |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**；无 Unity kernel 工程 0 warning |
 | 测试 | **Unity EditMode 1309 passed / 0 failed**（2026-10-13 实跑，1300 + Soak 9）；无 Unity 工具链 **kernel 1016 passed / 0 failed** |
@@ -63,8 +63,8 @@
 | 静态门禁 | `Tools/check.ps1` PASS（415 文件） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |
 | AI 能力 | `GreedyAiAgent`（贪心 + 可选难度 Profile）+ `AiVsAiSimulator`（批量 500 局门禁 + 胜率统计）+ 三档难度 Easy（劣化排序）/ Normal（贪心）/ Hard（评估函数 + 斩杀意识），同英雄镜像 200 局：Normal vs Easy 68.5%、Hard vs Normal 54.5% |
-| 联网能力 | 权威宿主 `MatchHost`（共享库）+ `PeerHost`（本机双进程 BCL TCP）+ 座位化广播/视野裁剪 + seq 幂等（回执按座位归属，M14-T7 修正）+ StateDelta/快照回退 + 终态编排（掉线判负/回合超时/MatchEnd）+ 异常注入防御 + **Soak 30 局真实 TCP 回环回归（M14-T7，门禁口径）**；协议"只加不删"演进 |
-| 未关闭项 | 无 P0/P1；阶段二验收遗留真机项（用户执行）：AC-7 双开 30 局 + ≥30 分钟挂机（§4.3 soak-watch.ps1 采样）、Unity EditMode 复验（预期 1309）、移除 `Card.Network` asmdef 后编译复验——见 [M14-T7 任务卡 §11.6](./tasks/M14-T7-Soak回归.md) |
+| 联网能力 | 权威宿主 `MatchHost`（共享库）+ `PeerHost`（BCL TCP，**监听绑定 0.0.0.0 支持跨机器 LAN**）+ 座位化广播/视野裁剪 + seq 幂等（回执按座位归属，M14-T7 修正）+ StateDelta/快照回退 + 终态编排（掉线判负/回合超时/MatchEnd）+ 异常注入防御 + **Soak 30 局真实 TCP 回环回归（M14-T7，门禁口径）** + **跨机器 LAN 双开验证通过**（校园网 WiFi，2026-10-13：PeerHost.ListenAddress 自动发现本机 WiFi IP，排除 APIPA 169.254/隧道/回环网卡）；协议"只加不删"演进 |
+| 未关闭项 | 无 P0/P1；**AC-7 跨机器 LAN 双开已验证通过**（2026-10-13，校园网 WiFi 同网段双机）；仅剩"移除 `Card.Network` asmdef 后编译复验"（用户执行）——见 [M14-T7 任务卡 §11.6](./tasks/M14-T7-Soak回归.md) |
 
 ## 4. 验证环境与命令（关键：两种跑法）
 
@@ -146,6 +146,14 @@ powershell -ExecutionPolicy Bypass -File Tools/dual-launch.ps1 -Port 9090 # 自�
 
 **已知限制**：本阶段仅本机/局域网直连（无 NAT 穿透与匹配服务，阶段三范围）。
 
+**跨机器 LAN 双开（2026-10-13 已验证通过）**：
+
+1. 房主机器：构建后启动 `CardReborn.exe -host 7777`，大厅自动显示**真实局域网 IP**（`PeerHost.ListenAddress` 自动发现 WiFi 网卡，排除 APIPA/隧道/回环）；**必须放行防火墙 7777 入站**（管理员 PowerShell：`New-NetFirewallRule -DisplayName "CardReborn TCP 7777" -Direction Inbound -Protocol TCP -LocalPort 7777 -Action Allow`）
+2. 加入方机器：拷整个 `Builds/Windows/` 文件夹过来，启动 `CardReborn.exe -join=<房主局域网IP>:7777`（不需要 Unity）
+3. 双方各点"准备" → 自动开局
+
+**校园网 WiFi 注意**：多数校园网开了 AP 隔离——两台机器 WiFi 下互相 ping 不通。**先测 `ping <对方IP>`，通了再走上面**。ping 不通时换手机热点（一台开热点另一台连，实测最稳）或网线直连两机。
+
 **挂机采样（M14-T7：AC-7 真机 Soak 验收）**：
 
 ```powershell
@@ -181,6 +189,8 @@ AC-7 判定流程：先按上面第 1/2 步双开打满 30 局（两边各点"�
 | 10 | 改内容后一批测试红了 | 早期测试断言了"恰好 N 张卡"这类绝对值 | 内容规模统一由 `ConfigContentTests`（≥ 阈值）把关；单测只断言特定对象的值 |
 | 11 | TRAE 沙箱里 Unity 批处理 `-runTests` exit 0 但无结果（M3-B1） | 沙箱拦截 `bee\trash`/`upm.log`，`isUpdating` 恒真、测试调度器不启动 | 优先用无 Unity 工具链（第 4.1 节）；Unity 权威验证请用户在编辑器 Test Runner（EditMode）手动跑并回报数字（M3 收官即用此路径：608/608）；禁沙箱跑批处理仍会因项目被编辑器占用而崩溃 |
 | 12 | 手工 `.meta` 里 GUID 不是 32 位（M12-B1：33/34 位）→ Unity 静默排除该源文件，程序集缺类型、下游编译 CS0246 | GUID 长度非法时 Unity 拒绝导入该资产；dotnet kernel 通配符编译不暴露 | 生成/校验 `.meta` 时 GUID 必须恰为 32 位十六进制且全仓唯一（`Get-ChildItem -Recurse -Filter *.meta \| Select-String 'guid:'` 扫描长度 + 重复）；修复后让 Unity 重新 Refresh 导入 |
+| 13 | 房主大厅显示 `169.254.x.x`（APIPA 地址）→ 加入方连不上 | Windows 网卡未拿到 DHCP 时自动分配 APIPA 自分配地址；原 `TryGetLanIpv4` 取"首个非 Loopback"恰好撞上没插网线的有线网卡 | 已修复（提交 `315c2ed`）：排除 169.254/16 + Tunnel/Loopback，WiFi（Wireless80211）优先返回；`Test-NetConnection <房主IP> -Port 7777` 返回 `TcpTestSucceeded=True` 但 `SourceAddress=169.254.x.x` 时是**本机自连假象**，不代表跨机器可达 |
+| 14 | 跨机器 LAN 下加入方一直"连接中" | 90% 是校园网 AP 隔离（两台 WiFi 下互相 ping 不通） | 先 `ping <对方IP>` 确认同网段可达；ping 不通时换手机热点或网线直连两机 |
 
 ## 7. 还没做的事（交接时请确认）
 
