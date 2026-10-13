@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Card.Core;
 
 namespace Card.Network
@@ -26,10 +27,14 @@ namespace Card.Network
         {
             _transport = Guard.NotNull(transport, nameof(transport));
             _diag = diag;
+            _transport.OnDisconnected += () => _diag?.Record(NetworkEventType.Disconnected, "transport-closed");
         }
 
         /// <summary>传输层是否仍连接（Dispose 后恒 false）。</summary>
         public bool Connected => !_disposed && _transport.Connected;
+
+        /// <summary>底层传输（Soak/诊断用；正常业务不应直用——帧分类归本类）。</summary>
+        public ITransport Transport => _transport;
 
         /// <summary>握手是否完成（已收 HelloAck）。</summary>
         public bool Handshook => _handshook;
@@ -138,6 +143,7 @@ namespace Card.Network
             }
 
             JsonValue payload;
+            long parseStart = Stopwatch.GetTimestamp();
             try
             {
                 payload = JsonValue.Parse(msg.PayloadJson);
@@ -146,6 +152,13 @@ namespace Card.Network
             {
                 Disconnect("载荷不是合法 JSON：" + ex.Message);
                 return false;
+            }
+
+            if (msg.Type == NetworkMessageType.StateDelta)
+            {
+                double parseMs = Stopwatch.GetElapsedTime(parseStart).TotalMilliseconds;
+                _diag?.Record(NetworkEventType.ReceiveFrame,
+                    $"delta json={msg.PayloadJson.Length} parse={parseMs:F1}ms");
             }
 
             return DispatchByType(msg.Type, payload);

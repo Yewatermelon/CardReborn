@@ -255,6 +255,11 @@ namespace Card.Tests.EditMode.Match
             Assert.That(IsAccepted(SendStep(firstClient, host,
                 CommandEnvelope(1, EndTurnPayload(firstSeat)))), Is.True, "座位 A 的 seq=1 应执行");
 
+            // M14-T7：seq 回执只发归属座位——排空座位 B 收到的座位 A 命令 step（无 seq）
+            while (secondClient.TryReceive(out _))
+            {
+            }
+
             int secondSeat = 1 - firstSeat;
             JsonValue second = SendStep(secondClient, host, CommandEnvelope(1, EndTurnPayload(secondSeat)));
             Assert.That(IsAccepted(second), Is.True, "座位 B 的 seq=1 不受座位 A 序号影响");

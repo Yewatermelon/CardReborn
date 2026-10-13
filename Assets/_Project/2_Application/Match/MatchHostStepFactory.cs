@@ -11,7 +11,9 @@ namespace Card.Application.Match
     /// </summary>
     internal static class MatchHostStepFactory
     {
-        /// <summary>为每个座位生成 step JSON（同座位多端点复用同一份）。</summary>
+        /// <summary>为每个座位生成 step JSON（同座位多端点复用同一份）。
+        /// M14-T7：seq 回执只写给命令归属座位——信封 seq 按座位独立编号，
+        /// 广播给对手会让对手的回执判定被交叉污染（Soak 实证：Rejected 2442）。</summary>
         public static Dictionary<int, string> BuildSeatSteps(
             MatchState before,
             MatchState after,
@@ -23,7 +25,8 @@ namespace Card.Application.Match
             CommandError error,
             string detail,
             bool finished,
-            IReadOnlyList<GameEvent> events)
+            IReadOnlyList<GameEvent> events,
+            int actorSeat)
         {
             Dictionary<int, string> steps = new Dictionary<int, string>();
             foreach (int seat in seats)
@@ -35,7 +38,7 @@ namespace Card.Application.Match
                     : Array.Empty<StateChange>();
 
                 steps[seat] = MatchHostProtocol
-                    .WriteStep(version, basedOn, seq, accepted, error, detail, finished, changes, events)
+                    .WriteStep(version, basedOn, seat == actorSeat ? seq : null, accepted, error, detail, finished, changes, events)
                     .ToJson();
             }
 

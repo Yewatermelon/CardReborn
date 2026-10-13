@@ -122,26 +122,28 @@ namespace Card.Application.Match
 
         private void ProcessCommand(LoopbackEndpoint endpoint, JsonValue json)
         {
+            // M14-T7：归属座位提前解析——Reject 的 seq 回执只发归属座位（与 BuildSeatSteps 同口径）
+            int seat = _seats[endpoint];
+
             // M13-T2 信封级校验 ①：载荷可解析——畸形命令产出结构化拒绝，不抛异常打死宿主
             if (!MatchHostProtocol.TryReadCommand(json, out IGameCommand? command, out string? readError))
             {
-                Reject(CommandError.UnknownCommand, readError!);
+                Reject(CommandError.UnknownCommand, readError!, seqSeat: seat);
                 return;
             }
 
             // M13-T2 信封级校验 ②：座位归属——不消费 seq（冒用他人身份不推进自己收件箱）
-            int seat = _seats[endpoint];
             if (command!.PlayerId != seat)
             {
                 Reject(CommandError.NotYourTurn,
-                    "命令归属玩家 " + command.PlayerId + " 与端点座位 " + seat + " 不匹配。");
+                    "命令归属玩家 " + command.PlayerId + " 与端点座位 " + seat + " 不匹配。", seqSeat: seat);
                 return;
             }
 
             // M13-T3 信封级校验 ③：seq 缺省 = 无序号模式（兼容 M11/T2 客户端）；非法值按信封畸形拒绝
             if (!MatchHostProtocol.TryReadSeq(json, out int? seq))
             {
-                Reject(CommandError.UnknownCommand, "command 信封 seq 字段非法（应为 ≥1 的整数）。");
+                Reject(CommandError.UnknownCommand, "command 信封 seq 字段非法（应为 ≥1 的整数）。", seqSeat: seat);
                 return;
             }
 
@@ -149,7 +151,7 @@ namespace Card.Application.Match
             if (seq.HasValue)
             {
                 inbox = GetInbox(seat);
-                if (HandleSequenced(endpoint, inbox, seq.Value, json))
+                if (HandleSequenced(endpoint, inbox, seq.Value, json, seat))
                 {
                     return;
                 }
@@ -159,7 +161,7 @@ namespace Card.Application.Match
         }
 
         /// <summary>M13-T3 序号幂等裁决：返回 true 表示已处理（拒绝或幂等重放），无需再结算。</summary>
-        private bool HandleSequenced(LoopbackEndpoint endpoint, SeatCommandInbox inbox, int seq, JsonValue json)
+        private bool HandleSequenced(LoopbackEndpoint endpoint, SeatCommandInbox inbox, int seq, JsonValue json, int seat)
         {
             if (inbox.IsExecutable(seq))
             {
@@ -175,7 +177,7 @@ namespace Card.Application.Match
             string why = seq < inbox.LastSeq
                 ? "已过期（该座位最新已消费 " + inbox.LastSeq + "）"
                 : "已被其他命令使用";
-            Reject(CommandError.StaleSequence, "命令序号 " + seq + " " + why + "。", seq);
+            Reject(CommandError.StaleSequence, "命令序号 " + seq + " " + why + "。", seq, seqSeat: seat);
             return true;
         }
 
@@ -206,7 +208,8 @@ namespace Card.Application.Match
 
             Dictionary<int, string> steps = MatchHostStepFactory.BuildSeatSteps(
                 before, _controller.State, DistinctSeats(), _stateVersion, basedOn, seq,
-                result.IsValid, result.Error, result.Detail, _controller.IsFinished, events);
+                result.IsValid, result.Error, result.Detail, _controller.IsFinished, events,
+                actorSeat: command.PlayerId);
 
             foreach (LoopbackEndpoint endpoint in _endpoints)
             {
@@ -246,15 +249,20 @@ namespace Card.Application.Match
             return roundEvents;
         }
 
-        /// <summary>广播一条结构化拒绝 step（M13-T2）：状态零变更，拒绝原因可观测；basedOn = 当前版本（未推进）。</summary>
-        private void Reject(CommandError error, string detail, int? seq = null)
+        /// <summary>广播一条结构化拒绝 step（M13-T2）：状态零变更，拒绝原因可观测；basedOn = 当前版本（未推进）。
+        /// M14-T7：seq 回执只写给归属座位 <paramref name="seqSeat"/>（信封 seq 按座位独立编号，不可广播污染对手）。</summary>
+        private void Reject(CommandError error, string detail, int? seq = null, int? seqSeat = null)
         {
-            string stepJson = MatchHostProtocol.WriteStep(
-                    _stateVersion, _stateVersion, seq, accepted: false, error, detail,
-                    finished: _controller.IsFinished,
-                    Array.Empty<StateChange>(), Array.Empty<GameEvent>())
-                .ToJson();
-            Broadcast(stepJson);
+            foreach (LoopbackEndpoint endpoint in _endpoints)
+            {
+                int seat = _seats[endpoint];
+                string stepJson = MatchHostProtocol.WriteStep(
+                        _stateVersion, _stateVersion, seat == seqSeat ? seq : null, accepted: false, error, detail,
+                        finished: _controller.IsFinished,
+                        Array.Empty<StateChange>(), Array.Empty<GameEvent>())
+                    .ToJson();
+                endpoint.Send(stepJson);
+            }
         }
 
         // -----------------------------------------------------------------

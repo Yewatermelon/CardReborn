@@ -34,6 +34,8 @@ namespace Card.Network
             _bridge = bridge;
             _diag = diag;
             _lastActivityTick = clock.CurrentTick;
+            _transport.OnDisconnected += () =>
+                _diag?.Record(NetworkEventType.Disconnected, $"peerSeat={_peerSeat} transport-closed");
         }
 
         /// <summary>对手是否已 Ready。</summary>
@@ -47,6 +49,9 @@ namespace Card.Network
 
         /// <summary>是否因超时判定断开。</summary>
         public bool TimedOut => _timedOut;
+
+        /// <summary>最近一次收到上行帧的权威 tick（Soak 夹具自救泵的观测口，M14-T7）。</summary>
+        public int LastActivityTick => _lastActivityTick;
 
         /// <summary>传输层是否仍连接。</summary>
         public bool IsConnected => _transport.Connected && !_timedOut;
@@ -145,6 +150,11 @@ namespace Card.Network
         /// <summary>心跳与超时：60 tick 无任何已到达消息 → 断链；30 tick → 发 Ping。</summary>
         private bool RunHeartbeat(int now)
         {
+            if (_timedOut)
+            {
+                return false; // 已超时断链：不再重复记录/重复 Dispose（M14-T7 粘性门）
+            }
+
             int idleTicks = now - _lastActivityTick;
             if (idleTicks >= PeerHost.TimeoutTicks)
             {
@@ -163,7 +173,12 @@ namespace Card.Network
                     NetworkMessageType.Ping,
                     MessageCodec.CurrentProtocolVersion,
                     ping.ToJson()));
-                _diag?.Record(NetworkEventType.PingSent, $"tick={now}");
+                // M14-T7：只记空闲期首个 Ping（去噪）——后续每 tick 补发不重复记录，
+                // 诊断尾部由 HeartbeatTimeout 收口。
+                if (idleTicks == PeerHost.HeartbeatIntervalTicks)
+                {
+                    _diag?.Record(NetworkEventType.PingSent, $"tick={now}");
+                }
             }
 
             return false;

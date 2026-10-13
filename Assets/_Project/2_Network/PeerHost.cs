@@ -20,9 +20,11 @@ namespace Card.Network
         private readonly BclTcpHostListener _listener;
         private readonly IClock _clock;
         private readonly LoopbackEndpoint _localClientEndpoint;
+        private readonly NetworkDiagnostics? _diag;
         private PeerSession? _session;
         private HostBridge? _bridge;
         private LoopbackEndpoint? _peerKernelEndpoint;
+        private ITransport? _activeTransport;
         private bool _disposed;
 
         // 终态编排状态（M13-T8）
@@ -72,6 +74,9 @@ namespace Card.Network
         /// <summary>当前对手会话（AcceptPeer 后存在；M13-T8）。</summary>
         public PeerSession? ActiveSession => _session;
 
+        /// <summary>当前对手原始传输（诊断用，M14-T7：Soak 观测接收线程健康）。</summary>
+        public ITransport? ActiveTransport => _activeTransport;
+
         /// <summary>对局是否已激活（粘性：任一会话报告开局后保持 true，M13-T8）。</summary>
         public bool MatchLive => _matchLive;
 
@@ -80,12 +85,13 @@ namespace Card.Network
 
         /// <summary>
         /// 创建房主宿主：监听指定端口（0 = OS 分配），内部持有 <see cref="MatchHost"/>；
-        /// 同时把房主本地座位 0 的回环端点挂到权威。
+        /// 同时把房主本地座位 0 的回环端点挂到权威。diag 可选注入会话诊断（M14-T7）。
         /// </summary>
-        public PeerHost(MatchHost matchHost, IClock clock, int listenPort = 0)
+        public PeerHost(MatchHost matchHost, IClock clock, int listenPort = 0, NetworkDiagnostics? diag = null)
         {
             _matchHost = matchHost;
             _clock = clock;
+            _diag = diag;
             _turnStartTick = clock.CurrentTick;
             LoopbackLink.CreatePair(out LoopbackEndpoint hostKernelEp, out _localClientEndpoint);
             matchHost.Attach(hostKernelEp, HostSeat);
@@ -106,7 +112,7 @@ namespace Card.Network
         /// </summary>
         public PeerSession? AcceptPeer()
         {
-            ITransport? transport = _listener.Accept();
+            ITransport? transport = _listener.Accept(_diag);
             if (transport == null) return null;
 
             return TakeOverPeer(transport);
@@ -141,8 +147,9 @@ namespace Card.Network
             LoopbackLink.CreatePair(out LoopbackEndpoint peerKernelEp, out LoopbackEndpoint peerBridgeEp);
             _matchHost.Attach(peerKernelEp, 1);
             _peerKernelEndpoint = peerKernelEp;
-            _bridge = new HostBridge(peerBridgeEp, transport, seat: 1);
-            _session = new PeerSession(_matchHost, transport, _clock, peerSeat: 1, bridge: _bridge);
+            _activeTransport = transport;
+            _bridge = new HostBridge(peerBridgeEp, transport, seat: 1, diag: _diag);
+            _session = new PeerSession(_matchHost, transport, _clock, peerSeat: 1, bridge: _bridge, diag: _diag);
             _disconnectStartTick = null; // 重连即取消掉线判负计时（M13-T8）
             return _session;
         }

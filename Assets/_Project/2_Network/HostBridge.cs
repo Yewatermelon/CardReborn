@@ -169,7 +169,7 @@ namespace Card.Network
             }
 
             _transport.Send(MessageCodec.Frame(type, MessageCodec.CurrentProtocolVersion, raw));
-            _diag?.Record(NetworkEventType.SendFrame, $"type={type}, seat={_seat}");
+            _diag?.Record(NetworkEventType.SendFrame, $"type={type}, seat={_seat}, bytes={raw.Length}");
             return true;
         }
     }
