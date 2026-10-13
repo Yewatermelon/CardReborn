@@ -51,20 +51,20 @@
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-12（M14-T6 收官 + 收尾 Bug 修复 + 推送远端）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-13（M14-T7 Soak 收官，**阶段二 M11–M14 全部完成**）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 已推送 `origin/main`（2026-10-12，HEAD `7fce1cd`）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
-| 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 🟡 6/7（T1–T6 已完成，T7 Soak 待做）**；M8/M9/M10 ⬜ 未开始 |
+| 分支 / 提交 | `main` 领先 `origin/main` 2 个提交（2026-10-13 M14-T7：feat `2e93fcc` + docs，**未推送**）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
+| 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 ✅ 7/7（2026-10-13 T7 Soak 收官）**；M8/M9/M10 ⬜ 未开始 |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**；无 Unity kernel 工程 0 warning |
-| 测试 | **Unity EditMode 1300 passed / 0 failed**；无 Unity 工具链 **kernel 1007 passed / 0 failed** |
-| 覆盖率 | `0_Core 95.82%`、`Domain + Application 93.33%`（门禁 90% / 80%） |
-| 静态门禁 | `Tools/check.ps1` PASS |
+| 测试 | **Unity EditMode 1300 passed / 0 failed**（T7 新增 9 例待复验，预期 1309）；无 Unity 工具链 **kernel 1016 passed / 0 failed** |
+| 覆盖率 | `0_Core 95.82%`、`Domain + Application 92.66%`（门禁 90% / 80%） |
+| 静态门禁 | `Tools/check.ps1` PASS（415 文件） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |
 | AI 能力 | `GreedyAiAgent`（贪心 + 可选难度 Profile）+ `AiVsAiSimulator`（批量 500 局门禁 + 胜率统计）+ 三档难度 Easy（劣化排序）/ Normal（贪心）/ Hard（评估函数 + 斩杀意识），同英雄镜像 200 局：Normal vs Easy 68.5%、Hard vs Normal 54.5% |
-| 联网能力 | 权威宿主 `MatchHost`（共享库）+ `PeerHost`（本机双进程 BCL TCP）+ 座位化广播/视野裁剪 + seq 幂等 + StateDelta/快照回退 + 终态编排（掉线判负/回合超时/MatchEnd）+ 异常注入防御；协议"只加不删"演进 |
-| 未关闭项 | 无 P0/P1；P3 登记见 [M13 复盘 §8](./reviews/M13-权威状态同步与裁剪-评审与复盘.md)；**M14-T7 20 局回归 Soak 待做**（用户说之后有空闲再做） |
+| 联网能力 | 权威宿主 `MatchHost`（共享库）+ `PeerHost`（本机双进程 BCL TCP）+ 座位化广播/视野裁剪 + seq 幂等（回执按座位归属，M14-T7 修正）+ StateDelta/快照回退 + 终态编排（掉线判负/回合超时/MatchEnd）+ 异常注入防御 + **Soak 30 局真实 TCP 回环回归（M14-T7，门禁口径）**；协议"只加不删"演进 |
+| 未关闭项 | 无 P0/P1；阶段二验收遗留真机项（用户执行）：AC-7 双开 30 局 + ≥30 分钟挂机（§4.3 soak-watch.ps1 采样）、Unity EditMode 复验（预期 1309）、移除 `Card.Network` asmdef 后编译复验——见 [M14-T7 任务卡 §11.6](./tasks/M14-T7-Soak回归.md) |
 
 ## 4. 验证环境与命令（关键：两种跑法）
 
@@ -145,6 +145,16 @@ powershell -ExecutionPolicy Bypass -File Tools/dual-launch.ps1 -Port 9090 # 自�
 | 构建报"场景未在 Build Settings" | `BuildMenu` 显式用 MainMenu + Battle 两场景，与 ProjectSettings 一致；新增场景需同步脚本 |
 
 **已知限制**：本阶段仅本机/局域网直连（无 NAT 穿透与匹配服务，阶段三范围）。
+
+**挂机采样（M14-T7：AC-7 真机 Soak 验收）**：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Tools/soak-watch.ps1 -Name CardReborn -Interval 5 -Out soak.csv
+# 或按 pid：-ProcIds 1234,5678；-Duration 1800（秒，0 = 采样到 Ctrl+C）
+# CSV 列：timestamp,pid,name,working_set_mb,private_mb,handles,threads
+```
+
+AC-7 判定流程：先按上面第 1/2 步双开打满 30 局（两边各点"准备"开局，打到分出胜负），随后挂机 ≥30 分钟并保持 `soak-watch.ps1` 采样——CSV 的 `working_set_mb` / `private_mb` / `handles` / `threads` 无持续增长趋势即通过。脚本只采样，**判定由人做**；kernel 侧 30 局自动回归由 `NetworkSoakRunnerTests` 门禁覆盖（`Tools/coverage.ps1`）。
 
 ## 5. 开发流程约定（本仓库的"做事方式"）
 
