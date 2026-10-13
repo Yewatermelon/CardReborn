@@ -55,10 +55,10 @@
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 领先 `origin/main` 2 个提交（2026-10-13 M14-T7：feat `2e93fcc` + docs，**未推送**）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
+| 分支 / 提交 | `main` 领先 `origin/main` 3 个提交（2026-10-13 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7`，**未推送**）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
 | 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 ✅ 7/7（2026-10-13 T7 Soak 收官）**；M8/M9/M10 ⬜ 未开始 |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**；无 Unity kernel 工程 0 warning |
-| 测试 | **Unity EditMode 1300 passed / 0 failed**（T7 新增 9 例待复验，预期 1309）；无 Unity 工具链 **kernel 1016 passed / 0 failed** |
+| 测试 | **Unity EditMode 1309 passed / 0 failed**（2026-10-13 实跑，1300 + Soak 9）；无 Unity 工具链 **kernel 1016 passed / 0 failed** |
 | 覆盖率 | `0_Core 95.82%`、`Domain + Application 92.66%`（门禁 90% / 80%） |
 | 静态门禁 | `Tools/check.ps1` PASS（415 文件） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |

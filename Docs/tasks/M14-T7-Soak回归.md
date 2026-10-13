@@ -161,6 +161,7 @@ public sealed class NetworkSoakReport
 | Soak 测试 | **9/9 全绿**（`dotnet test --filter FullyQualifiedName~Soak`，26s；30 局全部终局、断连 0、心跳维持） |
 | coverage 门禁 | **kernel 1016 passed / 0 failed**（基线 1007 + 9）；`0_Core 95.82%`（门禁 90%）/ `Domain + App 92.66%`（门禁 80%） |
 | 静态门禁 | `check.ps1` PASS（415 文件）；编译 0 warning |
+| Unity EditMode | **1309 passed / 0 failed**（2026-10-13 实跑，1300 + 9 与预期一致） |
 
 ### 11.4 决策点实测
 
@@ -168,11 +169,10 @@ public sealed class NetworkSoakReport
 
 ### 11.5 提交
 
-- feat：`2e93fcc`（26 文件，+1406/−71）
+- feat：`2e93fcc`（26 文件，+1406/−71）+ 兼容修复 `64635fe`（Stopwatch.GetElapsedTime → GetTimestamp+Frequency）
 - docs：本提交（任务卡 + PROGRESS + HANDOFF）
 
 ### 11.6 遗留项（移交）
 
 - **AC-7 真机**（用户执行）：双开 30 局 + ≥30 分钟挂机，`soak-watch.ps1` 采样 CSV 无持续增长趋势（用法见 HANDOFF §4.3）；§10 各 🖥 项随真机复验逐项勾选。
-- **Unity Test Runner 复验**：新增 9 例属 EditMode 套件，预期 **1309 passed / 0 failed**（1300 + 9）。
 - **"移除 `Card.Network` 程序集仍可编译出包"复验**（用户执行）：移除 asmdef 引用后编译（§10 结构保证项）。
