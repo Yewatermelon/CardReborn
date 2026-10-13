@@ -9,7 +9,7 @@ namespace Card.Network
 {
     /// <summary>
     /// BCL TCP 传输（M12-T3；Docs/05 §3.3）：System.Net.Sockets + MessageCodec framing。
-    /// 零第三方依赖，本阶段用于本机双进程直连（127.0.0.1）。
+    /// 零第三方依赖；监听绑定 0.0.0.0（IPAddress.Any），支持本机双进程 + 跨机器 LAN。
     /// </summary>
     public static class BclTcpTransport
     {
@@ -39,7 +39,7 @@ namespace Card.Network
 
         public BclTcpHostListener(int port)
         {
-            _listener = new TcpListener(IPAddress.Loopback, port);
+            _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
         }
 

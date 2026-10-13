@@ -20,7 +20,7 @@ namespace Card.Bootstrap.Battle.Net
         /// <summary>房主默认监听端口（"再来一局"重载后地址可复现）。</summary>
         public const int DefaultListenPort = 7777;
 
-        private const string HostAddressPrefix = "127.0.0.1:";
+        private const string TestHostAddressPrefix = "127.0.0.1:"; // 测试注入路径的 fallback，真实路径取 PeerHost.ListenAddress
 
         private readonly CardDatabase _database;
         private readonly int _listenPort;
@@ -83,9 +83,9 @@ namespace Card.Bootstrap.Battle.Net
                 INetMatchLink link = _hostFactoryOverride != null
                     ? _hostFactoryOverride()
                     : CreateHostLink();
-                // 真实路径已在 CreateHostLink 内按实际监听端口写入；注入路径（测试）
-                // 无 PeerHost，回落配置端口——大厅状态文本依赖该地址展示。
-                ListenAddress ??= HostAddressPrefix + _listenPort.ToString(CultureInfo.InvariantCulture);
+                // 真实路径已在 CreateHostLink 内写入 PeerHost.ListenAddress（本机局域网 IP）；
+                // 注入路径（测试）无 PeerHost，回落 127.0.0.1 + 配置端口。
+                ListenAddress ??= TestHostAddressPrefix + _listenPort.ToString(CultureInfo.InvariantCulture);
                 _isHosting = true;
                 _link = link;
                 _driver = new NetMatchDriver(link, 0);
@@ -182,7 +182,7 @@ namespace Card.Bootstrap.Battle.Net
             var matchHost = new MatchHost(controller);
             var peerHost = new PeerHost(matchHost, _clock, _listenPort);
             _hostPeer = peerHost;
-            ListenAddress = HostAddressPrefix + peerHost.ListenPort.ToString(CultureInfo.InvariantCulture);
+            ListenAddress = peerHost.ListenAddress; // 本机局域网 IP + 端口（支持跨机器）
             return new HostNetLink(matchHost, peerHost);
         }
 

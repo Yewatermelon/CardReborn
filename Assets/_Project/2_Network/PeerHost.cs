@@ -1,4 +1,6 @@
 using System;
+using System.Net;
+using System.Net.Sockets;
 using Card.Core;
 using Card.Application.Match;
 using Card.Domain.Match;
@@ -14,7 +16,7 @@ namespace Card.Network
     /// 本阶段不做：多房间、匹配、账号、中继、NAT 穿透。
     /// （M13-T2 / M13-OBS-1：PeerSession 已拆分至独立文件 PeerSession.cs。）
     /// </summary>
-    public sealed class PeerHost : IDisposable
+    public sealed partial class PeerHost : IDisposable
     {
         private readonly MatchHost _matchHost;
         private readonly BclTcpHostListener _listener;
