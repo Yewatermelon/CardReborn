@@ -156,7 +156,7 @@ namespace Card.Network
 
             if (msg.Type == NetworkMessageType.StateDelta)
             {
-                double parseMs = Stopwatch.GetElapsedTime(parseStart).TotalMilliseconds;
+                double parseMs = (double)(Stopwatch.GetTimestamp() - parseStart) / Stopwatch.Frequency * 1000;
                 _diag?.Record(NetworkEventType.ReceiveFrame,
                     $"delta json={msg.PayloadJson.Length} parse={parseMs:F1}ms");
             }
