@@ -38,6 +38,7 @@ namespace Card.Bootstrap.Replay
         private int _lastRenderedFrame = -1;
         private int _lastLoggedEventCount;
         private float _stepTimer;
+        private bool _seekPending; // Seek/重播/切文件时置 true，PushLogEntries 据此清空+全量重投
 
         private void Start()
         {
@@ -123,6 +124,8 @@ namespace Card.Bootstrap.Replay
             MatchRecording recording = _repository.Load(_metas[_metaIndex].FilePath);
             _player = new ReplayPlayer(recording, _database);
             _lastRenderedFrame = -1;
+            _stepTimer = 0f;
+            _seekPending = true;
             _lastLoggedEventCount = 0;
             _log?.Clear();
             _stepTimer = 0f;
@@ -147,6 +150,7 @@ namespace Card.Bootstrap.Replay
             {
                 player.Seek(0); // 终局后点播放 = 重播
                 player.Play();
+                _seekPending = true;
             }
             else
             {
@@ -173,6 +177,7 @@ namespace Card.Bootstrap.Replay
             }
 
             player.Seek(target);
+            _seekPending = true;
             _bar?.SetPlaying(false);
         }
 
@@ -199,11 +204,13 @@ namespace Card.Bootstrap.Replay
 
             player.Pause();
             player.Seek(Math.Max(0, Math.Min(player.TotalFrames, frame)));
+            _seekPending = true;
             _bar?.SetPlaying(false);
         }
 
         /// <summary>帧号变化才推送视图（Push 为全量同步，避免每帧重复推送）。
-        /// 日志投递：前进 1 帧=追加增量；跳转/重播=清空后全量重投（复盘应反映当前帧的完整历史）。</summary>
+        /// 日志投递：_seekPending=true（Seek/重播/切文件）= 清空+全量重投；否则增量追加。
+        /// 连续推进（含 2x/4x 补帧）走增量路径，避免清空→重投的 TMP 渲染抖动导致视觉滞后。</summary>
         private void RenderCurrent()
         {
             if (_player == null || _synchronizer == null || _player.CurrentFrame == _lastRenderedFrame)
@@ -211,27 +218,28 @@ namespace Card.Bootstrap.Replay
                 return;
             }
 
-            bool isSequentialStep = _player.CurrentFrame == _lastRenderedFrame + 1;
             _lastRenderedFrame = _player.CurrentFrame;
             _synchronizer.Push(_player.CurrentSnapshot);
-            PushLogEntries(isSequentialStep);
+            PushLogEntries();
             _bar?.SetFrames(_player.CurrentFrame, _player.TotalFrames);
             _bar?.SetPlaying(_player.State == ReplayPlayerState.Playing);
         }
 
         /// <summary>把 ReplayPlayer.AllEvents 的增量投递到日志面板（M15-T1-B1 操作日志）。
-        /// 非顺序推进（Seek/重播/切文件）时清空并全量重投，保证日志与当前帧状态一致。</summary>
-        private void PushLogEntries(bool isSequentialStep)
+        /// _seekPending=true 时清空并全量重投（跳转/重播/切文件后日志须反映当前帧完整历史）；
+        /// 否则增量追加 [_lastLoggedEventCount, AllEvents.Count)，连续推进无清空抖动。</summary>
+        private void PushLogEntries()
         {
             if (_log == null || _player == null)
             {
                 return;
             }
 
-            if (!isSequentialStep)
+            if (_seekPending)
             {
                 _log.Clear();
                 _lastLoggedEventCount = 0;
+                _seekPending = false;
             }
 
             IReadOnlyList<GameEvent> events = _player.AllEvents;

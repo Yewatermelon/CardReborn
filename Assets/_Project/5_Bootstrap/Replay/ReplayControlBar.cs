@@ -49,7 +49,7 @@ namespace Card.Bootstrap.Replay
         public void SetFrames(int current, int total)
         {
             _frameLabel.text = total > 0
-                ? current.ToString() + " / " + total
+                ? current + " / " + total + " 步"
                 : "-- / --";
 
             _suppressSlider = true;

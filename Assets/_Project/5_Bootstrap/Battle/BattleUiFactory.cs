@@ -90,7 +90,7 @@ namespace Card.Bootstrap.Battle
 
         private static void BuildBoardsAndHands(BattleUi ui, RectTransform root, CardView cardPrefab)
         {
-            RectTransform enemyHand = CreateBox("EnemyHand", root, new Vector2(0f, 480f), new Vector2(1200f, 156f));
+            RectTransform enemyHand = CreateBox("EnemyHand", root, new Vector2(0f, 460f), new Vector2(1200f, 156f));
             RectTransform enemyBoard = CreateBox("EnemyBoard", root, new Vector2(0f, 250f), new Vector2(1200f, 156f));
             RectTransform localBoard = CreateBox("LocalBoard", root, new Vector2(0f, -180f), new Vector2(1200f, 156f));
             RectTransform localHand = CreateBox("LocalHand", root, new Vector2(0f, -400f), new Vector2(1200f, 156f));
