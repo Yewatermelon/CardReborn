@@ -36,7 +36,7 @@ namespace Card.Bootstrap.Replay
         private ReplayControlBar? _bar;
         private BattleLogView? _log;
         private int _lastRenderedFrame = -1;
-        private int _lastLoggedEventCount;
+        private int _lastLoggedFrame;
         private float _stepTimer;
         private bool _seekPending; // Seek/重播/切文件时置 true，PushLogEntries 据此清空+全量重投
 
@@ -126,9 +126,7 @@ namespace Card.Bootstrap.Replay
             _lastRenderedFrame = -1;
             _stepTimer = 0f;
             _seekPending = true;
-            _lastLoggedEventCount = 0;
-            _log?.Clear();
-            _stepTimer = 0f;
+            _lastLoggedFrame = 0;
             _bar?.SetFile(Path.GetFileName(_metas[_metaIndex].FilePath));
             _bar?.SetSpeed(_player.Speed);
             RenderCurrent();
@@ -225,9 +223,10 @@ namespace Card.Bootstrap.Replay
             _bar?.SetPlaying(_player.State == ReplayPlayerState.Playing);
         }
 
-        /// <summary>把 ReplayPlayer.AllEvents 的增量投递到日志面板（M15-T1-B1 操作日志）。
-        /// _seekPending=true 时清空并全量重投（跳转/重播/切文件后日志须反映当前帧完整历史）；
-        /// 否则增量追加 [_lastLoggedEventCount, AllEvents.Count)，连续推进无清空抖动。</summary>
+        /// <summary>按帧把事件投递到日志面板（M15-T1-B1 操作日志）。
+        /// _seekPending=true 时清空并从第 0 帧重投；否则从 _lastLoggedFrame 增量投递。
+        /// 每帧调用 GetFrameEventRange 取该帧产出的事件——被拒命令产出 0 事件，
+        /// 投递占位条目，保证帧号与日志条目一一对应（修复 AllEvents.Count 偏离帧号导致的固定滞后）。</summary>
         private void PushLogEntries()
         {
             if (_log == null || _player == null)
@@ -238,16 +237,27 @@ namespace Card.Bootstrap.Replay
             if (_seekPending)
             {
                 _log.Clear();
-                _lastLoggedEventCount = 0;
+                _lastLoggedFrame = 0;
                 _seekPending = false;
             }
 
-            IReadOnlyList<GameEvent> events = _player.AllEvents;
-            for (int i = _lastLoggedEventCount; i < events.Count; i++)
+            IReadOnlyList<GameEvent> allEvents = _player.AllEvents;
+            for (int frame = _lastLoggedFrame; frame < _player.CurrentFrame; frame++)
             {
-                _log.Append(events[i]);
+                (int start, int end) = _player.GetFrameEventRange(frame);
+                if (end <= start)
+                {
+                    _log.AppendText("—— 第 " + (frame + 1) + " 步：操作被拒/无事件 ——");
+                }
+                else
+                {
+                    for (int i = start; i < end; i++)
+                    {
+                        _log.Append(allEvents[i]);
+                    }
+                }
             }
-            _lastLoggedEventCount = events.Count;
+            _lastLoggedFrame = _player.CurrentFrame;
         }
 
         /// <summary>与 BattleSceneBootstrap.LoadTextResolver 同口径：读本地化 CSV，缺省回退 Key 显示。</summary>

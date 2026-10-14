@@ -84,6 +84,43 @@ namespace Card.Tests.EditMode.Replay
             Assert.That(player.AllEvents.Count, Is.EqualTo(0), "空录制无事件");
         }
 
+        [Test]
+        public void GetFrameEventRange_Step_RangesContiguous()
+        {
+            MatchRecording recording = BuildRecording(seed: 42, stepCount: 5);
+            var player = new ReplayPlayer(recording, Db);
+
+            int prevEnd = 0;
+            for (int f = 0; f < 5; f++)
+            {
+                Assert.That(player.Step(), Is.True, "第 " + f + " 帧 Step 应成功");
+                (int start, int end) = player.GetFrameEventRange(f);
+                Assert.That(start, Is.EqualTo(prevEnd), "帧 " + f + " 的 start 须等于前一帧 end");
+                Assert.That(end, Is.GreaterThanOrEqualTo(start), "帧 " + f + " 的 end 须 >= start");
+                prevEnd = end;
+            }
+        }
+
+        [Test]
+        public void GetFrameEventRange_Seek_RangesSumEqualsAllEvents()
+        {
+            MatchRecording recording = BuildRecording(seed: 11, stepCount: 8);
+            var player = new ReplayPlayer(recording, Db);
+
+            player.Seek(6);
+
+            int total = 0;
+            for (int f = 0; f < 6; f++)
+            {
+                (int start, int end) = player.GetFrameEventRange(f);
+                Assert.That(end, Is.GreaterThanOrEqualTo(start), "帧 " + f + " 的 end 须 >= start");
+                total += end - start;
+            }
+
+            Assert.That(total, Is.EqualTo(player.AllEvents.Count),
+                "各帧事件数之和须等于 AllEvents.Count（Seek 重建后帧范围一致）");
+        }
+
         // ===== 助手（与 ReplayPlayerTests 同口径，复制以避免改动既有测试文件） =====
 
         private static MatchRecording BuildRecording(int seed, int stepCount)

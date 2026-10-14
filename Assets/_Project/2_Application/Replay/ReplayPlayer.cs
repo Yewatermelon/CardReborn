@@ -35,6 +35,7 @@ namespace Card.Application.Replay
         private int _currentFrame;
         private ReplayPlayerState _playerState = ReplayPlayerState.Idle;
         private float _speed = 1f;
+        private readonly List<int> _frameEventEnds = new();
 
         public ReplayPlayer(MatchRecording recording, CardDatabase database)
         {
@@ -109,6 +110,7 @@ namespace Card.Application.Replay
 
             IGameCommand command = CommandSerializer.Deserialize(_recording.Commands[_currentFrame]);
             _controller.Submit(command);
+            _frameEventEnds.Add(_controller.Events.Count);
             _currentFrame++;
 
             if (_currentFrame >= TotalFrames)
@@ -161,16 +163,35 @@ namespace Card.Application.Replay
                 _database, _recording.Seat0, _recording.Seat1,
                 new SeededRandomProvider(_recording.Seed));
             var controller = new MatchController(state, _database);
+            _frameEventEnds.Clear();
 
             for (int i = 0; i < targetFrame; i++)
             {
                 IGameCommand cmd = CommandSerializer.Deserialize(_recording.Commands[i]);
                 controller.Submit(cmd);
+                _frameEventEnds.Add(controller.Events.Count);
             }
 
             _state = state;
             _controller = controller;
             _currentFrame = targetFrame;
+        }
+
+        /// <summary>
+        /// 第 <paramref name="frame"/> 帧（[0, CurrentFrame)）Submit 后产出的全部事件
+        /// 在 <see cref="AllEvents"/> 中的范围 [start, end)。被拒命令产出 0 个事件——
+        /// 调用方据此投递占位条目，保证帧号与日志条目一一对应（M15-T1-B1 修复日志滞后）。
+        /// </summary>
+        public (int start, int end) GetFrameEventRange(int frame)
+        {
+            if (frame < 0 || frame >= _frameEventEnds.Count)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(frame), frame, "帧号超出范围 [0, " + _frameEventEnds.Count + ")。");
+            }
+
+            int start = frame == 0 ? 0 : _frameEventEnds[frame - 1];
+            return (start, _frameEventEnds[frame]);
         }
     }
 }
