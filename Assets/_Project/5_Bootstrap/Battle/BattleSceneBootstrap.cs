@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Card.Application.Match;
 using Card.Application.Match.Agents;
@@ -51,6 +52,8 @@ namespace Card.Bootstrap.Battle
         private AiTurnRunner? _aiRunner;
         private bool _isPve;
         private bool _recordSaved;
+        private ReplayRecordingCollector? _replayCollector;
+        private bool _replaySaved;
 
         private void Start()
         {
@@ -78,15 +81,15 @@ namespace Card.Bootstrap.Battle
                 return;
             }
 
-            MatchController controller = BattleComposition.StartMatch(
-                database, BattleComposition.BuildDeckKeys(database));
+            IReadOnlyList<string> deckKeys = BattleComposition.BuildDeckKeys(database);
+            MatchController controller = BattleComposition.StartMatch(database, deckKeys);
             _controller = controller;
 
             ITextResolver texts = LoadTextResolver(configDir);
             _synchronizer = new BattleViewSynchronizer(ui, database, texts, LocalSeat, EnemySeat);
             _pump = new MatchEventPump(controller.Events);
             BindFeedback(ui, _pump, LocalSeat);
-            BindInput(ui, controller, database);
+            BindInput(ui, controller, database, deckKeys);
 
             _pump.EventAppended += ui.Log.Append;
             _synchronizer.Push(controller.View);
@@ -120,7 +123,7 @@ namespace Card.Bootstrap.Battle
             feedback.Bind(pump);
         }
 
-        private void BindInput(BattleUi ui, MatchController controller, CardDatabase database)
+        private void BindInput(BattleUi ui, MatchController controller, CardDatabase database, IReadOnlyList<string> deckKeys)
         {
             _input = gameObject.AddComponent<PlayerInputController>();
             _input._localPlayerId = LocalSeat;
@@ -152,7 +155,15 @@ namespace Card.Bootstrap.Battle
                 };
             }
 
-            var runner = new AgentMatchRunner(controller, controller.View, agents);
+            // M15-T1：录制收集器插在 runner 与权威之间——AI 与玩家命令统一经 runner.Submit 全部捕获
+            var collector = new ReplayRecordingCollector(
+                controller,
+                new MatchSetupRequest(BattleComposition.MageHeroKey, deckKeys),
+                new MatchSetupRequest(BattleComposition.WarriorHeroKey, deckKeys),
+                BattleComposition.DemoSeed);
+            _replayCollector = collector;
+
+            var runner = new AgentMatchRunner(collector, controller.View, agents);
 
             _sink = new MatchControllerCommandSink(runner);
             _input.Initialize(_sink);
@@ -221,17 +232,6 @@ namespace Card.Bootstrap.Battle
         private void OnDestroy()
         {
             OnDestroyNet();
-        }
-
-        /// <summary>M14-T5：对局终局时持久化 MatchRecord 到磁盘；未终局或已保存过则跳过。</summary>
-        private void PersistMatchRecordIfNeeded()
-        {
-            if (_recordSaved || _controller == null || _controller.LastRecord == null)
-                return;
-
-            // 联机房主侧带上网络结束原因（正常终局为 null/EndReasonNormal）
-            string? endReasonNet = _netLobby?.HostPeer?.LastMatchEndReason;
-            MatchRecordPersister.TrySave(_controller, ref _recordSaved, endReasonNet);
         }
 
         private static ITextResolver LoadTextResolver(string configDir)

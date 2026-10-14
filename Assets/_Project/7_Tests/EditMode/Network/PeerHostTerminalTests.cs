@@ -105,6 +105,9 @@ namespace Card.Tests.EditMode.Network
         /// 避免长快进触发 PeerSession 心跳超时（60 tick）与掉线判负路径（回合超时用例专用）。
         /// 每批发整批帧而非单帧：编辑器高负载下 IO 接收线程调度延迟可超任何固定 Sleep，
         /// 单帧迟到即触发心跳超时误判负（M14-T3 复跑暴露），整批缓存后接收线程醒一次即可清零 idle。
+        /// M15-B2：批末用 <see cref="PeerSession.LastActivityTick"/> 自旋确认宿主已消费本批，
+        /// 再推下一批时钟——否则连续两拍接收延迟即 idle≥60 心跳超时断链（宿主 Dispose 传输，
+        /// 客户端后续 Send 抛"TCP 传输已断开"，M15-T1 复跑暴露）。确认后 idle 最多累积 50。
         /// </summary>
         private void AdvanceIdle(int totalTicks)
         {
@@ -120,9 +123,25 @@ namespace Card.Tests.EditMode.Network
                     _client.Send(MessageCodec.Frame(NetworkMessageType.Pong, MessageCodec.CurrentProtocolVersion, pong.ToJson()));
                 }
 
-                Thread.Sleep(10);
-                _peerHost.RunNetworkTick();
+                WaitForBatchConsumed();
             }
+        }
+
+        /// <summary>自旋驱动网络 tick 直到宿主会话消费到本批 Pong（activity 追平时钟），上限 2 秒。</summary>
+        private void WaitForBatchConsumed()
+        {
+            for (int i = 0; i < 200; i++)
+            {
+                _peerHost.RunNetworkTick();
+                if (_session != null && _session.LastActivityTick >= _clock.CurrentTick)
+                {
+                    return;
+                }
+
+                Thread.Sleep(10);
+            }
+
+            Assert.Fail("等待宿主消费本批 Pong 超时（2 秒）——会话可能已心跳超时断链。");
         }
 
         /// <summary>自旋等待宿主侧会话感知掉线（上限 2 秒）。</summary>

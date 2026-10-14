@@ -75,9 +75,20 @@ namespace Card.Network
             JsonValue payload = JsonValue.Object()
                 .Add("winner", winner.HasValue ? JsonValue.From(winner.Value) : JsonValue.Null())
                 .Add("reason", JsonValue.From(reason));
-            _transport.Send(MessageCodec.Frame(
-                NetworkMessageType.MatchEnd, MessageCodec.CurrentProtocolVersion, payload.ToJson()));
-            _diag?.Record(NetworkEventType.SendFrame, $"type=MatchEnd, seat={_seat}");
+            byte[] frame = MessageCodec.Frame(
+                NetworkMessageType.MatchEnd, MessageCodec.CurrentProtocolVersion, payload.ToJson());
+            try
+            {
+                _transport.Send(frame);
+                _diag?.Record(NetworkEventType.SendFrame, $"type=MatchEnd, seat={_seat}");
+            }
+            catch (InvalidOperationException)
+            {
+                // 竞态窗口（M15-B1）：Connected 检查后、发送瞬间对端断开，接收循环
+                // 把 _connected 置 false 后 Send 前置检查抛 InvalidOperationException。
+                // "尽力通知"语义：记录失败路径不抛——TearDown/Dispose/tick 终态编排不得被打断。
+                NetworkLogger.Warn($"HostBridge MatchEnd 发送瞬间断链（竞态）：seat={_seat}，reason={reason}");
+            }
         }
 
         /// <summary>
