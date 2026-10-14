@@ -6,7 +6,9 @@ using Card.Application.Replay;
 using Card.Bootstrap.Battle;
 using Card.Core;
 using Card.Domain.Config;
+using Card.Domain.Match;
 using Card.Presentation.Battle;
+using Card.Presentation.Battle.Log;
 using UnityEngine;
 
 namespace Card.Bootstrap.Replay
@@ -32,7 +34,9 @@ namespace Card.Bootstrap.Replay
         private ReplayPlayer? _player;
         private BattleViewSynchronizer? _synchronizer;
         private ReplayControlBar? _bar;
+        private BattleLogView? _log;
         private int _lastRenderedFrame = -1;
+        private int _lastLoggedEventCount;
         private float _stepTimer;
 
         private void Start()
@@ -51,7 +55,10 @@ namespace Card.Bootstrap.Replay
 
             _database = database;
             _synchronizer = new BattleViewSynchronizer(
-                ui, database, LoadTextResolver(configDir), BattleSceneBootstrap.LocalSeat, BattleSceneBootstrap.EnemySeat);
+                ui, database, LoadTextResolver(configDir),
+                BattleSceneBootstrap.LocalSeat, BattleSceneBootstrap.EnemySeat,
+                observerMode: true);
+            _log = ui.Log;
             _repository = new ReplayFileRepository();
             _bar = new ReplayControlBar(ui.CanvasRoot);
             BindControlBar();
@@ -116,6 +123,8 @@ namespace Card.Bootstrap.Replay
             MatchRecording recording = _repository.Load(_metas[_metaIndex].FilePath);
             _player = new ReplayPlayer(recording, _database);
             _lastRenderedFrame = -1;
+            _lastLoggedEventCount = 0;
+            _log?.Clear();
             _stepTimer = 0f;
             _bar?.SetFile(Path.GetFileName(_metas[_metaIndex].FilePath));
             _bar?.SetSpeed(_player.Speed);
@@ -193,7 +202,8 @@ namespace Card.Bootstrap.Replay
             _bar?.SetPlaying(false);
         }
 
-        /// <summary>帧号变化才推送视图（Push 为全量同步，避免每帧重复推送）。</summary>
+        /// <summary>帧号变化才推送视图（Push 为全量同步，避免每帧重复推送）。
+        /// 日志投递：前进 1 帧=追加增量；跳转/重播=清空后全量重投（复盘应反映当前帧的完整历史）。</summary>
         private void RenderCurrent()
         {
             if (_player == null || _synchronizer == null || _player.CurrentFrame == _lastRenderedFrame)
@@ -201,10 +211,35 @@ namespace Card.Bootstrap.Replay
                 return;
             }
 
+            bool isSequentialStep = _player.CurrentFrame == _lastRenderedFrame + 1;
             _lastRenderedFrame = _player.CurrentFrame;
             _synchronizer.Push(_player.CurrentSnapshot);
+            PushLogEntries(isSequentialStep);
             _bar?.SetFrames(_player.CurrentFrame, _player.TotalFrames);
             _bar?.SetPlaying(_player.State == ReplayPlayerState.Playing);
+        }
+
+        /// <summary>把 ReplayPlayer.AllEvents 的增量投递到日志面板（M15-T1-B1 操作日志）。
+        /// 非顺序推进（Seek/重播/切文件）时清空并全量重投，保证日志与当前帧状态一致。</summary>
+        private void PushLogEntries(bool isSequentialStep)
+        {
+            if (_log == null || _player == null)
+            {
+                return;
+            }
+
+            if (!isSequentialStep)
+            {
+                _log.Clear();
+                _lastLoggedEventCount = 0;
+            }
+
+            IReadOnlyList<GameEvent> events = _player.AllEvents;
+            for (int i = _lastLoggedEventCount; i < events.Count; i++)
+            {
+                _log.Append(events[i]);
+            }
+            _lastLoggedEventCount = events.Count;
         }
 
         /// <summary>与 BattleSceneBootstrap.LoadTextResolver 同口径：读本地化 CSV，缺省回退 Key 显示。</summary>

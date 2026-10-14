@@ -17,6 +17,7 @@ namespace Card.Bootstrap.Menu
     {
         public const string BattleSceneName = "Battle";
         public const string MainMenuSceneName = "MainMenu";
+        public const string ReplaySceneName = "Replay";
 
         /// <summary>
         /// 进程内守卫：启动参数自动跳转 Battle 只做一次（M14-T6）。
@@ -61,6 +62,7 @@ namespace Card.Bootstrap.Menu
             CreateStartButton(canvasGo.transform);
             CreatePveButton(canvasGo.transform);
             CreateNetButton(canvasGo.transform);
+            CreateReplayButton(canvasGo.transform);
         }
 
         private static void CreateTitle(Transform parent)
@@ -165,6 +167,36 @@ namespace Card.Bootstrap.Menu
                 PlayerPrefs.SetString(Battle.BattleSceneBootstrap.GameModePrefKey, Battle.BattleSceneBootstrap.PvpNetMode);
                 GameLog.Info(LogChannel.Boot, "主菜单：进入联机对战（房主托管 · 仅用于本机验证）。");
                 SceneManager.LoadScene(BattleSceneName);
+            });
+        }
+
+        /// <summary>查看回放入口（M15-T1-B1）：载入 Replay 场景，脱离 Unity 编辑器查看已保存回放。</summary>
+        private static void CreateReplayButton(Transform parent)
+        {
+            var go = new GameObject("ReplayButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchoredPosition = new Vector2(0f, -400f);
+            rect.sizeDelta = new Vector2(360f, 110f);
+            go.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.3f, 1f);
+
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var labelRect = (RectTransform)labelGo.transform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            var label = labelGo.AddComponent<TextMeshProUGUI>();
+            label.fontSize = 32;
+            label.color = Color.white;
+            label.alignment = TextAlignmentOptions.Center;
+            label.text = "查看回放";
+
+            go.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                GameLog.Info(LogChannel.Boot, "主菜单：进入回放查看。");
+                SceneManager.LoadScene(ReplaySceneName);
             });
         }
     }

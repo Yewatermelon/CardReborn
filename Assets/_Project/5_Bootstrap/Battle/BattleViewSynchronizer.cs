@@ -12,6 +12,8 @@ namespace Card.Bootstrap.Battle
     /// 输入只有 <see cref="IReadOnlyMatchState"/>，不持可写状态、不判规则。
     /// 己方手牌显示卡面，对方手牌只显示牌背数量；随从带嘲讽关键词时亮嘲讽标记
     /// （关键词是状态数据，等同渲染攻击力，不是规则判断）。
+    /// M15-T1-B1：observerMode（明牌视角）下双方手牌都显示卡面——仅用于回放场景，
+    /// 不影响产品对战（BattleSceneBootstrap 不传，默认 false）。
     /// </summary>
     public sealed class BattleViewSynchronizer
     {
@@ -23,19 +25,22 @@ namespace Card.Bootstrap.Battle
         private readonly CardDatabase _database;
         private readonly BattleUi _ui;
         private readonly ITextResolver _texts;
+        private readonly bool _observerMode;
 
         public BattleViewSynchronizer(
             BattleUi ui,
             CardDatabase database,
             ITextResolver texts,
             int localSeat,
-            int enemySeat)
+            int enemySeat,
+            bool observerMode = false)
         {
             _ui = ui;
             _database = database;
             _texts = Guard.NotNull(texts, nameof(texts));
             _localSeat = localSeat;
             _enemySeat = enemySeat;
+            _observerMode = observerMode;
         }
 
         /// <summary>按只读对局快照全量刷新各区（事件泵派发后调用，非每帧）。</summary>
@@ -71,7 +76,7 @@ namespace Card.Bootstrap.Battle
                 .ToList());
             ApplyTauntMarks(board, player.Board.Cards);
 
-            if (isLocal)
+            if (isLocal || _observerMode)
             {
                 hand.SetCards(player.Hand.Cards
                     .Select(c => CardViewData.FromInstance(_database.RequireCard(c.CardKey), c, _texts))

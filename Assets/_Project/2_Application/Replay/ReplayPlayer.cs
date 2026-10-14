@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Card.Application.Match;
 using Card.Core;
 using Card.Domain.Config;
@@ -53,6 +54,12 @@ namespace Card.Application.Replay
 
         /// <summary>当前帧的对局状态快照（引用语义，由表现层只读推送）。</summary>
         public MatchState CurrentSnapshot => _state;
+
+        /// <summary>
+        /// 截至当前帧的事件流（引用 <see cref="MatchController.Events"/> 活视图，M15-T1-B1）。
+        /// 表现层用 <c>Count</c> 差值取本帧新增事件投递日志面板；Seek 后事件流反映重建态。
+        /// </summary>
+        public IReadOnlyList<GameEvent> AllEvents => _controller.Events;
 
         /// <summary>倍速（1/2/4 等正数）；只影响表现层推进节奏，不影响内核。</summary>
         public float Speed => _speed;
