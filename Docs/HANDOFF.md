@@ -51,20 +51,20 @@
 
 ## 3. 当前状态快照
 
-> 快照日期：2026-10-13（M14-T7 Soak 收官，**阶段二 M11–M14 全部完成**）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
+> 快照日期：2026-10-14（M15-T1 交互式回放系统收官，**阶段二 M11–M14 + 扩展 M15-T1 完成**）。**每次交接前请重新跑第 4 节的命令并更新本节数字。**
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 领先 `origin/main` 10 个提交（2026-10-13 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7` + Unity 复验 docs `48f62a1` + LAN 跨机器 feat `16ffc54` + APIPA 修复 `315c2ed`，**未推送**）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
-| 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 ✅ 7/7（2026-10-13 T7 Soak 收官）**；M8/M9/M10 ⬜ 未开始 |
+| 分支 / 提交 | `main` 领先 `origin/main` 11 个提交（2026-10-14 M15-T1：feat `762cfea` + docs 待补，**未推送**；前序 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7` + Unity 复验 docs `48f62a1` + LAN 跨机器 feat `16ffc54` + APIPA 修复 `315c2ed`）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
+| 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 ✅ 7/7（2026-10-13 T7 Soak 收官）**；**阶段二扩展：M15-T1 ✅ 回放系统（2026-10-14），M15-T2 ⬜ 观战模式**；M8/M9/M10 ⬜ 未开始 |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**；无 Unity kernel 工程 0 warning |
-| 测试 | **Unity EditMode 1309 passed / 0 failed**（2026-10-13 实跑，1300 + Soak 9）；无 Unity 工具链 **kernel 1016 passed / 0 failed** |
-| 覆盖率 | `0_Core 95.82%`、`Domain + Application 92.66%`（门禁 90% / 80%） |
-| 静态门禁 | `Tools/check.ps1` PASS（415 文件） |
+| 测试 | **Unity EditMode 1323 passed / 0 failed**（2026-10-14 实跑，1309 + 回放 14）；无 Unity 工具链 **kernel 1030 passed / 0 failed** |
+| 覆盖率 | `0_Core 95.82%`、`Domain + Application 92.56%`（门禁 90% / 80%） |
+| 静态门禁 | `Tools/check.ps1` PASS（425 文件） |
 | 配置管线 | 37 行卡表（35 启用 + 2 废弃）→ 校验 → `Assets/_Project/Config/*.json` → `CardDatabase` 可查；热加载可用；`Localization.csv`（78 条中文文本）随部署流程复制到 StreamingAssets |
 | AI 能力 | `GreedyAiAgent`（贪心 + 可选难度 Profile）+ `AiVsAiSimulator`（批量 500 局门禁 + 胜率统计）+ 三档难度 Easy（劣化排序）/ Normal（贪心）/ Hard（评估函数 + 斩杀意识），同英雄镜像 200 局：Normal vs Easy 68.5%、Hard vs Normal 54.5% |
 | 联网能力 | 权威宿主 `MatchHost`（共享库）+ `PeerHost`（BCL TCP，**监听绑定 0.0.0.0 支持跨机器 LAN**）+ 座位化广播/视野裁剪 + seq 幂等（回执按座位归属，M14-T7 修正）+ StateDelta/快照回退 + 终态编排（掉线判负/回合超时/MatchEnd）+ 异常注入防御 + **Soak 30 局真实 TCP 回环回归（M14-T7，门禁口径）** + **跨机器 LAN 双开验证通过**（校园网 WiFi，2026-10-13：PeerHost.ListenAddress 自动发现本机 WiFi IP，排除 APIPA 169.254/隧道/回环网卡）；协议"只加不删"演进 |
-| 未关闭项 | 无 P0/P1；**AC-7 跨机器 LAN 双开已验证通过**（2026-10-13，校园网 WiFi 同网段双机）；仅剩"移除 `Card.Network` asmdef 后编译复验"（用户执行）——见 [M14-T7 任务卡 §11.6](./tasks/M14-T7-Soak回归.md) |
+| 未关闭项 | 无 P0/P1；**AC-7 跨机器 LAN 双开已验证通过**（2026-10-13，校园网 WiFi 同网段双机）；仅剩"移除 `Card.Network` asmdef 后编译复验"（用户执行）——见 [M14-T7 任务卡 §11.6](./tasks/M14-T7-Soak回归.md)；M15 遗留：M15-L1（P3 联机回放后置）、M15-T1-B1（待开：操作日志+明牌视角+客户端入口）——见 [M15-T1 任务卡 §12](./tasks/M15-T1-回放系统.md) |
 
 ## 4. 验证环境与命令（关键：两种跑法）
 

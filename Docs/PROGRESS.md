@@ -3,7 +3,7 @@
 > 维护方式：每个里程碑结束后更新；状态变更需注明日期与证据（测试报告 / 评审记录）。
 > 状态图例：⬜ 未开始 ｜ 🟡 进行中 ｜ 🔵 待评审 ｜ ✅ 完成 ｜ 🔴 阻塞
 
-**当前阶段：阶段二联网 M11–M14 全部收官（2026-10-13：M14-T7 Soak 回归完成，M14 7/7）；待用户真机验收（AC-7：双开 30 局 + ≥30 分钟挂机）｜HANDOFF §4.3 已附双开与 soak-watch 指南**
+**当前阶段：阶段二联网 M11–M14 全部收官 + 阶段二扩展 M15-T1 回放系统完成（2026-10-14：M15-T1 交互式回放系统，feat `762cfea`）；M15-T2 观战模式 ⬜ 待开｜待用户真机验收（AC-7：双开 30 局 + ≥30 分钟挂机）｜HANDOFF §4.3 已附双开与 soak-watch 指南**
 
 > **交接**：项目已移交后续 AI/开发者，请先读 [Docs/HANDOFF.md](./HANDOFF.md)（现状快照、验证命令、已知坑、接手准备）。
 > 本文件的状态与证据在每次交接前需重新跑验证并更新。
@@ -30,6 +30,12 @@
 | M12 本机双进程与直连传输 | ✅ 完成（2026-10-10 补记） | 9/9 | 双进程握手全流程 + 心跳超时 + 角色切换 | BCL TCP 零依赖；提交 61751b4…1e4c248 |
 | M13 权威状态同步与裁剪 | ✅ 完成 | 9/9 | kernel 958/0；0_Core 91.96% / Domain+App 93.14% | T1～T9 完成 |
 | M14 双人验证与体验打磨 | ✅ 完成 | 7/7 | kernel 1016/0；Unity EditMode 1309/0；0_Core 95.82% / Domain+App 92.66% | 2026-10-12：T1 表现先行 + T2 状态插值 + T3 PVP 场景装配 + T4 双开工具 + T5 对局记录 + T6 异常体验打磨；2026-10-13：T7 Soak 回归（30 局真实 TCP 回环全终局 + 挂机模拟；seq 回执归属座位协议修正），M14 收官；Unity EditMode 1309 passed / 0 failed（1300 + 9 Soak 新增，2026-10-13 实跑留证）；**跨机器 LAN 双开验证通过**（校园网 WiFi，2026-10-13：监听绑定 0.0.0.0 + APIPA 排除 + WiFi 优先 IP 发现，提交 16ffc54 + 315c2ed） |
+
+**阶段二扩展：回放与观战**
+
+| 里程碑 | 状态 | 任务完成/总数 | 门禁 | 备注 |
+| --- | --- | --- | --- | --- |
+| M15 回放与观战 | 🟡 进行中 | 1/2 | kernel 1030/0；Unity EditMode 1323/0；check 425；0_Core 95.82% / Domain+App 92.56% | 2026-10-14：M15-T1 ✅ 交互式回放系统（基于 M4-T9 录制基础设施扩展为可暂停/倍速/帧跳转，feat `762cfea`，14 例先红后绿，M15-B1/B2 已修复）；M15-T2 ⬜ 观战模式 |
 
 > **阶段三（未来，暂不做）**：专用服务器、公网对战、匹配服务、NAT 穿透与中继、反作弊加固、客户端预测与和解、主机迁移。
 
@@ -237,6 +243,14 @@
 
 ---
 
+## M15 任务级状态（进行中 1/2）
+
+| 任务 | 状态 | 证据 |
+| --- | --- | --- |
+| M15-T1 交互式回放系统 | ✅ | 任务卡 [tasks/M15-T1-回放系统.md](./tasks/M15-T1-回放系统.md)；代码：新文件 [ReplayFileRepository.cs](Assets/_Project/2_Application/Replay/ReplayFileRepository.cs)（持久化 Save/List/Load/Delete，纯 BCL）+ [ReplayPlayer.cs](Assets/_Project/2_Application/Replay/ReplayPlayer.cs)（Idle/Playing/Paused/Finished 状态机 Play/Pause/Step/Seek/SetSpeed，Seek 重建快进不做反向回退）+ [ReplayRecordingCollector.cs](Assets/_Project/5_Bootstrap/Battle/ReplayRecordingCollector.cs)（ICommandAuthority decorator 终局录制被接受命令）+ [BattleSceneBootstrap.Replay.cs](Assets/_Project/5_Bootstrap/Battle/BattleSceneBootstrap.Replay.cs)（partial SaveReplayIfNeeded 接线 persistentDataPath/Replays）+ [ReplaySceneBootstrap.cs](Assets/_Project/5_Bootstrap/Replay/ReplaySceneBootstrap.cs)/[ReplayControlBar.cs](Assets/_Project/5_Bootstrap/Replay/ReplayControlBar.cs)（回放场景+控制 UI，复用 M6-T1 模式）+ [M15SceneSetup.cs](Assets/_Project/6_Editor/M15/M15SceneSetup.cs)（Card/M15 菜单生成 Replay.unity 写入 Build Settings）；测试 +14 例先红后绿（Repository 5 + Player 9）；M15-B1 HostBridge.SendMatchEnd 竞态断链修复 + M15-B2 PeerHostTerminalTests 心跳保活误判修复；规则三层零改动（时间参数化 R1、BattleSceneBootstrap 拆 partial R5）；kernel 1030/0、Unity EditMode 1323/0、check PASS 425、覆盖率 0_Core 95.82% / Domain+App 92.56%；feat `762cfea` |
+
+---
+
 ## 未关闭问题（P0 / P1）
 
 | 编号 | 级别 | 来源 | 描述 | 责任人 | 状态 |
@@ -258,6 +272,10 @@
 | BK-CFG-1 | P2 | M6-T5 复盘改进项 2 | 配置与代码缺加载期契约：效果表达式只在出牌时解析，未知类型/坏参数/缺 Trigger 前缀全部运行时才炸（M6 实录 3 类）。需 CardDatabase 构建期全量校验 | AI | 🔵 待 M9-T1 前置（[任务卡](./tasks/BACKLOG-ConfigEffectValidation.md)） |
 | M7-OBS-1 | P3（观察项，已完成） | M7-T1 | PVE 人机实盘。**2026-10-08 用户决策**：① 时机——M7-T3 完成后立即单开（任务顺序 T3→OBS-1→T4→T5）；② 驱动——AI 回合逐命令分帧泵（MonoBehaviour 驱动、规则层仍纯 BCL），禁止同步整回合一帧跑完；③ 范围——最小可玩：主菜单加"人机对战"入口、玩家固定座位 0 先手、对手=GreedyAiAgent、AI 回合锁输入/不切视角/思考提示、复用胜负与再来一局；不做先后手选择与难度（T5）；④ 验收——实机冒烟 1-2 局 + 新增 1 个 PlayMode 人机对局自动化用例。**2026-10-10 完成**：kernel 831 全绿，EditMode +6，PlayMode +1，check.ps1 PASS | AI | ✅ 已完成 |
 | M7-B1 | P1（调整记录，已完成 2026-10-10） | M7-T4 批量模拟 | 500 局 AI vs AI 门禁胜率超区间（Docs/02 允许"调整记录"口径）：P0(Mage) 67.8% vs P1(Warrior) 32.2%，超出 [45%,55%]。双方 AI（GreedyAiAgent）、牌库、先后手均对称（MatchFactory 掷先手 50/50），失衡根因为**英雄技能强度不对齐**——Mage 技能（任意目标打 1）是可点脸的进攻资源，Warrior 技能（叠甲 2）纯防御。**再平衡已完成**（[任务卡](./tasks/M7-B1-HeroPowerRebalance.md)）：以 M7-T4 模拟器为标定工具迭代 6 轮，终态 Warrior 技能改为镜像 HERO_POWER_BASH（2 费任意目标打 1，Heroes.csv/HeroPowers.csv/MatchFactoryTests 断言同步）；kernel 837 全绿 + check.ps1 PASS，复测 500 局 **P0 48.4% / P1 51.6% 回归区间**，顺带验证模拟器对称性（偏置纯来自技能强度）。经验沉淀：技能费用是最强平衡旋钮（2 费打 1 vs 1 费叠甲 2 胜率摆幅 44 个百分点）、血量补偿效率极低（+5 血≈2% 胜率）、职业差异化留 M9（4 英雄/60 卡）重新设计 | AI | ✅ 已完成 |
+
+| M15-B1 | P2（缺陷，已关闭） | M15-T1 Unity EditMode 实跑 | HostBridge.SendMatchEnd 在 Connected 检查后存在竞态窗口：接收循环置 _connected=false 后 Send 前置检查抛 InvalidOperationException，中断 TearDown/终态编排。修复：发送动作包 try-catch（catch InvalidOperationException + NetworkLogger.Warn，尽力通知语义）。kernel 1030/0、Unity EditMode 1323/0 复验 | AI | ✅ 已关闭 |
+| M15-B2 | P2（缺陷，已关闭） | M15-T1 Unity EditMode 实跑 | PeerHostTerminalTests.AdvanceIdle 保活节奏在编辑器高负载下抖动，Pong 入队延迟 >1 拍，心跳 idle≥60（PeerHost.TimeoutTicks）先于回合超时误判断链（M14-T3 同类复发）。修复：批末用 PeerSession.LastActivityTick 自旋确认宿主消费本批 Pong 再推下一批时钟；不改产品心跳行为 | AI | ✅ 已关闭 |
+| M15-L1 | P3（后置） | M15-T1 | PVP 联机对局不录制：_replayCollector 为 null，命令在 MatchHost 权威侧，客户端只上行意图。需权威层截获命令流水后置（M15-T2 观战/后续任务） | AI | 🔵 后置 |
 
 ## 里程碑复盘记录索引
 
