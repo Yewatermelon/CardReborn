@@ -77,6 +77,9 @@ namespace Card.Presentation.Battle.Log
 
             if (_scrollRect != null)
             {
+                // 强制重建布局后设滚动位置：content 高度已更新，0f 才是真正的底部
+                // （M15-T1-B1：修复滚动位置基于旧高度导致新日志不可见、累积数条后才滚到底）
+                LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)_content);
                 _scrollRect.verticalNormalizedPosition = 0f;
             }
         }
