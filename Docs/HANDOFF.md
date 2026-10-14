@@ -55,7 +55,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `main` 领先 `origin/main` 11 个提交（2026-10-14 M15-T1：feat `762cfea` + docs 待补，**未推送**；前序 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7` + Unity 复验 docs `48f62a1` + LAN 跨机器 feat `16ffc54` + APIPA 修复 `315c2ed`）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
+| 分支 / 提交 | `main` 领先 `origin/main` 12 个提交（2026-10-14 M15-T1：feat `762cfea` + docs `2f2f28d`，**未推送**；前序 M14-T7：feat `2e93fcc` + fix `64635fe` + docs `d0dcdc7` + Unity 复验 docs `48f62a1` + LAN 跨机器 feat `16ffc54` + APIPA 修复 `315c2ed`）；工作区仅剩编辑器侧噪声（场景/字体/ProjectSettings 本地偏好，不提交不还原） |
 | 里程碑 | 阶段一：M0 ✅ 8/8、M1 ✅ 9/9、M2 ✅ 7/7、M3 ✅ 10/10、M4 ✅ 10/10、M5 ✅ 8/8、M6 ✅ 5/5、M7 ✅ 5/5 + 1 项再平衡；**阶段二联网：M11 ✅ 8/8、M12 ✅ 9/9、M13 ✅ 9/9、M14 ✅ 7/7（2026-10-13 T7 Soak 收官）**；**阶段二扩展：M15-T1 ✅ 回放系统（2026-10-14），M15-T2 ⬜ 观战模式**；M8/M9/M10 ⬜ 未开始 |
 | 编译 | Unity 2022.3.54f1c1：**0 error / 0 warning**；无 Unity kernel 工程 0 warning |
 | 测试 | **Unity EditMode 1323 passed / 0 failed**（2026-10-14 实跑，1309 + 回放 14）；无 Unity 工具链 **kernel 1030 passed / 0 failed** |
