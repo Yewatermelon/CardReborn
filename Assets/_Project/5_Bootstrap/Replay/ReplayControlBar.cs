@@ -88,10 +88,10 @@ namespace Card.Bootstrap.Replay
             out TMP_Text frameLabel,
             out Slider slider)
         {
-            (Button stepBack, _) = MakeButton(bar, "StepBackBtn", new Vector2(-810f, -26f), new Vector2(72f, 40f), "⏮");
+            (Button stepBack, _) = MakeButton(bar, "StepBackBtn", new Vector2(-810f, -26f), new Vector2(72f, 40f), "后退");
             (Button playPause, TMP_Text playText) = MakeButton(bar, "PlayPauseBtn", new Vector2(-700f, -26f), new Vector2(120f, 40f), "播放");
             playLabel = playText;
-            (Button stepForward, _) = MakeButton(bar, "StepForwardBtn", new Vector2(-590f, -26f), new Vector2(72f, 40f), "⏭");
+            (Button stepForward, _) = MakeButton(bar, "StepForwardBtn", new Vector2(-590f, -26f), new Vector2(72f, 40f), "前进");
             (Button speed, TMP_Text speedText) = MakeButton(bar, "SpeedBtn", new Vector2(-470f, -26f), new Vector2(96f, 40f), "1x");
             speedLabel = speedText;
             (Slider sliderControl, _) = MakeSlider(bar, "FrameSlider", new Vector2(155f, -26f), new Vector2(1170f, 22f));
